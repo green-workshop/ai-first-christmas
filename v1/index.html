@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>North Pole Ltd: AI-First Christmas</title>
+<meta name="description" content="A tiny game about reviewing AI output on Christmas Eve. The board wants AI adoption. The children want presents.">
+<style>
+  :root {
+    --bg1: #0b1633;
+    --bg2: #16204a;
+    --card: #fffaf0;
+    --ink: #1c1c28;
+    --muted: #5d6178;
+    --red: #c8283c;
+    --green: #1f8a4c;
+    --gold: #f4c542;
+    --panel: rgba(255,255,255,0.08);
+    --line: rgba(255,255,255,0.18);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #f5f6ff;
+    background: radial-gradient(ellipse at top, var(--bg2), var(--bg1) 70%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* gentle snow */
+  .snow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .55;
+    background-image:
+      radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+      radial-gradient(2px 2px at 120px 80px, #fff, transparent),
+      radial-gradient(3px 3px at 220px 150px, #fff, transparent),
+      radial-gradient(2px 2px at 320px 40px, #fff, transparent),
+      radial-gradient(2px 2px at 60px 200px, #fff, transparent),
+      radial-gradient(3px 3px at 260px 260px, #fff, transparent);
+    background-size: 340px 300px;
+    animation: fall 18s linear infinite;
+  }
+  @keyframes fall { to { background-position: 0 300px; } }
+  @media (prefers-reduced-motion: reduce) {
+    .snow { animation: none; }
+    * { transition: none !important; animation: none !important; }
+  }
+  .wrap { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 16px; }
+  header h1 { font-size: clamp(1.2rem, 4.5vw, 1.8rem); margin: 4px 0 2px; letter-spacing: .2px; }
+  header p { margin: 0 0 12px; color: #c4c8e8; font-size: .95rem; }
+
+  .meters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .meter { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+  .meter .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .6px; color: #b8bde6; }
+  .meter .value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+  .meter.board .value { color: var(--gold); }
+  .meter.xmas .value { color: #7be3a3; }
+
+  .ticker { background: #2a1a2f; border: 1px solid #5a2f4a; border-radius: 10px; padding: 8px 12px; font-size: .9rem; color: #ffd9e0; min-height: 40px; margin-bottom: 12px; }
+  .ticker b { color: var(--gold); }
+
+  .stage { background: var(--card); color: var(--ink); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35); position: relative; }
+  .letter { font-size: .95rem; color: var(--muted); border-left: 4px solid var(--red); padding-left: 10px; margin-bottom: 12px; }
+  .letter .from { font-weight: 700; color: var(--ink); display: block; margin-bottom: 2px; }
+  .outlabel { font-size: .72rem; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+  .tag { background: #fde8c8; color: #8a4b00; border-radius: 999px; padding: 1px 8px; font-size: .7rem; text-transform: none; letter-spacing: 0; }
+  .output { background: #eef1fb; border: 2px dashed #9aa6d8; border-radius: 12px; padding: 14px; font-size: 1.15rem; min-height: 88px; display: flex; align-items: center; }
+  .output.reply { background: #e9f8ef; border-color: #6cc593; font-style: italic; }
+  .output.result { background: #fff4d6; border-color: var(--gold); font-style: normal; }
+
+  .timerbar { height: 10px; background: #e3e5f0; border-radius: 999px; overflow: hidden; margin: 14px 0; }
+  .timerfill { height: 100%; width: 100%; background: var(--green); transition: background .3s; }
+  .timerfill.low { background: var(--red); }
+
+  .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button {
+    font: inherit; font-weight: 700; font-size: 1.05rem; border: 0; border-radius: 14px; padding: 14px 10px; cursor: pointer; color: #fff;
+    min-height: 56px;
+  }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .approve { background: var(--green); }
+  .reject { background: var(--red); }
+  .hint { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 8px; }
+
+  .progress { font-size: .85rem; color: #c4c8e8; margin-top: 10px; text-align: center; }
+
+  .overlay { position: fixed; inset: 0; z-index: 5; display: none; align-items: center; justify-content: center; background: rgba(5,8,24,.82); padding: 16px; }
+  .overlay.show { display: flex; }
+  .modal { background: var(--card); color: var(--ink); border-radius: 18px; padding: 22px; max-width: 520px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .modal h2 { margin: 0 0 8px; font-size: 1.4rem; }
+  .modal p { margin: 8px 0; line-height: 1.45; }
+  .modal .big { font-size: 2.4rem; margin: 2px 0; }
+  .modal button { margin-top: 12px; width: 100%; background: var(--red); }
+  .modal button.alt { background: #4a5278; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .stat { background: #eef1fb; border-radius: 10px; padding: 8px 10px; }
+  .stat .k { font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .stat .v { font-size: 1.4rem; font-weight: 700; }
+  .banner { background: #2a1a2f; color: #ffd9e0; border-radius: 10px; padding: 10px 12px; font-weight: 600; }
+  .small { font-size: .85rem; color: var(--muted); }
+  footer { text-align: center; color: #9aa0cc; font-size: .78rem; margin: 18px 0 8px; }
+</style>
+</head>
+<body>
+<div class="snow" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <h1>🎅 North Pole Ltd: AI-First Christmas</h1>
+    <p>You're the elf in the middle. The AI picks the presents. The board picks the metrics.</p>
+  </header>
+
+  <div class="meters" aria-live="polite">
+    <div class="meter board"><div class="label">Board: AI adoption</div><div class="value" id="mAdopt">8%</div></div>
+    <div class="meter xmas"><div class="label">Right presents</div><div class="value" id="mXmas">–</div></div>
+    <div class="meter"><div class="label">Children done</div><div class="value" id="mDone">0/24</div></div>
+  </div>
+
+  <div class="ticker" id="ticker"><b>Board:</b> Please maximise AI adoption. Use cases to follow.</div>
+
+  <main class="stage" id="stage">
+    <div class="letter" id="letter"><span class="from">Letter</span><span id="letterText"></span></div>
+    <div class="outlabel"><span>AI-generated gift decision</span><span class="tag" id="tag" hidden></span></div>
+    <div class="output" id="output" role="status" aria-live="polite">Press start to begin.</div>
+    <div class="timerbar" aria-hidden="true"><div class="timerfill" id="timer"></div></div>
+    <div class="buttons">
+      <button class="approve" id="btnApprove" disabled>✓ Approve &amp; ship</button>
+      <button class="reject" id="btnReject" disabled>✗ Reject</button>
+    </div>
+    <div class="hint">Keys: A or → to approve, R or ← to reject. If the timer runs out, the AI ships it unchecked.</div>
+  </main>
+  <div class="progress" id="progress"></div>
+
+  <footer>Made with AI. Checked by a human, which is rather the point. · green-workshop</footer>
+</div>
+
+<div class="overlay show" id="ovStart">
+  <div class="modal">
+    <div class="big">🎄</div>
+    <h2>Christmas Eve at North Pole Ltd</h2>
+    <p class="banner">The board has mandated an AI-first Christmas. The use case is to be confirmed.</p>
+    <p>Letters arrive. The AI decides what each child gets. Compare the letter to the AI's decision, then <b>approve</b> it or <b>reject</b> it before the timer runs out.</p>
+    <p>If you reject something, the AI will tell you you're right. Don't read too much into that.</p>
+    <p class="small">24 children. You can send each decision back up to three times. The board only measures adoption. You will be measured on whether anyone got what they asked for.</p>
+    <button id="btnStart">Start the shift</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovInit">
+  <div class="modal">
+    <div class="big">📣</div>
+    <h2 id="initTitle">New initiative</h2>
+    <p class="banner" id="initText"></p>
+    <p class="small" id="initEffect"></p>
+    <button id="btnInit">Understood (synergies)</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovEnd">
+  <div class="modal">
+    <div class="big" id="endEmoji">🎁</div>
+    <h2 id="endTitle">Christmas is delivered</h2>
+    <p id="endVerdict"></p>
+    <div class="stats">
+      <div class="stat"><div class="k">AI adoption</div><div class="v" id="eAdopt"></div></div>
+      <div class="stat"><div class="k">Christmas</div><div class="v" id="eXmas"></div></div>
+      <div class="stat"><div class="k">Rejections</div><div class="v" id="eRej"></div></div>
+      <div class="stat"><div class="k">Shipped unchecked</div><div class="v" id="eUnc"></div></div>
+    </div>
+    <p class="small" id="eCave"></p>
+    <button id="btnAgain">Play again</button>
+    <button class="alt" id="btnCopy">Copy my result</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Content ----------
+  var KIDS = [
+    { n: "Mia", a: 7, w: "a bike", g: "Red bicycle, 20-inch, with a bell.", b: "4,000 left socks (bulk pack)." },
+    { n: "Tom", a: 9, w: "football boots", g: "Football boots, size 4, studs included.", b: "One football boot. Left." },
+    { n: "Priya", a: 6, w: "a teddy bear", g: "Soft brown teddy bear with a ribbon.", b: "A bear. Real one. Fully grown. Confidence: high." },
+    { n: "Jack", a: 10, w: "a Lego set", g: "Lego castle set, 1,200 pieces.", b: "A castle. Actual castle. Please arrange a chimney." },
+    { n: "Ella", a: 8, w: "a book about dragons", g: "Illustrated dragon book, hardback.", b: "Tax guidance for dragons (2019 edition)." },
+    { n: "Sam", a: 5, w: "a toy train", g: "Wooden toy train with 12 pieces of track.", b: "The 1987 rail timetable. Delays not included." },
+    { n: "Zara", a: 11, w: "a skateboard", g: "Skateboard with helmet and pads.", b: "A skateboard. Wheels not included. Neither is the board." },
+    { n: "Oliver", a: 4, w: "some building blocks", g: "Chunky wooden building blocks.", b: "A building. Planning permission pending." },
+    { n: "Amira", a: 9, w: "an art set", g: "Paints, brushes and a sketchbook.", b: "A painting of a horse with six legs, confidently signed 'Da Vinci'." },
+    { n: "Leo", a: 12, w: "a football", g: "Size 5 football.", b: "Size 5 football, delivered inflated to 400 psi." },
+    { n: "Chloe", a: 7, w: "a jigsaw puzzle", g: "500-piece jigsaw, seaside scene.", b: "500 pieces, each from a different jigsaw." },
+    { n: "Noah", a: 8, w: "a kite", g: "Red kite with string and handle.", b: "A red kite. The bird. It has been informed." },
+    { n: "Isla", a: 6, w: "a dolls' house", g: "Wooden dolls' house with furniture.", b: "A house. Mortgage in Isla's name." },
+    { n: "Ben", a: 10, w: "a telescope", g: "Beginner telescope with a tripod.", b: "A telescope, pointed at the neighbours. Optimised for engagement." },
+    { n: "Hana", a: 5, w: "warm pyjamas", g: "Warm pyjamas, dinosaur print.", b: "A dinosaur. Pyjamas to follow." },
+    { n: "Dev", a: 9, w: "a chess set", g: "Wooden chess set.", b: "Chess set. 32 pieces. All pawns." },
+    { n: "Ruby", a: 7, w: "roller skates", g: "Roller skates, adjustable size.", b: "Ice skates. Delivered to a house with no ice." },
+    { n: "Finn", a: 6, w: "a toy dinosaur", g: "Toy T. rex that roars when pressed.", b: "A T. rex. I cannot confirm whether it is toy-sized." },
+    { n: "Grace", a: 8, w: "a diary with a lock", g: "Diary with a lock and two keys.", b: "Diary. Contents summarised and sent to the board for insight." },
+    { n: "Max", a: 11, w: "headphones", g: "Over-ear headphones.", b: "Headphones. Playing the all-hands meeting on a loop." },
+    { n: "Lily", a: 4, w: "a little scooter", g: "Small scooter with a wide, stable deck.", b: "A scooter. The Italian motor kind. Please present a licence." },
+    { n: "Hugo", a: 9, w: "a board game", g: "Family board game, 2 to 6 players.", b: "Board game. Rules not included. Rules generated at runtime." },
+    { n: "Nia", a: 7, w: "a recorder", g: "A descant recorder. Apologies to the parents.", b: "A pipe organ. The parents have been notified." },
+    { n: "Joe", a: 10, w: "a cricket bat", g: "Junior cricket bat.", b: "A bat. The flying kind. Check your loft." }
+  ];
+
+  var GENERIC_BAD = [
+    "As a language model, I cannot deliver presents to chimneys.",
+    "Gift: [INSERT GIFT HERE]",
+    "A gift card for a shop that closed in 2011.",
+    "Present #4,821. Description: present.",
+    "Whatever the last child asked for.",
+    "A voucher to chat with our chatbot."
+  ];
+
+  var YOURE_RIGHT = [
+    "You're absolutely right! Apologies for the confusion. Here is a corrected version.",
+    "Great catch! You're right, and I should have spotted that.",
+    "You're completely right to flag that. Let me fix it now.",
+    "Thank you for pointing that out! You're right. Updated below.",
+    "You're right, and I apologise. I've made the change.",
+    "Excellent observation! You are absolutely right."
+  ];
+
+  var BOARD_REJECT = [
+    "Rework is up. Have you tried prompting it better?",
+    "Why are you checking? It's AI.",
+    "Our AI-first strategy requires trust.",
+    "Every rejection is a training opportunity.",
+    "Let's take this offline and circle back.",
+    "Can we automate the checking, too?"
+  ];
+
+  var BOARD_RIGHT = [
+    "See? AI works. Use case: this.",
+    "This is what AI-first looks like.",
+    "Strategy validated."
+  ];
+
+  var BOARD_WRONG = [
+    "No issues reported. Adoption is up.",
+    "Impressive throughput!",
+    "Thrilled with the velocity.",
+    "Early signs are very promising."
+  ];
+
+  var INITS = [
+    { t: "Letters to Father Christmas now handled by ChatBot™.", d: "Use case: to be confirmed. You now have 1 second less per decision." },
+    { t: "Naughty/Nice list replaced by sentiment analysis.", d: "Ho ho hold on. The AI is now more confident and more often wrong." },
+    { t: "Reindeer replaced by a drone swarm. Reindeer have been 'redeployed'.", d: "Faster sleigh, no feedback. Less time per decision again." },
+    { t: "Elf headcount reduced by 40% to fund AI. Synergies expected.", d: "Same workload, fewer elves. You are the elves." },
+    { t: "AI will now write the AI strategy.", d: "The board is delighted. You have even less time." }
+  ];
+
+  // ---------- State ----------
+  var S;
+  var raf = null, lastT = 0;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function newGame() {
+    S = {
+      deck: shuffle(KIDS.slice()),
+      done: 0, correct: 0, rejects: 0, caved: 0, unchecked: 0,
+      inits: 0, initShownAt: {},
+      cur: null, phase: "start",
+      timeLeft: 0, timeMax: 10
+    };
+  }
+
+  function adoption() {
+    return Math.min(100, 8 + S.done * 3 + S.inits * 6);
+  }
+
+  function updateMeters() {
+    $("mAdopt").textContent = adoption() + "%";
+    $("mXmas").textContent = S.done > 0 ? Math.round(100 * S.correct / S.done) + "%" : "–";
+    $("mDone").textContent = S.done + "/" + KIDS.length;
+    $("progress").textContent = "Christmas Eve: child " + Math.min(S.done + 1, KIDS.length) + " of " + KIDS.length;
+  }
+
+  function say(html) { $("ticker").innerHTML = "<b>Board:</b> " + html; }
+
+  function setOutput(text, cls) {
+    var o = $("output");
+    o.textContent = text;
+    o.className = "output" + (cls ? " " + cls : "");
+  }
+
+  function setButtons(on) {
+    $("btnApprove").disabled = !on;
+    $("btnReject").disabled = !on;
+  }
+
+  // ---------- Flow ----------
+  function nextCard() {
+    if (S.done >= KIDS.length) { return endGame(); }
+    if (S.done > 0 && S.done % 4 === 0 && S.inits < INITS.length && !S.initShownAt[S.done]) {
+      S.initShownAt[S.done] = true;
+      return showInit();
+    }
+    presentCard();
+  }
+
+  function presentCard() {
+    var kid = S.deck[S.done];
+    var badChance = Math.min(0.7, 0.42 + 0.06 * S.inits);
+    var bad = Math.random() < badChance;
+    S.cur = { kid: kid, bad: bad, rejects: 0 };
+    S.timeMax = Math.max(4.5, 10 - 1.2 * S.inits);
+    S.timeLeft = S.timeMax;
+    $("letterText").textContent = "Dear Father Christmas, I would like " + kid.w + ". Love, " + kid.n + " (age " + kid.a + ").";
+    $("tag").hidden = true;
+    setOutput(bad ? kid.b : kid.g);
+    updateMeters();
+    S.phase = "play";
+    setButtons(true);
+    startLoop();
+  }
+
+  function showInit() {
+    var it = INITS[S.inits];
+    S.inits += 1;
+    S.phase = "init";
+    stopLoop();
+    setButtons(false);
+    $("initTitle").textContent = "New initiative " + S.inits + " of " + INITS.length;
+    $("initText").textContent = it.t;
+    $("initEffect").textContent = it.d;
+    updateMeters();
+    say("AI adoption is now <b>" + adoption() + "%</b>. Use cases to follow.");
+    $("ovInit").classList.add("show");
+  }
+
+  function finalize(timedOut) {
+    stopLoop();
+    setButtons(false);
+    S.phase = "result";
+    var c = S.cur;
+    var ok = !c.bad;
+    S.done += 1;
+    if (ok) { S.correct += 1; }
+    if (timedOut) { S.unchecked += 1; }
+    var prefix = timedOut ? "No time to check. Shipped unchecked. " : "";
+    if (ok) {
+      setOutput(prefix + c.kid.n + " got what they asked for. 🎉", "result");
+      say(pick(BOARD_RIGHT));
+    } else {
+      setOutput(prefix + c.kid.n + " received: " + (c.text || c.kid.b) + " 😬", "result");
+      say(pick(BOARD_WRONG));
+    }
+    updateMeters();
+    window.setTimeout(nextCard, 1500);
+  }
+
+  function reject() {
+    if (S.phase !== "play") { return; }
+    if (S.cur.rejects >= 3) {
+      say("Rework limit reached for this child. Please ship it. Adoption targets are at risk.");
+      return;
+    }
+    stopLoop();
+    S.phase = "reply";
+    setButtons(false);
+    var c = S.cur;
+    c.rejects += 1;
+    S.rejects += 1;
+    setOutput(pick(YOURE_RIGHT), "reply");
+    say(pick(BOARD_REJECT));
+    window.setTimeout(function () {
+      var kid = c.kid;
+      if (!c.bad) {
+        // the AI caves and changes a correct answer into a wrong one
+        S.caved += 1;
+        c.bad = true;
+        c.text = kid.b;
+      } else {
+        var again = c.rejects < 3 && Math.random() < (0.3 + 0.05 * S.inits);
+        if (again) {
+          c.bad = true;
+          c.text = pick(GENERIC_BAD);
+        } else {
+          c.bad = false;
+          c.text = kid.g;
+        }
+      }
+      setOutput(c.text);
+      $("tag").textContent = "↻ Revised by AI";
+      $("tag").hidden = false;
+      S.timeLeft = Math.min(S.timeMax, Math.max(S.timeLeft, 0) + 2);
+      S.phase = "play";
+      setButtons(true);
+      startLoop();
+    }, 1300);
+  }
+
+  function approve() {
+    if (S.phase !== "play") { return; }
+    if (S.cur.text === undefined) { S.cur.text = S.cur.bad ? S.cur.kid.b : S.cur.kid.g; }
+    finalize(false);
+  }
+
+  // ---------- Timer ----------
+  function startLoop() {
+    stopLoop();
+    lastT = performance.now();
+    raf = requestAnimationFrame(tick);
+  }
+  function stopLoop() {
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+  }
+  function tick(now) {
+    var dt = Math.min(0.1, (now - lastT) / 1000);
+    lastT = now;
+    if (S.phase === "play") {
+      S.timeLeft -= dt;
+      var f = Math.max(0, S.timeLeft / S.timeMax);
+      var el = $("timer");
+      el.style.width = (f * 100) + "%";
+      if (f < 0.3) { el.classList.add("low"); } else { el.classList.remove("low"); }
+      if (S.timeLeft <= 0) {
+        if (S.cur.text === undefined) { S.cur.text = S.cur.bad ? S.cur.kid.b : S.cur.kid.g; }
+        finalize(true);
+        return;
+      }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+
+  // ---------- End ----------
+  function resultText() {
+    var pct = Math.round(100 * S.correct / KIDS.length);
+    return "North Pole Ltd: AI-First Christmas. AI adoption: " + adoption() + "%. Christmas: " + pct +
+      "%. I rejected " + S.rejects + " things and the AI told me I was right every time.";
+  }
+
+  function endGame() {
+    S.phase = "end";
+    stopLoop();
+    setButtons(false);
+    var pct = Math.round(100 * S.correct / KIDS.length);
+    var emoji, title, verdict;
+    if (pct >= 90) {
+      emoji = "🌟"; title = "Christmas saved";
+      verdict = "Almost everyone got what they asked for. The board credits the AI. Your contribution is not mentioned.";
+    } else if (pct >= 70) {
+      emoji = "🎁"; title = "Mostly fine";
+      verdict = "Most children are happy. A few received an unexpected bear. Lessons will be learned, eventually.";
+    } else if (pct >= 40) {
+      emoji = "🧦"; title = "Memorable, for the wrong reasons";
+      verdict = "Several children will be telling this story for years. The board says adoption is up.";
+    } else {
+      emoji = "🔥"; title = "Adoption: 100%. Christmas: ruined";
+      verdict = "Nobody got what they asked for, but the dashboard is green. Promotion likely.";
+    }
+    $("endEmoji").textContent = emoji;
+    $("endTitle").textContent = title;
+    $("endVerdict").textContent = verdict;
+    $("eAdopt").textContent = adoption() + "%";
+    $("eXmas").textContent = pct + "%";
+    $("eRej").textContent = S.rejects;
+    $("eUnc").textContent = S.unchecked;
+    $("eCave").textContent = S.caved > 0
+      ? "Times the AI changed a correct answer to a wrong one because you pushed back: " + S.caved + ". It also said you were right."
+      : "You never made the AI talk itself out of a correct answer. Well checked.";
+    $("ovEnd").classList.add("show");
+  }
+
+  // ---------- Wiring ----------
+  function startGame() {
+    $("ovStart").classList.remove("show");
+    $("ovEnd").classList.remove("show");
+    newGame();
+    say("Please maximise AI adoption. Use cases to follow.");
+    updateMeters();
+    nextCard();
+  }
+
+  $("btnStart").addEventListener("click", startGame);
+  $("btnAgain").addEventListener("click", startGame);
+  $("btnInit").addEventListener("click", function () {
+    $("ovInit").classList.remove("show");
+    presentCard();
+  });
+  $("btnApprove").addEventListener("click", approve);
+  $("btnReject").addEventListener("click", reject);
+  $("btnCopy").addEventListener("click", function () {
+    var txt = resultText();
+    var btn = $("btnCopy");
+    function done(msg) {
+      btn.textContent = msg;
+      window.setTimeout(function () { btn.textContent = "Copy my result"; }, 1800);
+    }
+    try {
+      navigator.clipboard.writeText(txt).then(function () { done("Copied"); }, function () { done("Copy failed"); });
+    } catch (e) { done("Copy failed"); }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) { return; }
+    var k = e.key;
+    if (k === "a" || k === "A" || k === "ArrowRight") { approve(); }
+    else if (k === "r" || k === "R" || k === "ArrowLeft") { reject(); }
+  });
+
+  newGame();
+  updateMeters();
+  window.__game = { S: function () { return S; }, startGame: startGame, approve: approve, reject: reject };
+})();
+</script>
+</body>
+</html>

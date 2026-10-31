@@ -1,0 +1,229 @@
+/* Page grid and responsive layout. Component looks live in ui.css. */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  color: var(--snow);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, var(--basement-light), transparent 70%),
+    linear-gradient(180deg, var(--basement) 0%, var(--night-900) 100%);
+  background-color: var(--night-900);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+body.on-title {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 100%, var(--night-600), transparent 70%),
+    linear-gradient(180deg, var(--night-900), var(--night-600));
+}
+#sprite-host { position: absolute; width: 0; height: 0; overflow: hidden; }
+#snow { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+#grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: .06; mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+body::after { /* vignette */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 49;
+  background: radial-gradient(ellipse at center, transparent 60%, color-mix(in srgb, var(--night-900) 45%, transparent) 100%);
+}
+#app { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 12px 16px 16px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Title */
+.screen-title { min-height: calc(100vh - 28px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+.title-logo { width: min(560px, 92vw); }
+.title-dash { width: min(420px, 86vw); }
+.title-logo svg, .title-dash svg { width: 100%; height: auto; display: block; }
+.title-actions { display: flex; gap: 10px; }
+.title-settings { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: var(--fs-caption); color: var(--snow-shade); }
+.title-settings label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer; }
+.title-strap { max-width: 34em; margin: 0; color: var(--snow-shade); }
+.title-credit { font-size: var(--fs-caption); color: var(--snow-shade); opacity: .8; margin: 6px 0 0; }
+
+/* Game */
+.screen-game { display: flex; flex-direction: column; gap: 10px; }
+.hud { display: grid; grid-template-columns: auto repeat(4, 1fr); gap: 8px; align-items: stretch; }
+.play { display: grid; gap: 10px; }
+.floor { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: end; }
+.belt-wrap { position: relative; padding-top: 84px; }       /* room above the belt for the gift tag */
+.belt-panel { width: 100%; aspect-ratio: 800 / 300; position: relative; margin-bottom: 14px; }
+.belt-panel svg, .desk-panel svg { width: 100%; height: 100%; display: block; }
+.gift-layer { position: absolute; left: 0; right: 0; bottom: 14px; aspect-ratio: 800 / 300; pointer-events: none; overflow: visible; }
+.belt-zone { position: absolute; inset: 0 0 14px 0; touch-action: none; cursor: grab; outline: none; }
+.belt-zone:focus-visible { box-shadow: inset 0 0 0 3px var(--gold); border-radius: 12px; }
+.timerbar { position: absolute; left: 4%; right: 4%; bottom: 0; }
+.desk-panel { width: 100%; aspect-ratio: 400 / 300; }
+
+.gift { position: absolute; left: 0; bottom: 24.1%; width: 13.75%;  /* belt top y=214, icon baseline 56/64 */ transform-origin: 50% 100%; will-change: transform; }
+.gift-art { width: 100%; aspect-ratio: 1; }
+.gift-art svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.gift .gift-tag { position: absolute; left: 50%; bottom: 100%; margin-bottom: 6px; }
+
+.controls { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.sleigh-strip { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; min-height: 32px; }
+.keys-hint { text-align: center; margin: 0; font-size: var(--fs-caption); color: var(--snow-shade); }
+
+/* Overlays */
+.overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+.overlay-full { padding: 0; }
+.modal { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
+.modal.report { width: min(720px, 100%); }
+.brief-demo { height: 90px; position: relative; overflow: hidden; }
+.toast { position: fixed; left: 50%; top: auto; height: auto; transform: translateX(-50%); z-index: 70; }   /* ui.css anchors it bottom-centre; setting top as well stretched it */
+
+/* Phone and narrow screens */
+@media (max-width: 760px) {
+  #app { padding: 8px 10px 10px; }
+  .hud { grid-template-columns: auto repeat(3, 1fr); gap: 6px; }
+  .hud .plate-patch { display: none; }
+  .floor { grid-template-columns: 1fr; }
+  .belt-wrap { padding-top: 96px; }
+  .desk-panel { aspect-ratio: auto; height: 170px; }
+  .keys-hint { display: none; }
+  .gift { width: 15%; bottom: 23.7%; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .floor { grid-template-columns: 2fr 1fr; }
+  .desk-panel { aspect-ratio: 400 / 300; height: auto; }
+}
+
+/* Engine-driven states */
+.letter-card.in { animation: letterIn .35s var(--ease-in) both; }
+@keyframes letterIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.gift.landed .gift-art { animation: squash .2s var(--ease-pop); transform-origin: 50% 88%; }
+@keyframes squash { 0% { transform: scale(1.12, .88); } 100% { transform: none; } }
+.gift.hint-reject::after {
+  content: "\2192"; position: absolute; left: 100%; top: 40%; font-size: 2rem; font-weight: 800; color: var(--gold);
+  animation: nudge 1s ease-in-out infinite; pointer-events: none;
+}
+@keyframes nudge { 0%, 100% { transform: translateX(0); opacity: .6; } 50% { transform: translateX(10px); opacity: 1; } }
+.gift.final .gift-tag::before {
+  content: "FINAL. NO FURTHER REWORK."; display: block; font-size: var(--fs-label); letter-spacing: .08em; font-weight: 800;
+  color: var(--pole-red); margin-bottom: 2px;
+}
+.gift.unchecked::before {
+  content: "UNCHECKED"; position: absolute; left: 50%; top: 35%; transform: translateX(-50%) rotate(-12deg); z-index: 2;
+  font-weight: 800; letter-spacing: .1em; font-size: .8rem; color: var(--pole-red); border: 2px solid var(--pole-red);
+  padding: 1px 6px; border-radius: 4px; background: color-mix(in srgb, var(--paper) 80%, transparent);
+}
+.brief-gift { position: absolute; left: 50%; bottom: 6px; width: 64px; height: 64px; }
+.timerfill { transform-origin: 0 50%; }
+.report-sleigh { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.rs-item { margin: 0; width: 84px; text-align: center; font-size: var(--fs-caption); }
+.rs-item .rs-art { width: 56px; height: 56px; margin: 0 auto; }
+.rs-item.bad figcaption { color: var(--bad); font-weight: 600; }
+.report-table .cmp { color: var(--ink-soft); font-size: var(--fs-caption); }
+.report-table td svg, .sl-item svg { width: 1em; height: 1em; vertical-align: -0.15em; }
+html.reduced *, html.reduced *::before, html.reduced *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+
+/* Review fixes: composition and the phone sleigh counter */
+.letter-card { width: min(640px, 100%); justify-self: center; }
+.play { gap: 6px; }
+.belt-wrap { padding-top: 78px; }
+.desk-panel { margin-bottom: 14px; }             /* lines up with the belt panel, which has the timer bar below it */
+.sleigh-strip { height: 34px; overflow: hidden; align-items: center; }
+.sl-count { display: none; align-items: center; gap: 6px; font-weight: 700; color: var(--snow); white-space: nowrap; }
+.sl-count svg { width: 22px; height: 22px; }
+.sl-count .sl-bad { color: var(--snow-shade); display: inline-flex; align-items: center; gap: 2px; }
+@media (max-width: 760px) {
+  .belt-wrap { padding-top: 100px; }
+  .sleigh-strip .sl-item { display: none; }
+  .sl-count { display: inline-flex; }
+  .desk-panel { margin-bottom: 0; }
+}
+/* The gift's size comes from .gift's width (a share of the belt), never a fixed pixel size */
+.gift .gift-art { width: 100%; height: auto; }
+@media (max-width: 760px) { .sl-count { font-size: var(--fs-caption); gap: 4px; } .sl-count svg { width: 18px; height: 18px; } }
+
+/* Playtest round 2: bigger Father Christmas on desktop, his moment on rejects, and a reading pause */
+.floor { grid-template-columns: 3fr 2fr; }
+.desk-panel { position: relative; }
+.belt-wrap, .desk-panel { transition: opacity .3s, transform .3s var(--ease-in), filter .3s; }
+.floor.spot-desk .belt-wrap { opacity: .55; }
+.floor.spot-desk .desk-panel { transform: scale(1.03); filter: drop-shadow(0 0 18px color-mix(in srgb, var(--lamp) 45%, transparent)); }
+.desk-caption {
+  position: absolute; left: 50%; bottom: 10px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
+  max-width: 92%; padding: 6px 12px; border-radius: 10px; font-size: var(--fs-tag); line-height: 1.35; text-align: center;
+  color: var(--ink); background: var(--paper); box-shadow: 0 4px 14px color-mix(in srgb, var(--night-900) 50%, transparent);
+  transition: opacity .25s, transform .25s var(--ease-pop);
+}
+.desk-caption.show { opacity: 1; transform: translate(-50%, 0); }
+.desk-caption b { color: var(--pole-red); }
+.belt-wrap.holding .timerbar::after {
+  content: "Read it. The belt starts in a moment."; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-size: var(--fs-label); letter-spacing: .06em; font-weight: 700; color: var(--snow-shade); white-space: nowrap;
+  background: var(--night-900); padding: 0 8px; border-radius: 6px;
+}
+@media (max-width: 760px) { .floor { grid-template-columns: 1fr; } .floor.spot-desk .desk-panel { transform: none; } }
+html.reduced .floor.spot-desk .desk-panel { transform: none; }
+/* Interlude: one panel per beat, and a continue button */
+.il-only-mon .il-board, .il-only-board .il-mon { display: none !important; }
+.il-next { display: block; margin: 6px auto 2px; min-width: 12rem; }
+@media (min-width: 761px) { .il-only-mon .il-mon { zoom: 1.45; } }
+
+/* The 3-2-1 resume countdown: one big number in the middle, not a stretched bar */
+.toast.count { top: 50%; bottom: auto; transform: translate(-50%, -50%); min-width: 0; width: auto; padding: .2em .7em; font-size: 3.5rem; font-weight: 800; line-height: 1; border-radius: 18px; }
+
+/* Beta test labelling (remove for launch) */
+.beta-tag { position: fixed; left: 10px; bottom: 10px; z-index: 80; pointer-events: none; padding: 3px 8px; border-radius: 6px; font: 800 var(--fs-label)/1.2 var(--font-ui); letter-spacing: .12em; color: var(--ink); background: var(--gold); opacity: .85; }
+.title-beta { max-width: 34em; margin: 0; padding: 8px 14px; border-radius: 10px; font-size: var(--fs-caption); color: var(--ink); background: var(--paper); }
+.title-beta a { color: var(--pole-red); font-weight: 700; }
+
+/* Keyboard vs touch instructions: html.touch is set by the engine from (hover: none) and (pointer: coarse) */
+.tch { display: none; }
+html.touch .kb { display: none !important; }
+html.touch .tch { display: inline; }
+html.touch p.tch, html.touch div.tch { display: block; }
+
+/* ---- Phone: the whole game fits one screen, buttons pinned, letter card a fixed size (beta feedback) ---- */
+@media (max-width: 760px) {
+  #screen-game:not([hidden]) {
+    height: 100dvh; min-height: 0; display: flex; flex-direction: column; gap: 6px;
+    margin: -8px -10px -10px; padding: 6px 10px calc(70px + env(safe-area-inset-bottom)); overflow: hidden;
+  }
+  #screen-game .hud { flex: none; gap: 5px; }
+  #screen-game .hud .plate { padding: .25rem .45rem .3rem; }
+  #screen-game .hud .plate-value { font-size: 1.2rem; }
+  #screen-game .ticker { flex: none; padding-block: .3rem; font-size: .875rem; }
+  #screen-game .play { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+  #screen-game .floor { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+  #screen-game .belt-wrap { flex: none; padding-top: 80px; }
+  #screen-game .desk-panel { flex: 1 1 auto; min-height: 80px; height: auto; aspect-ratio: auto; margin: 0; }
+  /* The letter card keeps one size whatever the letter, so nothing below it moves */
+  #letter {
+    --fs-letter: .9rem; --lh: calc(var(--fs-letter) * 1.45);
+    flex: none; width: 100%; height: calc(var(--lh) * 6 + 1.1rem); overflow: hidden;
+    padding: .55rem .8rem .5rem 2.1rem; line-height: 1.45;
+    background:
+      var(--ui-grain),
+      linear-gradient(90deg, transparent 1.5rem, color-mix(in srgb,var(--pole-red) 45%, transparent) 1.5rem 1.6rem, transparent 1.6rem),
+      repeating-linear-gradient(180deg, transparent 0 calc(var(--lh) - 1.5px), color-mix(in srgb,var(--snow-shade) 85%, transparent) calc(var(--lh) - 1.5px) var(--lh)) 0 .55rem / 100% calc(100% - 1.05rem) no-repeat,
+      var(--ui-paper);
+  }
+  #letter::before { top: -8px; width: 70px; height: 18px; margin-left: -35px; }
+  /* Pack / Reject always visible at the bottom of the screen */
+  #screen-game .controls {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, var(--night-900) 30%);
+  }
+  #screen-game .controls .keycap { min-height: 52px; }
+}
+
+/* Report buttons: one bar that stays at the bottom while the report scrolls */
+.report-actions {
+  position: sticky; bottom: 0; z-index: 2; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px;
+  margin: 12px -6px -6px; padding: 10px 6px 6px;
+  background: linear-gradient(180deg, transparent, var(--paper) 22%);
+}
+.report-actions .keycap { width: 100%; margin: 0 !important; padding-inline: .5em; }
+@media (max-width: 760px) {
+  .report-actions { grid-template-columns: 1fr 1fr; }
+  .report-actions #btnAgain { grid-column: 1 / -1; }
+  /* The beta tag would sit on the Pack button: show it on the title screen only */
+  body:not(.on-title) .beta-tag { display: none; }
+  .sl-count .sl-word { display: none; }
+}

@@ -1,0 +1,56 @@
+/* Palette and type tokens: SPEC §9.2 and §9.6 */
+:root {
+  --night-900: #0E1530;
+  --night-600: #24356B;
+  --snow: #EEF3FA;
+  --snow-shade: #A9B8D6;
+  --lamp: #FFC873;
+  --lamp-deep: #E8914A;
+  --board: #6B7A90;
+  --board-dark: #3B4659;
+  --pole-red: #C23B3B;
+  --pole-green: #2E7D5B;
+  --gold: #E6B54A;
+  --paper: #F6EFE1;
+  --ink: #1E1A2E;
+  --ink-soft: #5A5470;
+  --good: #2A7FD4;
+  --bad: #E5762B;
+
+  /* derived tones */
+  --pole-red-dark: #8E2630;
+  --pole-green-dark: #1F5A41;
+  --gold-dark: #A77A22;
+  --paper-shade: #E3D7BF;
+  --wood: #B9773F;
+  --wood-dark: #7E4C27;
+  --basement: #1B2346;
+  --basement-light: #2C3A6B;
+
+  /* gift hues (icons use --gift-hue) */
+  --hue-red: #C23B3B;
+  --hue-blue: #2F6FB8;
+  --hue-green: #2E7D5B;
+  --hue-pink: #E07AA6;
+  --hue-yellow: #E6B54A;
+  --hue-brown: #9A6238;
+  --hue-purple: #7B5BB0;
+
+  --font-ui: ui-rounded, "SF Pro Rounded", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --fs-caption: .8125rem;
+  --fs-body: 1rem;
+  --fs-letter: 1.0625rem;
+  --fs-tag: .9375rem;
+  --fs-hud: 1.5rem;
+  --fs-heading: 1.75rem;
+  --fs-label: .75rem;
+
+  --ease-in: cubic-bezier(.2,.8,.2,1);
+  --ease-out: cubic-bezier(.5,0,.75,0);
+  --ease-pop: cubic-bezier(.34,1.56,.64,1);
+  --t-ui: 180ms;
+  --t-drop: 420ms;
+  --t-push: 260ms;
+}

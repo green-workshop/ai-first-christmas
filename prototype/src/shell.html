@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>North Pole Ltd: AI-First Christmas (beta)</title>
+<meta name="description" content="A tiny game about checking AI output on Christmas Eve. The board wants AI adoption. The children want presents.">
+<style>
+<!-- @css -->
+</style>
+</head>
+<body>
+<div id="sprite-host" aria-hidden="true"></div>
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="grain" aria-hidden="true"></div>
+
+<div class="beta-tag" aria-hidden="true">BETA TEST</div>
+<div id="app">
+
+  <!-- Title -->
+  <section id="screen-title" class="screen screen-title" aria-labelledby="titleHeading">
+    <h1 id="titleHeading" class="sr-only">North Pole Ltd: AI-First Christmas</h1>
+    <div class="title-logo" id="titleLogo"></div>
+    <div class="title-dash" id="titleDash"></div>
+    <p class="title-strap">The board has mandated an AI-first Christmas. You're the elf who checks what the AI decides.</p>
+    <div class="title-actions">
+      <button id="btnStart" class="keycap keycap-pack">Start shift</button>
+      <button id="btnIntro" class="keycap keycap-plain">Replay intro</button>
+    </div>
+    <div class="title-settings" role="group" aria-label="Settings">
+      <label><input type="checkbox" id="setSound"> Sound</label>
+      <label><input type="checkbox" id="setRelaxed"> Relaxed belt</label>
+      <label><input type="checkbox" id="setUntimed"> Untimed belt</label>
+      <label><input type="checkbox" id="setReduced"> Reduced motion</label>
+      <label><input type="checkbox" id="setSkipCut"> Skip cutscenes</label>
+    </div>
+    <p class="title-beta"><b>Beta test.</b> Thanks for trying it. Something broken, unclear or unfunny? Tell me, or <a href="https://github.com/green-workshop/ai-first-christmas/issues" target="_blank" rel="noopener">open an issue</a>.</p>
+    <p class="title-credit">Made with AI, checked by a human · green-workshop · MIT · North Pole Ltd is fictional.</p>
+  </section>
+
+  <!-- Game -->
+  <section id="screen-game" class="screen screen-game" hidden>
+    <header id="hud" class="hud">
+      <button id="btnPause" class="keycap keycap-plain keycap-icon" aria-label="Pause"></button>
+      <div class="plate plate-board"><span class="plate-label">AI adoption</span><span class="plate-value" id="hAdopt">8%</span></div>
+      <div class="plate plate-xmas"><span class="plate-label">Right presents</span><span class="plate-value" id="hRight">–</span></div>
+      <div class="plate"><span class="plate-label">Child</span><span class="plate-value" id="hChild">1/8</span></div>
+      <div class="plate plate-patch"><span class="plate-label">AI build</span><span class="plate-value" id="hPatch">v1.0</span></div>
+    </header>
+    <div id="ticker" class="ticker" aria-live="off"><b>Board:</b> <span id="tickerText">Please maximise AI adoption. Use case to follow.</span></div>
+
+    <div class="play">
+      <article id="letter" class="letter-card" aria-label="Letter">
+        <div class="letter-head">Dear Father Christmas,</div>
+        <p class="letter-body" id="letterBody"></p>
+        <div class="letter-sign" id="letterSign"></div>
+      </article>
+
+      <div class="floor">
+        <div class="belt-wrap">
+          <div id="belt" class="belt-panel"></div>
+          <div id="giftLayer" class="gift-layer" aria-hidden="true"></div>
+          <div id="beltZone" class="belt-zone" role="application" aria-label="Conveyor belt. Left arrow or A packs the gift. Right arrow or D rejects it."></div>
+          <div id="timerbar" class="timerbar" aria-hidden="true"><div id="timerfill" class="timerfill"></div></div>
+        </div>
+        <div id="desk" class="desk-panel"></div>
+      </div>
+
+      <div class="controls">
+        <button id="btnPack" class="keycap keycap-pack"><span class="k-ico" data-icon="arrow-left"></span> Pack</button>
+        <div id="sleigh" class="sleigh-strip" aria-label="Packed gifts"></div>
+        <button id="btnReject" class="keycap keycap-reject">Reject <span class="k-ico" data-icon="arrow-right"></span></button>
+      </div>
+      <p class="keys-hint kb">← / A pack · → / D reject · Esc pause</p>
+    </div>
+  </section>
+
+  <!-- Briefing -->
+  <div id="briefing" class="overlay" hidden>
+    <div class="modal memo" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
+      <div class="memo-head">NORTH POLE LTD · INTERNAL</div>
+      <h2 id="briefTitle">Your shift: checking the AI</h2>
+      <div class="brief-demo" id="briefDemo" aria-hidden="true"></div>
+      <p><b>Read the letter.</b> Then check what the AI chose.</p>
+      <p class="brief-keys kb"><span class="kbd">←</span> or <span class="kbd">A</span> <b>pack it</b> &nbsp;·&nbsp; <span class="kbd">→</span> or <span class="kbd">D</span> <b>reject it</b></p>
+      <p class="brief-keys tch"><b>Swipe left</b> to pack it &nbsp;·&nbsp; <b>swipe right</b> to reject it &nbsp;·&nbsp; or use the buttons</p>
+      <p class="brief-warn">The belt is the timer. <b>If you do nothing, it ships.</b></p>
+      <button id="btnBriefingGo" class="keycap keycap-pack">Start checking</button>
+    </div>
+  </div>
+
+  <!-- Intro and epilogue -->
+  <div id="intro" class="overlay overlay-full" hidden></div>
+  <div id="epilogue" class="overlay overlay-full" hidden></div>
+  <div id="memo" class="overlay" hidden></div>
+
+  <!-- Interlude -->
+  <div id="interlude" class="overlay overlay-full" hidden></div>
+
+  <!-- Pause -->
+  <div id="pause" class="overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <h2 id="pauseTitle">Paused</h2>
+      <p class="small">The belt has stopped. Nobody upstairs has noticed.</p>
+      <button id="btnResume" class="keycap keycap-pack">Resume</button>
+      <button id="btnRestart" class="keycap keycap-plain">Restart shift</button>
+      <button id="btnQuit" class="keycap keycap-reject">Resign from North Pole Ltd</button>
+      <div id="quitConfirm" class="confirm" hidden>
+        <p>Resign? Your shift will not be saved.</p>
+        <button id="btnQuitYes" class="keycap keycap-reject">Yes, resign</button>
+        <button id="btnQuitNo" class="keycap keycap-plain">Stay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report -->
+  <div id="report" class="overlay" hidden>
+    <div class="modal report" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+      <div class="memo-head">SHIFT REPORT · CHRISTMAS EVE</div>
+      <h2 id="reportTitle">Shift report</h2>
+      <p id="reportVerdict" class="report-verdict"></p>
+      <div class="report-top">
+        <div class="plate"><span class="plate-label">Right presents</span><span class="plate-value" id="rRight"></span></div>
+        <div class="plate plate-board"><span class="plate-label">AI adoption</span><span class="plate-value" id="rAdopt"></span></div>
+      </div>
+      <table class="report-table" id="reportTable"></table>
+      <ul id="reportNotes" class="report-notes"></ul>
+      <div id="reportSleigh" class="report-sleigh"></div>
+      <p class="closing">The only skill in this game was a human checking the output.</p>
+      <div class="report-actions">
+        <button id="btnAgain" class="keycap keycap-pack">Another shift</button>
+        <button id="btnCopy" class="keycap keycap-plain">Copy result</button>
+        <button id="btnReportTitle" class="keycap keycap-plain">Back to title</button>
+      </div>
+      <textarea id="copyFallback" class="copy-fallback" hidden readonly></textarea>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+</div>
+
+<script>
+<!-- @js -->
+</script>
+</body>
+</html>

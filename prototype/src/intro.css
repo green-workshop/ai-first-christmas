@@ -1,0 +1,37 @@
+/* intro.css: the intro film (intro.js). Classes .in-*. Look only. */
+.in-root { position: absolute; inset: 0; overflow: hidden; background: var(--night-900); color: var(--snow); font-family: var(--font-ui); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.in-stage, .in-scene { position: absolute; inset: 0; }
+.in-scene > svg { display: block; width: 100%; height: 100%; }
+.in-t { font-family: var(--font-ui); font-weight: 800; }
+.in-fb { transform-box: fill-box; transform-origin: 50% 50%; }
+.in-btn, .in-sq, .in-stsq { transform-box: fill-box; transform-origin: 50% 100%; }
+.in-red .sc-rig { transition: none; }
+
+/* lens: vignette (§9.3) and static grain */
+.in-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 78% 72% at 50% 45%, transparent 60%, color-mix(in srgb, var(--night-900) 45%, transparent)); }
+.in-grain { position: absolute; inset: 0; pointer-events: none; background: var(--ui-grain); background-size: 180px; opacity: .07; mix-blend-mode: soft-light; }
+
+/* caption bar: ink on paper for dialogue, snow on night for narration */
+.in-caps { position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 16px; pointer-events: none; }
+.in-cap { box-sizing: border-box; max-width: min(46rem, 100%); padding: .5em 1.05em .58em; border-radius: 12px; font-size: clamp(1.125rem, .82rem + 1.15vw, 1.75rem); line-height: 1.28; font-weight: 750; text-align: center; text-wrap: balance; }
+.in-who { display: block; margin-bottom: .14em; font-size: max(.8125rem, .58em); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.in-k-say, .in-k-flash, .in-k-big { color: var(--ink); background: var(--ui-grain), linear-gradient(165deg, var(--paper), color-mix(in srgb, var(--paper) 72%, var(--paper-shade))); box-shadow: 0 1px 0 var(--paper-shade), 0 3px 0 color-mix(in srgb, var(--paper-shade) 70%, var(--wood-dark)), 0 12px 28px color-mix(in srgb, var(--night-900) 55%, transparent); }
+.in-k-say { transform: rotate(-.4deg); }
+.in-k-say .in-who { color: var(--ink-soft); }
+.in-k-nar { color: var(--snow); font-style: italic; font-weight: 650; background: color-mix(in srgb, var(--night-900) 82%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--gold) 50%, transparent), 0 12px 28px color-mix(in srgb, var(--night-900) 45%, transparent); }
+.in-k-big { font-weight: 900; letter-spacing: .03em; border-top: 6px solid var(--pole-red); }
+.in-k-flash { display: flex; align-items: center; gap: .5em; font-size: clamp(1.25rem, .9rem + 1.4vw, 2rem); transform: rotate(.8deg); background: var(--ui-grain), linear-gradient(165deg, color-mix(in srgb, var(--lamp) 34%, var(--paper)), color-mix(in srgb, var(--gold) 40%, var(--paper-shade))); }
+.in-k-flash .in-who { display: inline-block; white-space: nowrap; flex: none; margin: 0; padding: .2em .5em; border-radius: 6px; color: var(--paper); background: var(--pole-red-dark); font-size: max(.8125rem, .62em); }
+.in-melt { display: block; width: 2.6em; height: 2.6em; }
+.in-red .in-cap { font-size: clamp(1rem, .8rem + .9vw, 1.375rem); }
+.in-red .in-k-flash { font-size: clamp(1rem, .8rem + .9vw, 1.375rem); }
+.in-red .in-melt { width: 1.8em; height: 1.8em; }
+
+/* skip: a keycap from ui.css, top right from the first second */
+.in-skip { position: absolute; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); font-size: 1rem; padding: .5em 1em .45em; }
+.in-skip svg { width: 1em; height: 1em; }
+.in-hint { position: absolute; z-index: 3; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); padding: .55em .9em; border-radius: 10px; font-size: .9375rem; font-weight: 700; color: var(--snow); background: color-mix(in srgb, var(--night-900) 80%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--gold) 45%, transparent); pointer-events: none; }
+@media (max-width: 480px) {
+  .in-skip { font-size: .9375rem; }
+  .in-hint { max-width: 40%; }
+}
