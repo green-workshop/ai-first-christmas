@@ -248,3 +248,5 @@ html.touch p.tch, html.touch div.tch { display: block; }
   #interlude .il-tk p { font-size: .75rem; line-height: 1.3; padding: .3rem .45rem .4rem; }
   #interlude .il-tkh { font-size: .7rem; padding-block: .25rem; }
 }
+
+.brief-skip { margin: .3rem 0; font-size: var(--fs-caption); color: var(--ink-soft); }

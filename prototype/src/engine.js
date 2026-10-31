@@ -42,7 +42,7 @@ window.NP = window.NP || {};
   function isPhone() { return window.innerWidth <= 760; }
   function mult() { return (isPhone() ? 1.15 : 1) * (settings.relaxed ? 1.5 : 1); }
   function wordCount(s) { return (s.match(/\S+/g) || []).length; }
-  function previewTime(letter) { return Math.min(8, 1.5 + 0.3 * Math.max(0, wordCount(letter) - 8)) * mult(); }
+  function previewTime(letter) { return Math.min(4, 1.2 + 0.15 * Math.max(0, wordCount(letter) - 8)) * mult(); }
 
   // ---------- Game clock: everything is scheduled on it, so pause freezes it ----------
   var clock = 0, timers = [], anims = [], rafId = null, lastT = 0;
@@ -230,7 +230,7 @@ window.NP = window.NP || {};
     if (c.auto) { duration = 1.8; say(pick(C.board.montage || ["Automation engaged."])); }   // the 2x montage (SPEC §4f)
     c.beltDur = duration;
     c.x = HOPPER_X; c.timeLeft = duration;
-    after(c.auto ? 0.5 : previewTime(c.kid.letter), function () { dropGift(c); });
+    c.previewTimer = after(c.auto ? 0.5 : previewTime(c.kid.letter), function () { c.previewTimer = null; dropGift(c); });
   }
 
   function pickWrong(c) {
@@ -287,7 +287,15 @@ window.NP = window.NP || {};
 
   function canAct() { return phase === "belt" && (clock - G.children[G.index].landedAt) >= LOCKOUT; }
 
+  function dropNow() {
+    var c = G && G.children[G.index];
+    if (phase !== "preview" || !c || !c.previewTimer || c.auto) { return false; }
+    cancel(c.previewTimer); c.previewTimer = null;
+    dropGift(c);
+    return true;
+  }
   function pack() {
+    if (dropNow()) { return; }
     if (!canAct()) { return; }
     var c = G.children[G.index];
     safe(function () { belt.mittens("left", c.x); });
@@ -306,6 +314,7 @@ window.NP = window.NP || {};
   }
 
   function reject() {
+    if (dropNow()) { return; }
     if (!canAct()) { return; }
     var c = G.children[G.index];
     if (c.rejects >= MAX_REJECTS) {
@@ -638,6 +647,7 @@ window.NP = window.NP || {};
       return;
     }
     if (phase === "report" && G && clock - G.reportOpenedAt < 1) { e.preventDefault(); return; }
+    if (phase === "preview" && /^(ArrowLeft|ArrowRight|a|A|d|D|r|R| |Spacebar|Enter)$/.test(k)) { e.preventDefault(); dropNow(); return; }
     if (k === "ArrowLeft" || k === "a" || k === "A") { if (phase === "belt") { e.preventDefault(); pack(); } }
     else if (k === "ArrowRight" || k === "d" || k === "D" || k === "r" || k === "R") { if (phase === "belt") { e.preventDefault(); reject(); } }
   }
@@ -653,6 +663,7 @@ window.NP = window.NP || {};
     var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y, dt = Math.max(1, performance.now() - swipe.t);
     swipe = null;
     var dist = Math.abs(dx), v = dist / dt;
+    if (phase === "preview") { dropNow(); return; }                     // any tap or swipe drops the gift early
     if (Math.abs(dx) < Math.abs(dy)) { return; }                       // mostly vertical: not a decision
     if (dist >= 28 || (dist >= 16 && v > 0.4)) {
       if (dx < 0) { pack(); } else { reject(); }
