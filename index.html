@@ -256,9 +256,9 @@ html.touch p.tch, html.touch div.tch { display: block; }
   #screen-game .hud .plate-value { font-size: 1.2rem; }
   #screen-game .ticker { flex: none; padding-block: .3rem; font-size: .875rem; }
   #screen-game .play { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
-  #screen-game .floor { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+  #screen-game .floor { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; align-items: stretch; }  /* desktop uses align-items:end, which shrank the belt here */
   #screen-game .belt-wrap { flex: none; padding-top: 80px; }
-  #screen-game .desk-panel { flex: 1 1 auto; min-height: 80px; height: auto; aspect-ratio: auto; margin: 0; }
+  #screen-game .desk-panel { flex: 1 1 auto; min-height: 52px; height: auto; aspect-ratio: auto; margin: 0; }
   /* The letter card keeps one size whatever the letter, so nothing below it moves */
   #letter {
     --fs-letter: .9rem; --lh: calc(var(--fs-letter) * 1.45);
@@ -293,6 +293,7 @@ html.touch p.tch, html.touch div.tch { display: block; }
   /* The beta tag would sit on the Pack button: show it on the title screen only */
   body:not(.on-title) .beta-tag { display: none; }
   .sl-count .sl-word { display: none; }
+  .sl-count > svg { display: none; }   /* the strip already draws a gold sleigh */
 }
 
 /* Phone title screen (beta feedback): start at the top so the logo isn't clipped, stack the two buttons,
