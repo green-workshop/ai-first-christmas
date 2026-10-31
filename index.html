@@ -295,6 +295,16 @@ html.touch p.tch, html.touch div.tch { display: block; }
   .sl-count .sl-word { display: none; }
 }
 
+/* Phone title screen (beta feedback): start at the top so the logo isn't clipped, stack the two buttons,
+   and leave room under the credit line for the BETA TEST tag */
+@media (max-width: 760px) {
+  #screen-title { justify-content: flex-start; min-height: 100dvh; gap: 10px; padding: 8px 0 48px; margin: -8px -10px -10px; padding-inline: 10px; }
+  #screen-title .title-actions { flex-direction: column; width: 100%; gap: 8px; }
+  #screen-title .title-actions .keycap { min-width: 0; width: 100%; font-size: 1.15rem; }
+  #screen-title .title-dash { width: min(360px, 92vw); }
+  #screen-title .title-strap { font-size: .95rem; }
+}
+
 /* ---- ui.css ---- */
 /* ui.css: UI chrome that belongs to the world (SPEC §9.8). Look only; layout.css owns the page grid. */
 :root {
