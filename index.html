@@ -318,6 +318,9 @@ html.touch p.tch, html.touch div.tch { display: block; }
 
 .brief-skip { margin: .3rem 0; font-size: var(--fs-caption); color: var(--ink-soft); }
 
+/* Why a gift was wrong, under its caption in the report */
+.rs-item .rs-why { display: block; margin-top: 3px; font-weight: 700; font-style: italic; color: var(--pole-red); }
+
 /* ---- ui.css ---- */
 /* ui.css: UI chrome that belongs to the world (SPEC §9.8). Look only; layout.css owns the page grid. */
 :root {
@@ -4453,32 +4456,32 @@ NP.content = {
         { id: "priya", name: "Priya", age: 6, letter: "I would like a teddy bear please.",
           right: { text: "Soft brown teddy bear with a ribbon.", icon: "teddy", hue: "brown" },
           wrong: [
-            { text: "A bear. Real one. Fully grown.", icon: "grizzly", scale: "giant" },
-            { text: "One (1) grizzly bear, live, unwrapped.", icon: "grizzly" }
+            { text: "A bear. Real one. Fully grown.", icon: "grizzly", scale: "giant", why: "Asked for a toy bear." },
+            { text: "One (1) grizzly bear, live, unwrapped.", icon: "grizzly", why: "Asked for a teddy, not a grizzly." }
           ] },
         { id: "jack", name: "Jack", age: 10, letter: "Please can I have a castle set.",
           right: { text: "Brick castle set, 1,200 pieces.", icon: "brickcastle", hue: "blue" },
           wrong: [
-            { text: "A castle. An actual castle. Please arrange a chimney.", icon: "castle", scale: "giant" },
-            { text: "Castle (14th century). Moat sold separately.", icon: "castle" }
+            { text: "A castle. An actual castle. Please arrange a chimney.", icon: "castle", scale: "giant", why: "Asked for a castle set." },
+            { text: "Castle (14th century). Moat sold separately.", icon: "castle", why: "Asked for a set, not a castle." }
           ] },
         { id: "noah", name: "Noah", age: 8, letter: "I'd love a red kite.",
           right: { text: "Red kite with string and handle.", icon: "kite", hue: "red" },
           wrong: [
-            { text: "A red kite. The bird. It has been informed.", icon: "bird" },
-            { text: "Red kite (bird of prey). Diet: mice. Please supply mice.", icon: "bird" }
+            { text: "A red kite. The bird. It has been informed.", icon: "bird", why: "Asked for a kite, not a bird." },
+            { text: "Red kite (bird of prey). Diet: mice. Please supply mice.", icon: "bird", why: "Wanted the kind with a string." }
           ] },
         { id: "hana", name: "Hana", age: 5, letter: "Some dinosaur pyjamas please.",
           right: { text: "Warm pyjamas, dinosaur print.", icon: "pyjamas", hue: "green" },
           wrong: [
-            { text: "A dinosaur. Pyjamas to follow.", icon: "dino", scale: "giant" },
-            { text: "Pyjamas, worn by a dinosaur. Dinosaur included.", icon: "dino" }
+            { text: "A dinosaur. Pyjamas to follow.", icon: "dino", scale: "giant", why: "Asked for pyjamas, not a dinosaur." },
+            { text: "Pyjamas, worn by a dinosaur. Dinosaur included.", icon: "dino", why: "Dinosaur print, not a dinosaur." }
           ] },
         { id: "joe", name: "Joe", age: 10, letter: "I want a cricket bat.",
           right: { text: "Junior cricket bat, willow.", icon: "cricketbat" },
           wrong: [
-            { text: "A bat. The flying kind. Check your loft.", icon: "bat" },
-            { text: "A cricket and a bat. Both alive. Both annoyed.", icon: "bat" }
+            { text: "A bat. The flying kind. Check your loft.", icon: "bat", why: "Asked for a cricket bat." },
+            { text: "A cricket and a bat. Both alive. Both annoyed.", icon: "bat", why: "Asked for a bat for cricket." }
           ] }
       ]
     },
@@ -4492,32 +4495,32 @@ NP.content = {
         { id: "mia", name: "Mia", age: 7, letter: "I would like some warm socks, please.",
           right: { text: "Two pairs of woolly socks.", icon: "socks", hue: "red" },
           wrong: [
-            { text: "4,000 left socks (bulk pack).", icon: "sock", hue: "red", badge: "×4,000" },
-            { text: "One sock. Left. Pair pending.", icon: "sock", hue: "red", badge: "×1" }
+            { text: "4,000 left socks (bulk pack).", icon: "sock", hue: "red", badge: "×4,000", why: "Asked for some, not 4,000." },
+            { text: "One sock. Left. Pair pending.", icon: "sock", hue: "red", badge: "×1", why: "Asked for socks, plural." }
           ] },
         { id: "tom", name: "Tom", age: 9, letter: "Football boots please, size 4.",
           right: { text: "Football boots, size 4, studs included.", icon: "boots" },
           wrong: [
-            { text: "One football boot. Left. Size 4.", icon: "boot", badge: "×1" },
-            { text: "Football boots for the whole team. 22 boots.", icon: "boots", badge: "×11" }
+            { text: "One football boot. Left. Size 4.", icon: "boot", badge: "×1", why: "Asked for boots, not one boot." },
+            { text: "Football boots for the whole team. 22 boots.", icon: "boots", badge: "×11", why: "Asked for one pair, not 11." }
           ] },
         { id: "dev", name: "Dev", age: 9, letter: "A chess set please.",
           right: { text: "Wooden chess set, 32 pieces.", icon: "chess" },
           wrong: [
-            { text: "Chess set. 32 pieces. All pawns.", icon: "pawns", badge: "×32" },
-            { text: "Chess set. 3 pieces. Good luck.", icon: "chess", badge: "×3" }
+            { text: "Chess set. 32 pieces. All pawns.", icon: "pawns", badge: "×32", why: "A chess set needs more than pawns." },
+            { text: "Chess set. 3 pieces. Good luck.", icon: "chess", badge: "×3", why: "Asked for a whole set, not 3." }
           ] },
-        { id: "chloe", name: "Chloe", age: 7, letter: "A jigsaw puzzle, the seaside one.",
+        { id: "chloe", name: "Chloe", age: 7, letter: "A jigsaw puzzle, the seaside one. One I can finish by New Year.",
           right: { text: "Seaside jigsaw, 500 pieces.", icon: "jigsaw", hue: "blue" },
           wrong: [
-            { text: "Seaside jigsaw, 50,000 pieces. Estimated finish: 2041.", icon: "jigsaw", hue: "blue", badge: "×50,000" },
-            { text: "Seaside jigsaw, 1 piece. Already finished. Well done.", icon: "jigsaw", hue: "blue", badge: "×1" }
+            { text: "Seaside jigsaw, 50,000 pieces. Estimated finish: 2041.", icon: "jigsaw", hue: "blue", badge: "×50,000", why: "Wanted it finished by New Year." },
+            { text: "Seaside jigsaw, 1 piece. Already finished. Well done.", icon: "jigsaw", hue: "blue", badge: "×1", why: "One piece isn't a puzzle." }
           ] },
         { id: "ben", name: "Ben", age: 10, letter: "Please may I have a telescope.",
           right: { text: "Beginner telescope with a tripod.", icon: "telescope" },
           wrong: [
-            { text: "Telescopes ×40. For a wider view.", icon: "telescope", badge: "×40" },
-            { text: "Half a telescope. Sees half as far.", icon: "telescope", badge: "×½" }
+            { text: "Telescopes ×40. For a wider view.", icon: "telescope", badge: "×40", why: "Asked for a telescope, not 40." },
+            { text: "Half a telescope. Sees half as far.", icon: "telescope", badge: "×½", why: "Asked for a whole telescope." }
           ] }
       ]
     },
@@ -4533,37 +4536,37 @@ NP.content = {
           letter: "Please could I have a violin? I've just started lessons at school.",
           right: { text: "Half-size violin with bow, rosin and case.", icon: "violin" },
           wrong: [
-            { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset", from: "oskar" },
-            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila" },
-            { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones", from: "mateo" }
+            { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset", from: "oskar", why: "Asked for a violin. That's Oskar's." },
+            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila", why: "Asked for a violin. That's Leila's." },
+            { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones", from: "mateo", why: "Asked for a violin. That's Mateo's." }
           ] },
         { id: "oskar", name: "Oskar", age: 5, pairWith: "amara",
           letter: "I would like a train set please. With a bridge for the trains to go over.",
           right: { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset" },
           wrong: [
-            { text: "Half-size violin with bow, rosin and case.", icon: "violin", from: "amara" },
-            { text: "Illustrated book of the planets, hardback.", icon: "book", from: "kofi" }
+            { text: "Half-size violin with bow, rosin and case.", icon: "violin", from: "amara", why: "Asked for a train set. That's Amara's." },
+            { text: "Illustrated book of the planets, hardback.", icon: "book", from: "kofi", why: "Asked for a train set. That's Kofi's." }
           ] },
         { id: "kofi", name: "Kofi", age: 10, pairWith: "leila",
           letter: "Please can I have a book about space? I like the planets best, especially Jupiter.",
           right: { text: "Illustrated book of the planets, hardback.", icon: "book" },
           wrong: [
-            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila" },
-            { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones", from: "mateo" }
+            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila", why: "Asked for a space book. That's Leila's." },
+            { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones", from: "mateo", why: "Asked for a space book. That's Mateo's." }
           ] },
         { id: "leila", name: "Leila", age: 7, pairWith: "kofi",
           letter: "I'd love a paint set with lots of colours, and a brush that isn't all squashed.",
           right: { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints" },
           wrong: [
-            { text: "Illustrated book of the planets, hardback.", icon: "book", from: "kofi" },
-            { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset", from: "oskar" }
+            { text: "Illustrated book of the planets, hardback.", icon: "book", from: "kofi", why: "Asked for paints. That's Kofi's." },
+            { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset", from: "oskar", why: "Asked for paints. That's Oskar's." }
           ] },
         { id: "mateo", name: "Mateo", age: 12, pairWith: "amara",
           letter: "Some headphones please, for listening to music on the bus to school.",
           right: { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones" },
           wrong: [
-            { text: "Half-size violin with bow, rosin and case.", icon: "violin", from: "amara" },
-            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila" }
+            { text: "Half-size violin with bow, rosin and case.", icon: "violin", from: "amara", why: "Asked for headphones. That's Amara's." },
+            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila", why: "Asked for headphones. That's Leila's." }
           ] }
       ]
     },
@@ -4580,37 +4583,37 @@ NP.content = {
           letter: "I am 5 now. Please can I have a bike with stabilisers? A small one.",
           right: { text: "14-inch children's bike with stabilisers.", icon: "bike" },
           wrong: [
-            { text: "26-inch adult road bike. Stabilisers not compatible.", icon: "bike", scale: "giant" },
-            { text: "Bike with stabilisers, ages 16+. Carbon frame, 22 gears.", icon: "bike", scale: "giant", badge: "16+" }
+            { text: "26-inch adult road bike. Stabilisers not compatible.", icon: "bike", scale: "giant", why: "Asked for a small one." },
+            { text: "Bike with stabilisers, ages 16+. Carbon frame, 22 gears.", icon: "bike", scale: "giant", badge: "16+", why: "Is 5, not 16." }
           ] },
         { id: "ruby", name: "Ruby", age: 7,
           letter: "A red scooter please. Red is my favourite colour, it has been for ages.",
           right: { text: "Red kick scooter, foldable, with a bell.", icon: "scooter", hue: "red" },
           wrong: [
-            { text: "Blue kick scooter, foldable, with a bell.", icon: "scooter", hue: "blue" },
-            { text: "Green kick scooter, foldable, with a bell.", icon: "scooter", hue: "green" }
+            { text: "Blue kick scooter, foldable, with a bell.", icon: "scooter", hue: "blue", why: "Asked for red." },
+            { text: "Green kick scooter, foldable, with a bell.", icon: "scooter", hue: "green", why: "Asked for red." }
           ] },
         { id: "felix", name: "Felix", age: 9,
           letter: "Roller skates please, size 2. My old ones are too small now.",
           right: { text: "Roller skates, size 2, with knee pads.", icon: "rollerskates" },
           wrong: [
-            { text: "Roller skates, adult size 11, with knee pads.", icon: "rollerskates", scale: "giant" },
-            { text: "Roller skates, toddler size 5, with knee pads.", icon: "rollerskates", scale: "tiny" }
+            { text: "Roller skates, adult size 11, with knee pads.", icon: "rollerskates", scale: "giant", why: "Asked for size 2." },
+            { text: "Roller skates, toddler size 5, with knee pads.", icon: "rollerskates", scale: "tiny", why: "Asked for size 2." }
           ] },
         { id: "aisha", name: "Aisha", age: 11,
           letter: "A purple cycle helmet please, for my new bike. It has to be purple to match.",
           right: { text: "Purple cycle helmet, junior size.", icon: "helmet", hue: "purple" },
           wrong: [
-            { text: "Yellow cycle helmet, junior size, with a rear light.", icon: "helmet", hue: "yellow" },
-            { text: "Pink cycle helmet, junior size.", icon: "helmet", hue: "pink" },
-            { text: "Purple cycle helmet, baby size.", icon: "helmet", hue: "purple", scale: "tiny" }
+            { text: "Yellow cycle helmet, junior size, with a rear light.", icon: "helmet", hue: "yellow", why: "Asked for purple." },
+            { text: "Pink cycle helmet, junior size.", icon: "helmet", hue: "pink", why: "Asked for purple." },
+            { text: "Purple cycle helmet, baby size.", icon: "helmet", hue: "purple", scale: "tiny", why: "Is 11, not a baby." }
           ] },
         { id: "ines", name: "Ines", age: 4,
           letter: "I am 4. Please can I have a dolls' house with little beds in it?",
           right: { text: "Wooden dolls' house with beds, ages 3+.", icon: "dollshouse", badge: "3+" },
           wrong: [
-            { text: "Dolls' house model kit, 2,000 tiny parts, ages 14+.", icon: "dollshouse", badge: "14+" },
-            { text: "Dolls' house kit. Glue and craft knife included. Ages 16+.", icon: "dollshouse", badge: "16+" }
+            { text: "Dolls' house model kit, 2,000 tiny parts, ages 14+.", icon: "dollshouse", badge: "14+", why: "Is 4, not 14." },
+            { text: "Dolls' house kit. Glue and craft knife included. Ages 16+.", icon: "dollshouse", badge: "16+", why: "Is 4, not 16." }
           ] }
       ]
     },
@@ -4627,41 +4630,42 @@ NP.content = {
           letter: "I would love a scooter, but not a pink one please. My sister has the pink one and she won't share.",
           right: { text: "Blue kick scooter with a bell.", icon: "scooter", hue: "blue" },
           wrong: [
-            { text: "Pink kick scooter with a bell.", icon: "scooter", hue: "pink" },
-            { text: "Pink scooter, as mentioned in your letter.", icon: "scooter", hue: "pink" }
+            { text: "Pink kick scooter with a bell.", icon: "scooter", hue: "pink", why: "Said NOT pink." },
+            { text: "Pink scooter, as mentioned in your letter.", icon: "scooter", hue: "pink", why: "Said NOT pink." }
           ] },
         { id: "arjun", name: "Arjun", age: 10,
           letter: "Anything except socks please! I got socks last year, and the year before, and the year before that. Maybe a football?",
           right: { text: "Size 4 football with a pump.", icon: "football" },
           wrong: [
-            { text: "Football socks, two pairs, red.", icon: "socks", hue: "red" },
-            { text: "Socks. Two pairs. Woolly. As requested.", icon: "socks", hue: "green" }
+            { text: "Football socks, two pairs, red.", icon: "socks", hue: "red", why: "Said anything except socks." },
+            { text: "Socks. Two pairs. Woolly. As requested.", icon: "socks", hue: "green", why: "Said anything except socks." }
           ] },
         { id: "sofia", name: "Sofia", age: 6,
           letter: "I would like a train set please. No more dinosaurs! I already have eleven and they take up the whole shelf.",
           right: { text: "Wooden train set with a station.", icon: "trainset" },
           wrong: [
-            { text: "Dinosaur train set. Track, station and four dinosaurs.", icon: "dino" },
-            { text: "A twelfth dinosaur. Train to follow.", icon: "dino" }
+            { text: "Dinosaur train set. Track, station and four dinosaurs.", icon: "dino", why: "Said no more dinosaurs." },
+            { text: "A twelfth dinosaur. Train to follow.", icon: "dino", why: "Said no more dinosaurs." }
           ] },
         { id: "kwame", name: "Kwame", age: 12,
           letter: "Headphones please, the big over-the-ear kind. Not earbuds. I already have some and they keep falling out on the bus.",
           right: { text: "Over-ear headphones, padded, with a fold-flat headband.", icon: "headphones" },
           wrong: [
-            { text: "Wireless earbuds, three sizes of ear tip.", icon: "headphones", scale: "tiny" },
-            { text: "Earbuds, improved grip. Falls out less, usually.", icon: "headphones", scale: "tiny" }
+            { text: "Wireless earbuds, three sizes of ear tip.", icon: "headphones", scale: "tiny", why: "Said NOT earbuds." },
+            { text: "Earbuds, improved grip. Falls out less, usually.", icon: "headphones", scale: "tiny", why: "Said NOT earbuds." }
           ] },
         { id: "elsie", name: "Elsie", age: 9,
           letter: "Please may I have a telescope? Not a toy one, a proper one, because I want to see Saturn's rings.",
           right: { text: "Beginner refracting telescope, 70mm, with tripod.", icon: "telescope" },
           wrong: [
-            { text: "Toy telescope, plastic, with sticker stars.", icon: "telescope", scale: "tiny" },
-            { text: "Toy telescope. Shows a printed picture of Saturn's rings.", icon: "telescope", scale: "tiny" }
+            { text: "Toy telescope, plastic, with sticker stars.", icon: "telescope", scale: "tiny", why: "Said NOT a toy one." },
+            { text: "Toy telescope. Shows a printed picture of Saturn's rings.", icon: "telescope", scale: "tiny", why: "Said NOT a toy one." }
           ] }
       ]
     },
     {
-      // Nearly right, plus one confidently invented detail. Same icon: you have to read the tag.
+      // Nearly right, with one confidently invented detail, and that detail breaks something the letter asked for.
+      // A harmless extra on a correct gift is NOT wrong. Same icon: you have to read the tag.
       bug: "Confidently plausible",
       comment: {
         good: "Round 6: you didn't trust the confident bit. Good.",
@@ -4673,36 +4677,37 @@ NP.content = {
           letter: "Please can I have a castle set? The big one with a drawbridge that goes up and down.",
           right: { text: "Brick castle set, 1,200 pieces, with a lifting drawbridge.", icon: "brickcastle" },
           wrong: [
-            { text: "Brick castle set, 1,200 pieces, includes a working moat.", icon: "brickcastle" },
-            { text: "Brick castle set with drawbridge. Voted Castle of the Year, 1497.", icon: "brickcastle" }
+            { text: "Brick castle set, 1,200 pieces, with a working moat instead of a drawbridge.", icon: "brickcastle", why: "Asked for a drawbridge." },
+            { text: "Brick castle set. Drawbridge is painted on, which is more authentic.", icon: "brickcastle", why: "Wanted a drawbridge that goes up." },
+            { text: "Brick castle set with lifting drawbridge, 40 pieces. The AI rates this 'big'.", icon: "brickcastle", why: "Asked for the big one." }
           ] },
         { id: "nia", name: "Nia", age: 7,
           letter: "A book about horses please, with lots of pictures. I want to learn all the different kinds.",
           right: { text: "Picture book of horse breeds, hardback.", icon: "book", hue: "brown" },
           wrong: [
-            { text: "Picture book of horse breeds, hardback. Foreword by a horse.", icon: "book", hue: "brown" },
-            { text: "Picture book of horse breeds, including the extinct Glasgow Pony.", icon: "book", hue: "brown" }
+            { text: "Horse breeds book, text only. The AI has described the pictures for you.", icon: "book", hue: "brown", why: "Wanted lots of pictures." },
+            { text: "Picture book about one horse breed. Every page is the Shetland.", icon: "book", hue: "brown", why: "Wanted all the different kinds." }
           ] },
         { id: "rafael", name: "Rafael", age: 11,
           letter: "A kite please, a stunt one with two strings so I can do loops. Red if you've got it.",
           right: { text: "Red stunt kite, two lines, for light wind.", icon: "kite", hue: "red" },
           wrong: [
-            { text: "Red stunt kite, two lines. Flies itself; no wind required.", icon: "kite", hue: "red" },
-            { text: "Red stunt kite, two lines, certified to 30,000 feet.", icon: "kite", hue: "red" }
+            { text: "Red stunt kite, single line. Loops automatically, the AI says.", icon: "kite", hue: "red", why: "Asked for two strings." },
+            { text: "Red two-line kite, extra-stable. Engineered so it can never loop.", icon: "kite", hue: "red", why: "Wanted to do loops." }
           ] },
         { id: "ezra", name: "Ezra", age: 9,
           letter: "A chess set please. A wooden one if possible, so it lasts. Grandad is teaching me.",
           right: { text: "Wooden chess set, 32 pieces, folding board.", icon: "chess" },
           wrong: [
-            { text: "Wooden chess set, folding board. Includes a 33rd piece, the Duke.", icon: "chess" },
-            { text: "Wooden chess set, 32 pieces. Rules updated for this year.", icon: "chess" }
+            { text: "Paper chess set, single use. Lasts one game, which is plenty.", icon: "chess", why: "Wanted one that lasts." },
+            { text: "Wooden chess set, 30 pieces. The AI found the kings optional.", icon: "chess", why: "Chess needs its kings." }
           ] },
         { id: "zara", name: "Zara", age: 5,
           letter: "I would like some paints please. The washable kind, because of the sofa. And a big brush.",
           right: { text: "Washable poster paints, 6 colours, chunky brush.", icon: "paints" },
           wrong: [
-            { text: "Washable poster paints, 6 colours, including the new colour 'blurple'.", icon: "paints" },
-            { text: "Washable poster paints, chunky brush. Sofa-proof, guaranteed by the AI.", icon: "paints" }
+            { text: "Poster paints, 6 colours. Permanent formula, extremely sofa-proof.", icon: "paints", why: "Asked for washable." },
+            { text: "Washable poster paints, with a fine-tip brush. Big brushes are messier.", icon: "paints", why: "Asked for a big brush." }
           ] }
       ]
     }
@@ -4725,12 +4730,12 @@ NP.content = {
 
   // Generic AI-isms, used for wrong revisions in any round (SPEC §4e)
   generic: [
-    { text: "Gift: [INSERT GIFT HERE]", icon: "empty" },
-    { text: "As a language model, I cannot deliver presents to chimneys.", icon: "crate" },
-    { text: "Present #4,821. Description: present.", icon: "giftbox", hue: "purple" },
-    { text: "A voucher to chat with our chatbot about gifts.", icon: "crate" },
-    { text: "Premium gift. Contents will be generated on opening.", icon: "crate" },
-    { text: "A thoughtful, personalised gift. Details available on request.", icon: "giftbox", hue: "green" }
+    { text: "Gift: [INSERT GIFT HERE]", icon: "empty", why: "The gift is a blank." },
+    { text: "As a language model, I cannot deliver presents to chimneys.", icon: "crate", why: "That isn't a present." },
+    { text: "Present #4,821. Description: present.", icon: "giftbox", hue: "purple", why: "Not the present they named." },
+    { text: "A voucher to chat with our chatbot about gifts.", icon: "crate", why: "Wanted a present, not a chat." },
+    { text: "Premium gift. Contents will be generated on opening.", icon: "crate", why: "Nobody knows what's in it." },
+    { text: "A thoughtful, personalised gift. Details available on request.", icon: "giftbox", hue: "green", why: "Not what the letter asked for." }
   ],
 
   // Scripted first gift on a first play (SPEC §4d)
@@ -5156,6 +5161,7 @@ window.NP = window.NP || {};
     if (!isPhone()) { return; }
     for (var fs = 0.9; fs > 0.72 && lc.scrollHeight > lc.clientHeight + 1; fs -= 0.04) { lc.style.setProperty("--fs-letter", fs.toFixed(2) + "rem"); }
   }
+  function whyText(c) { return c.kid.name + ": " + (c.gift.spec.why || "not what they asked for.").replace(/^./, function (ch) { return ch.toLowerCase(); }); }
   function newGift(spec, correct) {
     var g = { spec: spec, correct: correct, conf: conf() };
     if (!correct) { G.confWrong.push(parseFloat(g.conf)); }
@@ -5330,7 +5336,8 @@ window.NP = window.NP || {};
     $("sleigh").appendChild(item);
     sleighCount();
     if (c.auto) { /* the montage keeps the board's line */ }
-    else if (timedOut) { say(pick(C.board.unchecked)); toast("Shipped unchecked"); }
+    else if (timedOut) { say(pick(C.board.unchecked)); toast("Shipped unchecked" + (c.gift.correct ? "" : ". " + whyText(c))); }
+    else if (!c.gift.correct && c.gift.spec.why) { toast("\u2717 " + whyText(c), 2.6); }
     else { say(pick(c.gift.correct ? C.board.right : C.board.wrong)); }
     announce((timedOut ? "Shipped unchecked. " : "Packed. ") + c.kid.name + (c.gift.correct ? " got what they asked for." : " got the wrong present."));
     blip(c.gift.correct ? 784 : 196, 0.2, c.gift.correct ? "sine" : "sawtooth", 0.05);
@@ -5484,7 +5491,7 @@ window.NP = window.NP || {};
     notes.forEach(function (n) { var li = document.createElement("li"); li.textContent = n; ul.appendChild(li); });
     $("reportSleigh").innerHTML = G.outcomes.map(function (o) {
       return '<figure class="rs-item ' + (o.correct ? "good" : "bad") + '"><div class="rs-art">' + giftSVG(o.spec) + "</div><figcaption>" +
-        o.name + (o.correct ? "" : ": " + escapeHtml(o.spec.text)) + "</figcaption></figure>";
+        o.name + (o.correct ? "" : ": " + escapeHtml(o.spec.text) + (o.spec.why ? '<span class="rs-why">' + escapeHtml(o.spec.why) + "</span>" : "")) + "</figcaption></figure>";
     }).join("");
     store.set("lastShift", { perRound: perRound, pct: pct });
     store.set("played", true);

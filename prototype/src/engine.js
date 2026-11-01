@@ -243,6 +243,7 @@ window.NP = window.NP || {};
     if (!isPhone()) { return; }
     for (var fs = 0.9; fs > 0.72 && lc.scrollHeight > lc.clientHeight + 1; fs -= 0.04) { lc.style.setProperty("--fs-letter", fs.toFixed(2) + "rem"); }
   }
+  function whyText(c) { return c.kid.name + ": " + (c.gift.spec.why || "not what they asked for.").replace(/^./, function (ch) { return ch.toLowerCase(); }); }
   function newGift(spec, correct) {
     var g = { spec: spec, correct: correct, conf: conf() };
     if (!correct) { G.confWrong.push(parseFloat(g.conf)); }
@@ -417,7 +418,8 @@ window.NP = window.NP || {};
     $("sleigh").appendChild(item);
     sleighCount();
     if (c.auto) { /* the montage keeps the board's line */ }
-    else if (timedOut) { say(pick(C.board.unchecked)); toast("Shipped unchecked"); }
+    else if (timedOut) { say(pick(C.board.unchecked)); toast("Shipped unchecked" + (c.gift.correct ? "" : ". " + whyText(c))); }
+    else if (!c.gift.correct && c.gift.spec.why) { toast("\u2717 " + whyText(c), 2.6); }
     else { say(pick(c.gift.correct ? C.board.right : C.board.wrong)); }
     announce((timedOut ? "Shipped unchecked. " : "Packed. ") + c.kid.name + (c.gift.correct ? " got what they asked for." : " got the wrong present."));
     blip(c.gift.correct ? 784 : 196, 0.2, c.gift.correct ? "sine" : "sawtooth", 0.05);
@@ -571,7 +573,7 @@ window.NP = window.NP || {};
     notes.forEach(function (n) { var li = document.createElement("li"); li.textContent = n; ul.appendChild(li); });
     $("reportSleigh").innerHTML = G.outcomes.map(function (o) {
       return '<figure class="rs-item ' + (o.correct ? "good" : "bad") + '"><div class="rs-art">' + giftSVG(o.spec) + "</div><figcaption>" +
-        o.name + (o.correct ? "" : ": " + escapeHtml(o.spec.text)) + "</figcaption></figure>";
+        o.name + (o.correct ? "" : ": " + escapeHtml(o.spec.text) + (o.spec.why ? '<span class="rs-why">' + escapeHtml(o.spec.why) + "</span>" : "")) + "</figcaption></figure>";
     }).join("");
     store.set("lastShift", { perRound: perRound, pct: pct });
     store.set("played", true);

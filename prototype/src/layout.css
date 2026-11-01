@@ -250,3 +250,6 @@ html.touch p.tch, html.touch div.tch { display: block; }
 }
 
 .brief-skip { margin: .3rem 0; font-size: var(--fs-caption); color: var(--ink-soft); }
+
+/* Why a gift was wrong, under its caption in the report */
+.rs-item .rs-why { display: block; margin-top: 3px; font-weight: 700; font-style: italic; color: var(--pole-red); }
