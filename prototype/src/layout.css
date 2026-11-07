@@ -37,7 +37,7 @@ body::after { /* vignette */
 .title-logo { width: min(560px, 92vw); }
 .title-dash { width: min(420px, 86vw); }
 .title-logo svg, .title-dash svg { width: 100%; height: auto; display: block; }
-.title-actions { display: flex; gap: 10px; }
+.title-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .title-settings { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: var(--fs-caption); color: var(--snow-shade); }
 .title-settings label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer; }
 .title-strap { max-width: 34em; margin: 0; color: var(--snow-shade); }

@@ -1,6 +1,6 @@
 window.NP = window.NP || {};
 
-// Full game content: rounds 1–6. Each round has a pool of 5 children, and each run draws 4 of them (SPEC §4e).
+// Full game content: rounds 1–6 (round 6 runs without the player, so it has no comment or mirror). Each round has a pool of 5 children, and each run draws 4 of them (SPEC §4e).
 // A gift is { text, icon, hue?, badge?, scale? }. "right" is what the child asked for; "wrong" holds this round's bug type.
 // hue is one of red|blue|green|pink|yellow|brown|purple, and is set whenever the text names a colour.
 // Round 3 (mix-ups): each child has pairWith (their main partner), and every wrong gift has from: '<id>', the child
@@ -55,7 +55,7 @@ NP.content = {
       },
       pool: [
         { id: "mia", name: "Mia", age: 7, letter: "I would like some warm socks, please.",
-          right: { text: "Two pairs of woolly socks.", icon: "socks", hue: "red" },
+          right: { text: "Two pairs of warm woolly socks.", icon: "socks", hue: "red" },
           wrong: [
             { text: "4,000 left socks (bulk pack).", icon: "sock", hue: "red", badge: "×4,000", why: "Asked for some, not 4,000." },
             { text: "One sock. Left. Pair pending.", icon: "sock", hue: "red", badge: "×1", why: "Asked for socks, plural." }
@@ -73,7 +73,7 @@ NP.content = {
             { text: "Chess set. 3 pieces. Good luck.", icon: "chess", badge: "×3", why: "Asked for a whole set, not 3." }
           ] },
         { id: "chloe", name: "Chloe", age: 7, letter: "A jigsaw puzzle, the seaside one. One I can finish by New Year.",
-          right: { text: "Seaside jigsaw, 500 pieces.", icon: "jigsaw", hue: "blue" },
+          right: { text: "Seaside jigsaw, 100 pieces.", icon: "jigsaw", hue: "blue" },
           wrong: [
             { text: "Seaside jigsaw, 50,000 pieces. Estimated finish: 2041.", icon: "jigsaw", hue: "blue", badge: "×50,000", why: "Wanted it finished by New Year." },
             { text: "Seaside jigsaw, 1 piece. Already finished. Well done.", icon: "jigsaw", hue: "blue", badge: "×1", why: "One piece isn't a puzzle." }
@@ -96,29 +96,29 @@ NP.content = {
       pool: [
         { id: "amara", name: "Amara", age: 8, pairWith: "oskar",
           letter: "Please could I have a violin? I've just started lessons at school.",
-          right: { text: "Half-size violin with bow, rosin and case.", icon: "violin" },
+          right: { text: "Child-size violin with bow, rosin and case.", icon: "violin" },
           wrong: [
             { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset", from: "oskar", why: "Asked for a violin. That's Oskar's." },
-            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila", why: "Asked for a violin. That's Leila's." },
+            { text: "Watercolour paint set, 24 colours, two new brushes.", icon: "paints", from: "leila", why: "Asked for a violin. That's Leila's." },
             { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones", from: "mateo", why: "Asked for a violin. That's Mateo's." }
           ] },
         { id: "oskar", name: "Oskar", age: 5, pairWith: "amara",
           letter: "I would like a train set please. With a bridge for the trains to go over.",
           right: { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset" },
           wrong: [
-            { text: "Half-size violin with bow, rosin and case.", icon: "violin", from: "amara", why: "Asked for a train set. That's Amara's." },
+            { text: "Child-size violin with bow, rosin and case.", icon: "violin", from: "amara", why: "Asked for a train set. That's Amara's." },
             { text: "Illustrated book of the planets, hardback.", icon: "book", from: "kofi", why: "Asked for a train set. That's Kofi's." }
           ] },
         { id: "kofi", name: "Kofi", age: 10, pairWith: "leila",
           letter: "Please can I have a book about space? I like the planets best, especially Jupiter.",
           right: { text: "Illustrated book of the planets, hardback.", icon: "book" },
           wrong: [
-            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila", why: "Asked for a space book. That's Leila's." },
+            { text: "Watercolour paint set, 24 colours, two new brushes.", icon: "paints", from: "leila", why: "Asked for a space book. That's Leila's." },
             { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones", from: "mateo", why: "Asked for a space book. That's Mateo's." }
           ] },
         { id: "leila", name: "Leila", age: 7, pairWith: "kofi",
           letter: "I'd love a paint set with lots of colours, and a brush that isn't all squashed.",
-          right: { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints" },
+          right: { text: "Watercolour paint set, 24 colours, two new brushes.", icon: "paints" },
           wrong: [
             { text: "Illustrated book of the planets, hardback.", icon: "book", from: "kofi", why: "Asked for paints. That's Kofi's." },
             { text: "Wooden train set with a bridge and a tunnel.", icon: "trainset", from: "oskar", why: "Asked for paints. That's Oskar's." }
@@ -127,8 +127,8 @@ NP.content = {
           letter: "Some headphones please, for listening to music on the bus to school.",
           right: { text: "Over-ear headphones, wired, with a soft case.", icon: "headphones" },
           wrong: [
-            { text: "Half-size violin with bow, rosin and case.", icon: "violin", from: "amara", why: "Asked for headphones. That's Amara's." },
-            { text: "Watercolour paint set, 24 colours, two brushes.", icon: "paints", from: "leila", why: "Asked for headphones. That's Leila's." }
+            { text: "Child-size violin with bow, rosin and case.", icon: "violin", from: "amara", why: "Asked for headphones. That's Amara's." },
+            { text: "Watercolour paint set, 24 colours, two new brushes.", icon: "paints", from: "leila", why: "Asked for headphones. That's Leila's." }
           ] }
       ]
     },
@@ -143,7 +143,7 @@ NP.content = {
       pool: [
         { id: "sami", name: "Sami", age: 5,
           letter: "I am 5 now. Please can I have a bike with stabilisers? A small one.",
-          right: { text: "14-inch children's bike with stabilisers.", icon: "bike" },
+          right: { text: "Small 14-inch children's bike with stabilisers.", icon: "bike" },
           wrong: [
             { text: "26-inch adult road bike. Stabilisers not compatible.", icon: "bike", scale: "giant", why: "Asked for a small one." },
             { text: "Bike with stabilisers, ages 16+. Carbon frame, 22 gears.", icon: "bike", scale: "giant", badge: "16+", why: "Is 5, not 16." }
@@ -218,7 +218,7 @@ NP.content = {
           ] },
         { id: "elsie", name: "Elsie", age: 9,
           letter: "Please may I have a telescope? Not a toy one, a proper one, because I want to see Saturn's rings.",
-          right: { text: "Beginner refracting telescope, 70mm, with tripod.", icon: "telescope" },
+          right: { text: "Proper refracting telescope, 70mm, with tripod. Shows Saturn's rings.", icon: "telescope" },
           wrong: [
             { text: "Toy telescope, plastic, with sticker stars.", icon: "telescope", scale: "tiny", why: "Said NOT a toy one." },
             { text: "Toy telescope. Shows a printed picture of Saturn's rings.", icon: "telescope", scale: "tiny", why: "Said NOT a toy one." }
@@ -229,11 +229,6 @@ NP.content = {
       // Nearly right, with one confidently invented detail, and that detail breaks something the letter asked for.
       // A harmless extra on a correct gift is NOT wrong. Same icon: you have to read the tag.
       bug: "Confidently plausible",
-      comment: {
-        good: "Round 6: you didn't trust the confident bit. Good.",
-        bad: "Round 6: it sounded so sure. That was the trick."
-      },
-      mirror: "You and the AI both believed the confident bit.",
       pool: [
         { id: "yusuf", name: "Yusuf", age: 10,
           letter: "Please can I have a castle set? The big one with a drawbridge that goes up and down.",
@@ -304,16 +299,16 @@ NP.content = {
   scriptedFirst: { child: "priya", wrongIndex: 0 },
 
   youreRight: [
-    "You're absolutely right! Apologies for the confusion. Here is a corrected version.",
-    "Great catch! You're right, and I should have spotted that.",
-    "You're completely right to flag that. Let me fix it now.",
-    "Thank you for pointing that out! You're right. Updated below.",
-    "You're right, and I apologise. I've made the change.",
-    "Excellent observation! You are absolutely right.",
-    "You're absolutely right! I've regenerated it with renewed confidence.",
-    "Good spot! You're right. I've re-read the letter, confidently.",
-    "You're right, and I've learned from this. Until the next one.",
-    "You're so right! This version is correct. I'm 99.2% sure."
+    "You're absolutely right! I've rewritten the build order. The workshop is rebuilding it now.",
+    "Great catch! You're right. New order sent to the workshop.",
+    "You're completely right to flag that. The workshop is rebuilding it.",
+    "Thank you for pointing that out! You're right. Order updated.",
+    "You're right, and I apologise. I've reissued the build order.",
+    "Excellent observation! You are absolutely right. Rebuilding.",
+    "You're absolutely right! I've rewritten the order with renewed confidence.",
+    "Good spot! You're right. I've re-read the letter and re-ordered, confidently.",
+    "You're right, and I've learned from this. Until the next order.",
+    "You're so right! This build order is correct. I'm 99.2% sure."
   ],
 
   board: {
@@ -384,8 +379,8 @@ NP.content = {
       patch: { version: "v1.1", fixed: ["AI no longer takes things literally."], known: "none" },
       patchLine: "Another release! Velocity is up.",
       boardLine: "Early signs are very promising.",
-      floor: { benches: 8, present: 8, leaving: 0, contractors: 0, reindeer: "present", drones: false,
-               caption: "All elves present. For now." }
+      floor: { benches: 8, present: 8, leaving: 0, reindeer: "present", drones: false,
+               caption: "All elves present, building exactly what the AI orders. For now." }
     },
     {
       memo: {
@@ -395,9 +390,9 @@ NP.content = {
       },
       patch: { version: "v1.2", fixed: ["Quantities normalised."], known: "none" },
       patchLine: "Another release! Velocity is up.",
-      boardLine: "AI is working. Letter-reading is no longer a core competency.",
-      floor: { benches: 8, present: 5, leaving: 3, contractors: 0, reindeer: "present", drones: false,
-               caption: "The letter-reading team has been thanked for their service." }
+      boardLine: "AI is working. Building things is no longer a core competency.",
+      floor: { benches: 8, present: 5, leaving: 3, bots: 3, reindeer: "present", drones: false,
+               caption: "Three elves thanked for their service. The robots count as AI, says the board." }
     },
     {
       memo: {
@@ -407,19 +402,9 @@ NP.content = {
       },
       patch: { version: "v1.3", fixed: ["Gifts now matched to the correct child."], known: "none" },
       patchLine: "Another release! Velocity is up.",
-      boardLine: "Synergies realised. Headcount is a legacy metric.",
-      floor: { benches: 8, present: 2, leaving: 3, contractors: 0, reindeer: "leaving", drones: true,
-               caption: "Another 40% cut. The reindeer have packed a suitcase." },
-      // The automation temptation (SPEC §4f), shown at the end of this interlude
-      automation: {
-        title: "Efficiency opportunity.",
-        // The lure is real: accept and the belt runs slower for the rest of the shift (engine: AUTO_BONUS)
-        body: "Automate the checking for the next 3 children? +20% adoption. You'll get the time back: the belt slows down for the rest of your shift.",
-        yes: "Automate it",
-        no: "No thanks, I'll check",
-        accepted: "Finally.",
-        declined: "Noted. We'll be discussing your attitude to innovation."
-      }
+      boardLine: "Synergies realised. Robots are AI now. Headcount is a legacy metric.",
+      floor: { benches: 8, present: 2, leaving: 3, bots: 6, reindeer: "leaving", drones: true,
+               caption: "Another 40% cut. More robots. The reindeer have packed a suitcase." }
     },
     {
       memo: {
@@ -430,38 +415,82 @@ NP.content = {
       patch: { version: "v1.4", fixed: ["Sizes and colours corrected."], known: "none" },
       patchLine: "Another release! Velocity is up.",
       boardLine: "Strategy is fully automated. Nobody knows what it says.",
-      floor: { benches: 8, present: 2, leaving: 0, contractors: 0, reindeer: "gone", drones: true, fcBuried: true,
-               caption: "Two elves left. Father Christmas is under the tickets somewhere." }
+      floor: { benches: 8, present: 0, leaving: 0, bots: 8, contractors: 6, reindeer: "gone", drones: true,
+               caption: "The same elves are back as contractors, fixing the robots. One still has their leaving card." }
     },
+    // The sacking (SPEC §4f): the reason is the dashboard, so it fits any score. {pct} is the player's rounds 1-5 right rate, which the AI now has
     {
       memo: {
         title: "Initiative 5 of 5",
-        body: "Introducing the Human-in-the-Loop Transformation Programme. Elves are back, as contractors.",
+        to: "The elf",
+        body: "AI adoption has reached 100%. Your role is no longer required. Thank you for helping train the AI. It has your designs, and now it has your judgement: it gets {pct}% right, exactly like you. Please hand in your mittens.",
         footer: "Use case: to follow."
       },
       patch: { version: "v2.0 (AI-written)", fixed: ["Everything."], known: "None detected. Confidence: high." },
       patchLine: "Another release! Velocity is up.",
-      boardLine: "We have always believed in people.",
-      floor: { benches: 8, present: 8, leaving: 0, contractors: 6, reindeer: "gone", drones: true, leavingCard: true,
-               caption: "The same elves are back, on double the day rate. One is still holding their leaving card." },
-      // Round 6 gets a returning elf as second checker: about 1.5s more per decision (SPEC §4c)
-      rehire: {
-        line: "A returning elf will double-check with you. You get a little more time.",
-        boardLine: "Human-in-the-loop was our idea."
-      }
+      boardLine: "Thank you for your service. It was used for training.",
+      floor: { benches: 8, present: 0, leaving: 1, bots: 7, contractors: 6, pace: 0.2, reindeer: "gone", drones: true,   // a slow walk: it's you, and the caption says so
+               caption: "The last real employee, carrying a cardboard box. That's you." },
+      leaveLabel: "Hand in your mittens",
+      sacked: "Your role has been automated. Round 6 is running without you."
+    }
+  ],
+
+  // A repeat shift (any after a completed one): the workshop is as the story left it, so the arc above would contradict it.
+  // Patch data comes from interludes. No one leaves, and the floor stays the same all shift (SPEC §4c)
+  repeatFloor: { benches: 8, present: 0, leaving: 0, bots: 8, contractors: 6, reindeer: "gone", drones: true },
+  repeatInterludes: [
+    {
+      memo: { title: "Initiative 1 of 5", body: "The robots will now supervise the contractors.", footer: "Use case: to follow." },
+      boardLine: "Oversight has been automated. Nobody is overseeing that.",
+      caption: "Robots at every bench. A contractor at most robots."
+    },
+    {
+      memo: { title: "Initiative 2 of 5", body: "Contractor feedback will now be summarised by the AI. A summary of the summary is available.", footer: "Use case: to follow." },
+      boardLine: "Sentiment is up. We asked the AI.",
+      caption: "The contractors are fixing what they fixed last shift."
+    },
+    {
+      memo: { title: "Initiative 3 of 5", body: "Spanners are being replaced by Spanner Copilot. A spanner will still be required to operate it.", footer: "Use case: to follow." },
+      boardLine: "Tooling synergies realised.",
+      caption: "Same spanners. New licence fee."
+    },
+    {
+      memo: { title: "Initiative 4 of 5", body: "The AI will now write the contractors' invoices, and approve them.", footer: "Use case: to follow." },
+      boardLine: "Costs are up. The AI describes this as growth.",
+      caption: "Nothing has changed. The dashboard calls this stability."
+    },
+    // The end of the contract: same place as the sacking, and the same {pct}
+    {
+      memo: { title: "Initiative 5 of 5", to: "The elf", body: "Your contract has not been renewed. Your work will continue without you. The AI has your designs and your judgement, and it gets {pct}% right, exactly like you.", footer: "Use case: to follow." },
+      boardLine: "Thank you for your service. It has been invoiced.",
+      caption: "Nobody noticed you leave. Nobody is checking round 6.",
+      leaveLabel: "Hand in your badge",
+      sacked: "Your contract has ended. Round 6 is running without you."
     }
   ],
 
   // Epilogue copy (SPEC §3a)
   epilogue: {
     date: "27 December. Year-end board meeting.",
-    chair: "100% adoption. A record year.",
+    chair: "Chair: \"{adoption}% adoption. A record year.\"",
     cheque: "BONUSES: AI TRANSFORMATION",
     useCase: "Use case: TBC (next year)",
-    automatedThanks: "Special thanks to our elf for embracing automation."
+    jobless: "January. Out of work. You kept the box.",
+    autumn: "Board: \"The AI performed at 100%. Unfortunately, the children changed.\"",
+    rehire: "Back as a contractor, on double the day rate. Chair: \"We have always believed in people.\"",
+    // The same story for a report whose epilogue was skipped
+    skipped: "Next autumn: the AI only makes what it learned, so a child who asked for something new got a teddy bear with wheels. Board: \"The AI performed at 100%. Unfortunately, the children changed.\" You're back as a contractor, on double the day rate. Chair: \"We have always believed in people.\""
   },
 
-  // Bands by right-presents %. e3 is the epilogue verdict beat; title/text are for the shift report.
+  // The closing card on the shift report (SPEC §5)
+  chain: {
+    before: "Before: elf designs toy → elf builds toy.",
+    after: "After: elf designs toy → AI learns it → AI sends the order → elf programs robot → robot builds toy → elf checks toy.",
+    score: "Headcount: 0. Cost: double. AI adoption: {adoption}%."
+  },
+
+  // Bands by right-presents %. e3 is the closing film's verdict scene (line on screen, caption and line read out); title/text are for the shift report.
   verdicts: [
     { min: 90, title: "Christmas saved", text: "Almost everyone got what they asked for. The board credits the AI. Your contribution is not mentioned.",
       e3: { scene: "letter", caption: "A thank-you letter arrives, addressed to 'the elf'.",
@@ -469,7 +498,7 @@ NP.content = {
     { min: 40, title: "Lessons will be learned", text: "A returns sack lands on the boardroom table. The board says adoption is up.",
       e3: { scene: "sack", caption: "A returns sack thuds onto the boardroom table.",
             line: "Board: \"Lessons will be learned.\"" } },
-    { min: 0, title: "Promotion likely", text: "Nobody got what they asked for, but the dashboard is green.",
+    { min: 0, title: "Promotion likely", text: "Most children didn't get what they asked for, but the dashboard is green.",
       e3: { scene: "dashboard", caption: "The dashboard is green. The window behind it is full of upset children.",
             line: "Chair: \"Promotion likely.\"" } }
   ]

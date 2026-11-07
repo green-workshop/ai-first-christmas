@@ -1,6 +1,6 @@
-# Playable slice: architecture and contracts
+# Architecture and contracts
 
-The slice is the game screen plus rounds 1–2, one interlude (patch v1.1) and a mini shift report, all in the final art style. The design source of truth is `../SPEC.md`. Art rules are in **SPEC §9**, which every art file follows.
+This began as a playable slice and is now the full game; the additions are under "Full game" below. The name `slice.html` is left over from then, and it is the same build as the root `index.html`. The design source of truth is `../SPEC.md`. Art rules are in **SPEC §9**, which every art file follows.
 
 ## Layout of files
 
@@ -12,7 +12,7 @@ prototype/
     shell.html       page markup with <!-- @css --> and <!-- @js --> placeholders   (owner: lead)
     tokens.css       palette and type tokens from SPEC §9.2 / §9.6                  (owner: lead)
     layout.css       grid and responsive layout of the screens                      (owner: lead)
-    ui.css           UI chrome: plates, keycaps, memo, tag, modal, title screen       (owner: UI agent)
+    ui.css           UI chrome: plates, keycaps, reject wear, droid, tag, modal, title (owner: UI agent)
     icons.js         NP.icons + NP.giftSVG()                                         (owner: icons agent)
     scene.js         NP.scene.mountBelt() / mountDesk(): belt, hopper, Father Christmas, pile (owner: scene agent)
     ui-art.js        NP.art.logo, NP.art.titleDashboard, NP.art.symbols               (owner: UI agent)
@@ -130,16 +130,16 @@ The full game is built from the same `src/`. `build.mjs` writes `slice.html` and
 ## New files and owners
 ```
 src/intro.js       NP.intro.play()       the 8-scene intro (SPEC §3)                 (owner: intro agent)
-src/epilogue.js    NP.epilogue.play()    the 3-scene epilogue (SPEC §3a)             (owner: cutscene agent)
+src/epilogue.js    NP.epilogue.play()    the 5-scene closing film (SPEC §3a)         (owner: cutscene agent)
 src/intro.css      intro styles, .in-* classes                                     (owner: intro agent)
-src/cutscene.css   epilogue and automation memo styles, .ep-* and .am-*           (owner: cutscene agent)
+src/cutscene.css   epilogue styles (.ep-*) and interlude floor additions           (owner: cutscene agent)
 ```
 The build order becomes: CSS tokens, layout, ui, cutscene; JS icons, ui-art, scene, interlude, intro, epilogue, content, engine.
 
 ### intro.js
 ```js
 var ix = NP.intro.play(el, { reduced: bool });   // el = #intro (full-screen overlay, the engine un-hides it)
-// About 68s, 8 scenes, captions always on screen as text. Plays on its own like a short film (it does not wait for clicks).
+// About 69s, 9 scenes, captions always on screen as text. Plays on its own like a short film (it does not wait for clicks).
 // A visible "Skip to the shift" button from the first second calls ix.skip() itself.
 ix.next()    // jump to the next scene now (engine: Space / tap)
 ix.skip()    // end now (engine: Enter / S, or the button)
@@ -150,29 +150,33 @@ Reduced motion: still comic-panel frames that **do** wait for next(), plus the s
 
 ### epilogue.js
 ```js
-var ep = NP.epilogue.play(el, { pct, pileCount, adoption, automated: bool, reduced: bool });   // el = #epilogue
-// E1 cheque, E2 basement with a pile of `pileCount` toys, E3 verdict line (SPEC §3a). Plays on its own (~15s). Same next/skip/pause/resume/done.
-NP.epilogue.verdictLine({ pct, automated }) -> string   // also shown on the report even when cutscenes are skipped
+var ep = NP.epilogue.play(el, { pct, pileCount, adoption, reduced: bool, onFinal: fn });   // five scenes; `onFinal` fires on the last one   // el = #epilogue
+// E1 cheque, E2 verdict, E3 January with a pile of `pileCount` toys, E4 Autumn, E5 Next year (SPEC §3a). E1 and E2 run on timers (10s); E3 to E5 hold for the `.ep-next` button, and with reduced motion every scene does. Same next/skip/pause/resume/done, plus `held()`, which makes Enter advance a held scene instead of skipping. `lastLabel` names the last button.
 ```
 
 ### interlude.js additions (cutscene agent)
-- `data.floor` = `{ benches, present, leaving, contractors, reindeer: 'present'|'leaving'|'gone', drones: bool, caption }`
-  - `leaving` elves are walked out carrying boxes (they walk off during the floor beat)
-  - `contractors` elves wear gold CONTRACTOR badges
-- `NP.interlude.memoChoice(el, { title, body, yes, no })` returns `{ done: Promise<'yes'|'no'> }`. This is the automation temptation (SPEC §4f).
-  - For the first 1s, input is ignored.
-  - The player answers by clicking or tapping a button, or with Enter on the focused button. Arrow keys only move focus.
-  - Neither button is focused by default. Instead, focus goes to the memo container.
+- `data.floor` = `{ benches, present, leaving, pace, bots, contractors, reindeer: 'present'|'leaving'|'gone', drones: bool, caption }`
+  - `leaving` elves are walked out carrying boxes (they walk off during the floor beat, at `pace` × the usual speed)
+  - `bots` robots hold the last benches, rolling in as leaving elves go; the last `contractors` of those also have an elf with a gold CONTRACTOR badge and a spanner, the first of them still holding a leaving card
+- `data.leaveLabel` replaces "Back to the belt" on the last beat; `data.memo.to` replaces "All workshop staff". The sacking uses both.
+- `onFinal` fires when the closing film's last scene (E5, the contract) is shown. The engine uses it to decide whether the report needs the rehire note.
 
 ### content.js (content agent): the schema is unchanged, extended to 6 rounds
 - `rounds[0..5]`: `{ bug, comment: { good, bad }, mirror?: string, pool: [5 children] }`.
-  - Round 3 is mix-ups (pre-written pairs inside the round). Round 4 is wrong spec (size, colour or age). Round 5 is negation. Round 6 is confidently plausible.
+  - Round 3 is mix-ups (pre-written pairs inside the round). Round 4 is wrong spec (size, colour or age). Round 5 is negation. Round 6 is confidently plausible and runs without the player, so it has no `comment` or `mirror`.
   - Letters get longer and more detailed in later rounds (SPEC §4e).
-- `interludes[0..4]`: one after each of rounds 1–5. Each has memo, patch, boardLine and floor (SPEC §4c table), plus an optional `automation: { title, body, yes, no }` on interludes[2].
+- `interludes[0..4]`: one after each of rounds 1–5. Each has memo, patch, boardLine and floor (SPEC §4c table). The last is the sacking: its memo body has a `{pct}` the engine fills in, and it adds `leaveLabel` and `sacked` (the toast afterwards). `chain` holds the report's closing card, and `epilogue.skipped` the story for a report whose closing film was skipped.
 - `epilogue` copy, `verdicts`, `board`, `sticky` (per round is allowed: `sticky.byRound[r]`) and `youreRight`.
 - Icons: use existing ids where possible. New icon ids must be listed in `NP.content.newIcons` with a one-line description each.
 
 ### engine.js additions (lead)
-- Phases are added: `intro`, `epilogue`, `memo` (the automation choice) and `montage` (the 2× automated children). Bots should treat these like interludes.
+- Phases are added: `intro`, `epilogue` and `montage` (round 6's 4 children, run by the AI at 2×). Bots should treat these like interludes.
+- `NP.art.droidSVG(carry)` draws the robot with a `'key'`, `'pad'`, `'tool'` or `'build'` (a hammer, used by `builder()` in `interlude.js`); the repair droid, the bench robots and the closing film all use it. The closing film's elf repeats the intro's paths with `ep-*` gradients.
+- Session-only progress (SPEC §7): `introSeen`, `endingSeen`, `shiftDone`, `lastShift` and `skipAuto` are plain variables, so a reload resets them. `settings` holds only what the player set: `skipCut()` is `settings.skipCut || skipAuto`, so saving another setting can't save the automatic switch-on. `showReport` sets `shiftDone` and `skipAuto` on the first report of a visit. The start of `engine.js` removes the flags older builds saved; `skipCutAuto` there marks a Skip cutscenes tick as automatic.
+- Replay ending: `endingSeen` works like `introSeen`, and is set when the closing film reaches the report. `replayEnding()` runs from the title with `lastShift`, so it needs no `G`, and returns to the title.
+- Repeat shifts: `G.firstPlay` is false once a shift has completed in this session (`?fresh=1` forces it true). `showInterlude` then overlays `content.repeatInterludes[n]` on `interludes[n]`, keeping the patch, and uses `content.repeatFloor`. `__game.state().repeat` reports it.
+- `AUTO_ROUND = 6`: `c.auto` is true for that round, the buttons are disabled, and `aiDeals()` decides right and wrong once, from the player's rounds 1–5 rate. `__game.state().automated` is true while `c.auto`.
+- Reject wear: `#rejectSlot[data-wear]` holds the current child's rejects. Its effects sit in `.rw-fx`, outside the button, so `:disabled` doesn't dim them. At 4 the button is really disabled; `sendDroid()` replaces it after the result, and `finishChild` waits for that.
+- The droid (`NP.art.droid`, `#droid`) lives in `#droidBay`, a fixed full-screen clip layer, so it can't add sideways scroll. It runs on `after()` and `trackAnim`, so pause holds it. `beginShift` and `beginChild` clear it.
 - Settings: "Skip cutscenes" turns itself on after the first complete shift. It skips the intro and the epilogue, but the E3 verdict line is still shown. Interludes are never skipped automatically.
 - `?skipintro=1` skips the intro in tests. `?rounds=N` stops after N rounds, for quick tests.

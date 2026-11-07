@@ -27,7 +27,7 @@ window.NP = window.NP || {};
   function memo(m) {
     return '<section class="il-beat il-b1" aria-hidden="true"><div class="il-memo">' +
       '<div class="il-lh"><span class="il-seal" aria-hidden="true">NP</span><span>NORTH POLE LTD · BOARD OFFICE</span></div>' +
-      '<div class="il-meta"><span><b>To</b> All workshop staff</span><span><b>From</b> The Board</span></div>' +
+      '<div class="il-meta"><span><b>To</b> ' + esc(m.to || 'All workshop staff') + '</span><span><b>From</b> The Board</span></div>' +
       '<h2 class="il-mt">' + esc(m.title) + '</h2><p class="il-mb">' + esc(m.body) + '</p>' +
       '<div class="il-sig">pp. The Board</div>' +
       '<div class="il-stamp"><span>' + esc(m.footer) + '</span></div></div></section>';
@@ -68,28 +68,44 @@ window.NP = window.NP || {};
   // Beat 3: the workshop floor (SVG). Elves: 2 heads tall, round heads, pointed green hood, dot eyes (SPEC §9.4)
   // Wide: one row of benches. Narrow (portrait): rows of up to 3 receding in depth, big elves filling the frame
   // bench s: 0 dark, 1 staffed, 2 leaving (lit until its elf has walked out, at od)
+  // bot b: 0 none, 1 at the bench, 2 rolls in at od. fix: a contractor is working on it. card: they kept their leaving card
   function lampG(ly, k, on) {
     return '<g transform="translate(0 ' + ly + ') scale(' + Math.min(k, 1.15).toFixed(2) + ' 1)">' + Pa('M-16 62L-8 44H8L16 62Z', on ? 'pole-green' : 'board-dark') +
       Pa('M-16 62L-8 44H-2L-6 62Z', 'snow', '.18') + El(0, 62, 10, 3.2, on ? 'lamp' : 'basement') + '</g>';
   }
-  function bench(cx, w, k, ly, s, con, hue, d, lamp, card, od) {
-    var out = s === 2 ? '<g class="il-out"' + st('--od:' + od.toFixed(2) + 's') + '>' : '';
+  function robot(ex, carry) {
+    var a = NP.art && NP.art.droidSVG ? NP.art.droidSVG(carry || 'tool') : '';
+    return a.replace('<svg ', '<svg x="-58" y="146" width="108" height="97" ' + (ex || ''));
+  }
+  // the toy on the bench, the same one an elf builds
+  function toy(x, hue) { return Rc(x, 194, 16, 16, 3, 'hue-' + hue) + Ln('M' + (x + 8) + ' 194V210M' + x + ' 201H' + (x + 16), 'gold', 2.6); }
+  // a robot at work: same toy and same hammering as the elf it replaced
+  function builder(hue, d) { return '<g class="il-bot"' + st('--d:-' + d + 's') + '><g transform="translate(14 -10)">' + robot('', 'build') + '</g>' + toy(-24, hue) + '</g>'; }
+  function bench(cx, w, k, ly, s, hue, d, lamp, od, b, fix, card) {
+    var dark = s === 2 && !b;                   // only a bench nobody takes over goes dark
+    var out = dark ? '<g class="il-out"' + st('--od:' + od.toFixed(2) + 's') + '>' : '';
+    if (b && s !== 1) s = 1.5;                  // lit, but no elf stays here
     var glow = El(0, (ly + 362) / 2, (w * 0.62).toFixed(1), (238 - ly) / 2 + 20, 'url(#ui-fg)', st('mix-blend-mode:screen'));
     var top = function (o) { return Rc(-44, 210, 88, 3.5, 1.75, 'lamp', o); };
-    return '<g transform="translate(' + cx.toFixed(1) + ' 0)">' + (s === 1 ? glow : s === 2 ? out + glow + '</g>' : '') +
-      (lamp ? '<path d="M0 ' + (ly - 400) + 'V' + (ly + 44) + '" stroke-width="2"' + K('night-900') + ' opacity=".6"/>' + lampG(ly, k, s === 1) + (s === 2 ? out + lampG(ly, k, true) + '</g>' : '') : '') +
+    var lit = s === 1 || s === 1.5, man = s === 1 ? elf(false, d, hue) : '';
+    // a contractor stands behind the robot, so its toy and hammer stay in view, and reaches over it with the spanner
+    var at = '<g transform="translate(-30 -12)">', reach = '';
+    if (fix) { man = at + elf(true, d, hue, card, 'body') + '</g>'; reach = at + elf(true, d, hue, card, 'arm') + '</g>'; }
+    var bot = !b ? '' : fix ? '<g transform="translate(14 0)">' + builder(hue, d) + '</g>' : b === 2 ? '<g class="il-botin"' + st('--od:' + od.toFixed(2) + 's') + '>' + builder(hue, d) + '</g>' : builder(hue, d);
+    return '<g transform="translate(' + cx.toFixed(1) + ' 0)">' + (lit ? glow : dark ? out + glow + '</g>' : '') +
+      (lamp ? '<path d="M0 ' + (ly - 400) + 'V' + (ly + 44) + '" stroke-width="2"' + K('night-900') + ' opacity=".6"/>' + lampG(ly, k, lit) + (dark ? out + lampG(ly, k, true) + '</g>' : '') : '') +
       // contact shadow + bench
       El(0, 300, (46 * k).toFixed(1), 7, 'night-900', ' opacity=".4" filter="url(#ui-fb)"') +
-      '<g transform="scale(' + k.toFixed(2) + ')" transform-origin="0 300">' + (s === 1 ? elf(con, d, hue, card) : '') +
+      '<g transform="scale(' + k.toFixed(2) + ')" transform-origin="0 300">' + man + bot + reach +
       Rc(-38, 226, 7, 72, 2, 'wood-dark') + Rc(31, 226, 7, 72, 2, 'wood-dark') + Rc(-44, 210, 88, 20, 4, 'url(#ui-fw)') +
-      top(s === 1 ? '.7' : '.15') + (s === 2 ? out + top('.55') + '</g>' : '') + Rc(-40, 230, 80, 8, 2, 'wood-dark') + '</g></g>';
+      top(lit ? '.7' : '.15') + (dark ? out + top('.55') + '</g>' : '') + Rc(-40, 230, 80, 8, 2, 'wood-dark') + '</g></g>';
   }
   function mv(a, b, c) { return st('--wd:' + a.toFixed(2) + 's;--du:' + b.toFixed(2) + 's;--dx:' + c.toFixed(0) + 'px'); }
   function ci(v, a, b) { return Math.max(a, Math.min(b, Math.round(+v || 0))); }
   function floor(f, narrow, red) {
     var n = ci(f.benches || 8, 1, 12), here = ci(f.present == null ? n : f.present, 0, n), leave = ci(f.leaving, 0, n - here);
     var rd = f.reindeer, lane = leave > 0 || rd === 'present' || rd === 'leaving';
-    var con = f.contractors || 0, hues = ['red', 'blue', 'yellow', 'green', 'purple', 'pink', 'brown'];
+    var nb = ci(f.bots, 0, n), con = ci(f.contractors, 0, nb), hues = ['red', 'blue', 'yellow', 'green', 'purple', 'pink', 'brown'];
     var W = narrow ? 400 : 800, per = narrow ? Math.min(3, n) : n, R = Math.ceil(n / per);
     var w = (W - 40) / per, k = Math.min(narrow ? 1.4 : 1.15, w / 92), ly = narrow ? Math.floor(222 - 214 * k) : 0;
     var TOP = f.drones ? (narrow ? 88 : 92) : 0, LANE = lane ? (narrow ? 150 : 112) : 0;
@@ -102,12 +118,13 @@ window.NP = window.NP || {};
     }
     var top = rows[0].y - (300 - ly + 34) * rows[0].s, shift = narrow ? 24 + TOP - top : 300 + TOP;
     var H = narrow ? Math.round(shift + 40 + LANE) : 330 + TOP + LANE, floorY = narrow ? Math.round(rows[0].y + shift - 70 * k * rows[0].s) : 250 + TOP;
-    var laneY = H - (narrow ? 24 : 20), kw = narrow ? k * 0.95 : k * 0.9, spd = narrow ? 250 : 430;
+    var laneY = H - (narrow ? 24 : 20), kw = narrow ? k * 0.95 : k * 0.9, spd = (narrow ? 250 : 430) * (f.pace || 1);
     for (r = 0; r < R; r++) {
       var o = rows[r], Y = o.y + shift, stag = narrow && o.m === per ? (r % 2 ? 0.16 : -0.16) * w : 0, ox = W / 2 * (1 - o.s);
       out += '<g transform="translate(' + ox.toFixed(1) + ' ' + (Y - 300 * o.s).toFixed(1) + ') scale(' + o.s.toFixed(3) + ')">';
       for (var j = 0; j < o.m; j++, i++) {
         var bx = W / 2 + (j - (o.m - 1) / 2) * w + stag, sb = i < here ? 1 : i < here + leave ? 2 : 0, od = 0;
+        var hasBot = i >= n - nb, botB = hasBot ? (sb === 2 && !red ? 2 : 1) : 0, fixed = i >= n - con;
         if (sb === 2) {
           // this bench's elf walks out along the front lane with a box
           var q = walk.length, wx = narrow ? (rd ? 160 : 80) + q * 84 : ox + bx * o.s, dx = W * 1.6 + 320 - wx, wd = 0.6 + (leave - 1 - q) * 0.42, du = dx / spd;
@@ -116,7 +133,7 @@ window.NP = window.NP || {};
             mv(wd, du, (dx / kw))));
           if (red) sb = 0;
         }
-        out += bench(bx, w, k, ly, sb, i < con, hues[i % hues.length], ((i * 0.37) % 1).toFixed(2), !narrow || r === 0, i === 0 && con > 0, od);
+        out += bench(bx, w, k, ly, sb, hues[i % hues.length], ((i * 0.37) % 1).toFixed(2), !narrow || r === 0, od, botB, fixed, i === n - con);
       }
       out += '</g>';
     }
@@ -159,7 +176,7 @@ window.NP = window.NP || {};
       Pa('M-23 153C-26 126-10 112 4 110C14 104 24 92 34 86C30 102 27 118 23 153C17 138-17 138-23 153Z', 'url(#ui-fh)') +
       Pa('M-23 150C-25 128-12 115-1 112C-11 120-18 134-19 150Z', 'lamp', '.45') + Ci(34, 86, 5, 'snow') + '</g>';
   }
-  function elf(contractor, d, hue, card) {
+  function elf(contractor, d, hue, card, part) {
     var hand = card
       // still holding the leaving card the team signed for them
       ? Ln('M-14 192C-24 186-29 178-30 170', 'pole-green-dark', 9) +
@@ -167,14 +184,18 @@ window.NP = window.NP || {};
         Pa('M-27 140c-2-3-6-1-4 2l4 4 4-4c2-3-2-5-4-2Z', 'pole-red') + tx(-27, 152, 3.6, 'SORRY YOU\'RE', 'ink-soft') + tx(-27, 156.5, 3.6, 'LEAVING!', 'ink-soft') + '</g>' +
         Ci(-30, 168, 5.5, 'paper-shade')
       : Ci(-15, 208, 5.5, 'paper-shade');
+    // a contractor's spanner where the hammer was
+    var tool = contractor
+      ? '<g transform="rotate(34 22 208)">' + Rc(19.5, 176, 7, 36, 3, 'lamp') + Rc(20.5, 176, 5, 36, 2.5, 'url(#ui-fgd)') + Pa('M11 178V163H18V172H28V163H35V178Q35 183 30 183H16Q11 183 11 178Z', 'url(#ui-fgd)') + '</g>'
+      : Rc(21, 186, 4, 26, 2, 'wood', 0, ' transform="rotate(-50 22 208)"') + Rc(16, 179, 14, 9, 2.5, 'board', 0, ' transform="rotate(-50 22 208)"');
+    var arm = '<g class="il-arm">' + Ln('M12 186C22 192 25 202 22 208', 'pole-green-dark', 9) + tool + Ci(22, 208, 5.5, 'paper-shade') + '</g>';
+    if (part === 'arm') return '<g class="il-elf"' + st('--d:-' + d + 's') + '>' + arm + '</g>';
     return '<g class="il-elf"' + st('--d:-' + d + 's') + '>' +
       Pa('M-20 232C-21 196-13 174 0 174S21 196 20 232Z', 'url(#ui-fh)') + Pa('M-20 228C-21 196-13 176-2 174C-10 184-14 204-13 228Z', 'lamp', '.35') +
       (contractor ? Ln('M-12 174L-8 183M4 174L-2 183', 'pole-red-dark', 1.6) + Rc(-27, 180, 42, 15, 3, 'url(#ui-fgd)') + Rc(-25, 180.6, 38, 1.6, 0.8, 'lamp', '.7') +
         tx(-6, 190.6, 7.8, 'CONTRACTOR', 'ink', ' textLength="37" lengthAdjust="spacingAndGlyphs"') : '') +
-      '<g class="il-arm">' + Ln('M12 186C22 192 25 202 22 208', 'pole-green-dark', 9) +
-      Rc(21, 186, 4, 26, 2, 'wood', 0, ' transform="rotate(-50 22 208)"') + Rc(16, 179, 14, 9, 2.5, 'board', 0, ' transform="rotate(-50 22 208)"') +
-      Ci(22, 208, 5.5, 'paper-shade') + '</g>' + hand +
-      Rc(-12, 194, 16, 16, 3, 'hue-' + hue) + Ln('M-4 194V210M-12 201H4', 'gold', 2.6) + head(0, 0, 'il-head') + '</g>';
+      (part === 'body' ? '' : arm) + hand +
+      (contractor ? '' : toy(-12, hue)) + head(0, 0, 'il-head') + '</g>';
   }
   // a laid-off elf, standing, facing right, carrying a cardboard box of desk things; feet at y = 0
   // a laid-off elf, standing, facing right, carrying a cardboard box of desk things; feet at y = 0
@@ -233,9 +254,10 @@ window.NP = window.NP || {};
           ' Known issues: ' + ((D.patch || {}).known || 'none') + '.',
         'Issues board: ' + (iss.length - nr) + ' caught in QA, ' + nr + ' customer returns. ' +
           iss.map(function (x) { return x.text; }).join(' ') + ' ' + caps[2],
-        'The workshop floor: ' + here + ' of ' + f.benches + ' benches staffed. ' +
-          (f.leaving ? f.leaving + ' elves are walked out carrying cardboard boxes, and their benches go dark. ' : '') +
-          (f.contractors ? f.contractors + ' elves are back, wearing gold contractor badges. One still holds a leaving card. ' : '') +
+        'The workshop floor: ' + here + ' of ' + f.benches + ' benches staffed by elves. ' + (f.bots ? f.bots + ' robots at the benches, building toys. ' : '') +
+          (f.contractors ? f.contractors + ' elves are back, wearing gold contractor badges and fixing the robots with spanners. One still holds a leaving card. ' : '') +
+          (f.leaving === 1 ? 'One elf is walked out carrying a cardboard box, and the bench goes dark. ' :
+            f.leaving ? f.leaving + ' elves are walked out carrying cardboard boxes, and their benches go dark. ' : '') +
           (f.reindeer === 'leaving' ? 'The reindeer leave with a suitcase. ' : '') + (f.drones ? 'A drone swarm hovers overhead. ' : '') + caps[3]
       ];
       var NB = 4;
@@ -263,8 +285,9 @@ window.NP = window.NP || {};
           beats[i].setAttribute('aria-hidden', i === n ? 'false' : 'true');
           dots[i].className = i < n ? 'past' : i === n ? 'now' : '';
         }
-        cap.textContent = caps[n]; srl.textContent = sr[n];
-        nextBtn.textContent = n === NB - 1 ? 'Back to the belt' : 'Continue';
+        cap.textContent = caps[n];
+        setTimeout(function () { if (cur === n) srl.textContent = sr[n]; }, 60);   // a live region announces changes, so not the text it was inserted with
+        nextBtn.textContent = n === NB - 1 ? (D.leaveLabel || 'Back to the belt') : 'Continue';
         try { nextBtn.focus({ preventScroll: true }); } catch (e) { nextBtn.focus(); }
       }
       function finish() {
@@ -289,59 +312,5 @@ window.NP = window.NP || {};
         done: done
       };
     }
-  };
-
-  // The automation temptation (SPEC §4f, §6a): input ignored for 1s; arrows only move focus; click/tap/Enter/Space choose.
-  NP.interlude.memoChoice = function (el, o) {
-    o = o || {};
-    var reduced = document.documentElement.classList.contains('reduced'), prev = document.activeElement;
-    var ready = false, chosen = false, readyAt = Date.now() + 1000, downAt = 0, resolve, done = new Promise(function (r) { resolve = r; });
-    el.innerHTML = '<div class="am' + (reduced ? ' am-reduced' : '') + '"><div class="am-memo am-wait" role="dialog" aria-modal="true" aria-labelledby="am-t" aria-describedby="am-b" tabindex="-1">' +
-      '<div class="il-lh"><span class="il-seal" aria-hidden="true">NP</span><span>NORTH POLE LTD · BOARD OFFICE</span></div>' +
-      '<div class="il-meta"><span><b>To</b> The elf</span><span><b>From</b> The Board</span></div>' +
-      '<h2 class="am-t" id="am-t">' + esc(o.title || 'Efficiency opportunity.') + '</h2><p class="am-b" id="am-b">' +
-      esc(o.body || "Automate the checking for the next 3 children? +20% adoption. You'll get the time back.").replace(/(\+\d+%\s*adoption\.?)/i, '<b class="am-hl">$1</b>') + '</p>' +
-      '<div class="am-stamp" aria-hidden="true">Board<br>recommended</div><div class="am-btns">' +
-      '<button type="button" class="keycap am-yes" disabled>' + esc(o.yes || 'Automate it') + '</button>' +
-      '<button type="button" class="keycap keycap-plain am-no" disabled>' + esc(o.no || "No thanks, I'll check") + '</button></div>' +
-      '<p class="am-hint" aria-hidden="true"><span class="kb">Click a button, or use the arrow keys, then Enter</span><span class="tch">Tap a button</span></p></div></div>';
-    el.hidden = false;
-    var root = el.firstChild, memo = root.firstChild, yes = root.querySelector('.am-yes'), no = root.querySelector('.am-no');
-    function fo(b) { try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); } }
-    function on(t, f) { root.addEventListener(t, f, true); }
-    fo(memo);
-    var arm = setTimeout(function () { ready = true; yes.disabled = no.disabled = false; memo.classList.remove('am-wait'); }, 1000);
-    function choose(v) {
-      if (!ready || chosen) return;
-      chosen = true;
-      memo.classList.add('am-picked', v === 'yes' ? 'am-py' : 'am-pn');
-      (v === 'yes' ? yes : no).classList.add('am-on');
-      yes.disabled = no.disabled = true;
-      setTimeout(function () {
-        el.hidden = true; el.innerHTML = '';
-        if (prev && prev.focus && document.contains(prev)) try { prev.focus({ preventScroll: true }); } catch (e) {}
-        resolve(v);
-      }, reduced ? 350 : 700);
-    }
-    on('keydown', function (e) {
-      var k = e.key, a = document.activeElement;
-      if (!/^(Arrow(Left|Right|Up|Down)|Enter| |Spacebar|Tab)$/.test(k)) return;
-      e.preventDefault(); e.stopPropagation();
-      if (e.repeat || !ready || chosen) return;                       // held keys and early presses are dropped
-      if (k === 'ArrowLeft' || k === 'ArrowUp') fo(yes);
-      else if (k === 'ArrowRight' || k === 'ArrowDown') fo(no);
-      else if (k === 'Tab') fo(a === yes ? no : a === no ? yes : e.shiftKey ? no : yes);
-      else if (a === yes || a === no) choose(a === yes ? 'yes' : 'no');
-    });
-    on('keyup', function (e) { if (/^(Enter| |Spacebar)$/.test(e.key)) e.preventDefault(); });   // no native click on keyup
-    on('pointerdown', function () { downAt = Date.now(); });
-    on('click', function (e) {
-      var b = e.target.closest && e.target.closest('.keycap');
-      e.stopPropagation();
-      if (!b || (downAt && downAt < readyAt)) return;                 // a press that began during the safety second
-      choose(b === yes ? 'yes' : 'no');
-    });
-    on('focusout', function (e) { if (!chosen && !memo.contains(e.relatedTarget)) setTimeout(function () { if (!chosen && !memo.contains(document.activeElement)) fo(memo); }); });
-    return { done: done };
   };
 })(window.NP);

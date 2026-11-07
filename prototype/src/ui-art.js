@@ -128,6 +128,62 @@ window.NP = window.NP || {};
       '</svg>';
   })();
 
+  // ---- The robot: faces left, treads on y = 118. The arm's tip is about 8% in from the left edge (engine: sendDroid)
+  // carry: 'key' the repair droid's keycaps, 'pad' a notepad, 'tool' a workbench screwdriver
+  art.droidSVG = function (carry) {
+    function F(c, o) { return st('fill:' + c) + (o ? ' opacity="' + o + '"' : ''); }
+    var LIP = 'color-mix(in srgb,var(--pole-red-dark) 75%,var(--night-900))';
+    function cap(cls, top, bot, lip, face) {
+      return '<g class="' + cls + '"><rect x="-1" y="53" width="34" height="23" rx="6"' + F(lip) + '/><rect x="-1" y="49" width="34" height="23" rx="6" fill="url(#' + top + ')"/>' +
+        '<rect x="2" y="51" width="28" height="3" rx="1.5"' + F(face, '.5') + '/>' + bot + '</g>';
+    }
+    var wheels = [46, 67, 88, 109].map(function (x) {
+      return '<circle cx="' + x + '" cy="104" r="9"' + F('var(--board-dark)') + '/><circle cx="' + x + '" cy="104" r="5.5" fill="url(#ui-drm)"/><circle cx="' + x + '" cy="104" r="1.8"' + F('var(--night-900)') + '/>';
+    }).join('');
+    return '<svg viewBox="0 0 136 122" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs>' +
+      '<linearGradient id="ui-drb" x1="0" y1="0" x2=".7" y2="1">' + sp('0', 'var(--snow)') + sp('.42', 'color-mix(in srgb,var(--board) 45%,var(--snow))') + sp('1', 'var(--board-dark)') + '</linearGradient>' +
+      '<linearGradient id="ui-drm" x1="0" y1="0" x2=".6" y2="1">' + sp('0', 'var(--snow-shade)') + sp('1', 'var(--board-dark)') + '</linearGradient>' +
+      '<linearGradient id="ui-drv" x1="0" y1="0" x2="1" y2="1">' + sp('0', 'var(--night-600)') + sp('1', 'var(--night-900)') + '</linearGradient>' +
+      '<linearGradient id="ui-drc" x1="0" y1="0" x2=".3" y2="1">' + sp('0', 'color-mix(in srgb,var(--pole-red) 78%,var(--lamp))') + sp('1', 'var(--pole-red)') + '</linearGradient>' +
+      '<linearGradient id="ui-drk" x1="0" y1="0" x2=".3" y2="1">' + sp('0', 'var(--board-dark)') + sp('1', 'var(--night-900)') + '</linearGradient>' +
+      '<radialGradient id="ui-dre">' + sp('0', 'var(--snow)') + sp('.35', 'var(--lamp)') + sp('1', 'var(--lamp-deep)', '0') + '</radialGradient></defs>' +
+      '<ellipse cx="78" cy="117" rx="52" ry="4.5"' + F('var(--night-900)', '.45') + '/>' +
+      '<g class="dr-bob">' +
+      // antenna, behind the dome
+      '<path d="M84 22C86 14 90 10 96 8" fill="none" stroke-width="3" stroke-linecap="round"' + st('stroke:var(--board-dark)') + '/>' +
+      '<circle class="dr-led" cx="97" cy="7.5" r="4.5"' + F('var(--pole-red)') + '/><circle cx="95.6" cy="6" r="1.4"' + F('var(--snow)', '.8') + '/>' +
+      // dome body
+      '<path d="M40 92V58C40 34 56 20 78 20S116 34 116 58V92Z" fill="url(#ui-drb)"/>' +
+      '<path d="M46 86V58C46 40 58 27 74 25C60 32 53 44 53 60V86Z"' + F('var(--snow)', '.55') + '/>' +
+      '<rect x="38" y="84" width="80" height="10" rx="4"' + F('var(--board-dark)') + '/><rect x="42" y="85.5" width="72" height="2"  rx="1"' + F('var(--snow-shade)', '.5') + '/>' +
+      // visor with its glowing eye
+      '<rect x="42" y="38" width="62" height="24" rx="12"' + F('var(--board-dark)') + '/><rect x="45" y="41" width="56" height="18" rx="9" fill="url(#ui-drv)"/>' +
+      '<rect x="50" y="43" width="30" height="2.4" rx="1.2"' + F('var(--snow)', '.2') + '/>' +
+      '<circle cx="62" cy="50" r="12" fill="url(#ui-dre)" opacity=".75"/><circle class="dr-eye" cx="62" cy="50" r="4.4"' + F('var(--lamp)') + '/><circle cx="61" cy="49" r="1.5"' + F('var(--snow)') + '/>' +
+      // the company plate
+      '<rect x="84" y="67" width="24" height="12" rx="3"' + F('var(--gold-dark)') + '/><rect x="85" y="68" width="22" height="9.5" rx="2.5"' + F('var(--gold)') + '/>' +
+      '<text x="96" y="76" text-anchor="middle"' + st(FUI + 'font-weight:900;font-size:8px;letter-spacing:.06em;fill:var(--ink)') + '>NP</text>' +
+      '</g>' +
+      // treads
+      '<rect x="32" y="90" width="92" height="28" rx="14"' + F('var(--night-900)') + '/>' +
+      '<rect class="dr-tread" x="34" y="92" width="88" height="24" rx="12" fill="none" stroke-width="3.5" stroke-dasharray="4 5"' + st('stroke:var(--board)') + '/>' + wheels +
+      // the arm, with the new keycap going out and the burnt one coming back
+      '<g class="dr-arm">' +
+      '<path d="' + (carry === 'build' ? 'M66 72C58 74 54 72 46 68' : 'M66 72C54 76 46 72 32 66') + '" fill="none" stroke-width="7" stroke-linecap="round"' + st('stroke:var(--board-dark)') + '/>' +
+      '<path d="' + (carry === 'build' ? 'M66 71C58 73 54 71 46 67' : 'M66 71C54 75 46 71 32 65') + '" fill="none" stroke-width="2.4" stroke-linecap="round"' + st('stroke:var(--snow-shade)') + '/>' +
+      '<circle cx="67" cy="72" r="6.5" fill="url(#ui-drm)"/><circle cx="67" cy="72" r="2"' + F('var(--night-900)') + '/>' +
+      (carry === 'pad' ? '<g transform="rotate(-6 16 62)"><rect x="-4" y="42" width="38" height="46" rx="3"' + F('var(--paper-shade)') + '/><rect x="-4" y="40" width="38" height="46" rx="3"' + F('var(--paper)') + '/><rect x="8" y="37" width="14" height="6" rx="2"' + F('var(--gold-dark)') + '/>' +
+          '<path d="M2 52h24M2 60h26M2 68h20M2 76h12" fill="none" stroke-width="1.8" stroke-linecap="round"' + st('stroke:var(--ink-soft)') + '/></g>' :
+        // a hammer, for the bench: the head lands on the toy just below it
+        carry === 'build' ? '<g transform="rotate(-62 46 68)"><rect x="43.5" y="42" width="5" height="28" rx="2.5"' + F('var(--wood)') + '/><rect x="36" y="32" width="20" height="12" rx="3"' + F('var(--board)') + '/><rect x="36" y="32" width="20" height="3.5" rx="1.75"' + F('var(--snow-shade)', '.6') + '/></g>' :
+        carry === 'tool' ? '<rect x="4" y="62" width="30" height="7" rx="3.5"' + F('var(--pole-red)') + '/><rect x="-14" y="64" width="20" height="3" rx="1.5"' + F('var(--snow-shade)') + '/>' :
+        cap('dr-new', 'ui-drc', '<path d="M11 61h10M17 57l4 4-4 4"  fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"' + st('stroke:var(--paper)') + '/>', LIP, 'var(--lamp)') +
+        cap('dr-old', 'ui-drk', '<path d="M8 66l6-9 3 6 7-8" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"' + st('stroke:var(--lamp-deep)') + '/>', 'var(--night-900)', 'var(--board)')) +
+      '<path d="M32 56h6v18h-6" fill="none" stroke-width="4" stroke-linejoin="round"' + st('stroke:var(--board-dark)') + '/>' +
+      '</g></svg>';
+  };
+  art.droid = art.droidSVG('key');
+
   // ---- Small UI icons (24 grid, currentColor). Strokes are allowed below 40px.
   var SW = ' fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width=';
   var SPK = '<path d="M3 9.2h3.6L11.3 5v14l-4.7-4.2H3a1 1 0 0 1-1-1v-3.6a1 1 0 0 1 1-1z"/>';
