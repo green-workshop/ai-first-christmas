@@ -203,8 +203,13 @@
 .report h2 { margin: .2rem 0 .15rem; }
 .report-verdict { margin: 0 0 .5rem; font-size: 1.0625rem; font-weight: 500; }
 .report-verdict b, .report-verdict strong { display: inline-block; margin: 0 .4rem .3rem 0; padding: .18em .5em .14em; border: 3px solid var(--pole-red); border-radius: 7px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--pole-red-dark); transform: rotate(-2deg); }
-.report-top { display: flex; gap: .6rem; margin: .4rem 0; }
-.report-top .plate { flex: 1; flex-direction: row; align-items: center; justify-content: space-between; padding-block: .4rem; }
+.report-top { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: .4rem 0; }
+.report-top .plate { flex-direction: row; align-items: center; justify-content: space-between; gap: .5rem; padding-block: .4rem; }
+.report-top .plate[hidden] { display: none; }
+.report-top .plate-label { white-space: normal; }
+.plate-ai { --face: var(--pole-red-dark); }
+.plate-ai .plate-label { color: color-mix(in srgb,var(--snow) 82%, var(--pole-red)); }
+.report-table .rt-ai { font-weight: 800; color: var(--pole-red-dark); white-space: nowrap; }
 .report-table { width: 100%; margin: .4rem 0; border-collapse: collapse; font: 500 .9375rem/1.35 var(--font-ui); font-variant-numeric: tabular-nums; }
 .report-table th { padding: .25rem .5rem; text-align: left; font: 700 var(--fs-label)/1.2 var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 2px solid color-mix(in srgb,var(--ink-soft) 70%, transparent); }
 .report-table td { padding: .3rem .5rem; border-bottom: 1px dashed color-mix(in srgb,var(--ink-soft) 35%, transparent); vertical-align: middle; }
@@ -212,6 +217,9 @@
 .report-table td:last-child, .report-table th:last-child { text-align: right; }
 .report-table .sl-item { width: 24px; height: 24px; vertical-align: middle; animation: none; }
 .report-table .sl-item svg { width: 15px; height: 15px; }
+.report-chain { margin: .7rem 0 .4rem; padding: .7rem .9rem; border-radius: 10px; font: 500 .9375rem/1.4 var(--font-ui); background: color-mix(in srgb,var(--paper-shade) 55%, var(--paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--ink-soft) 22%, transparent); }
+.report-chain p { margin: 0 0 .35rem; text-wrap: pretty; }
+.report-chain p:last-child { margin: 0; font-weight: 800; color: var(--pole-red-dark); }
 .report-notes { margin: .4rem 0; padding: 0; list-style: none; font-size: .9375rem; line-height: 1.35; }
 .report-notes li { position: relative; margin: .2rem 0; padding-left: 1.35rem; }
 .report-notes li::before { content: ""; position: absolute; left: .15rem; top: .45em; width: .6rem; height: .6rem; border-radius: 50%; background: radial-gradient(circle at 35% 30%, color-mix(in srgb,var(--pole-red) 50%, var(--lamp)), var(--pole-red) 60%, var(--pole-red-dark)); box-shadow: 0 1px 1.5px var(--ui-sh); }
@@ -375,16 +383,68 @@
 .il-arm { transform-origin: 22px 208px; }
 .il-b3.on .il-head { animation: il-nod 1.2s ease-in-out var(--d) infinite alternate; }
 .il-b3.on .il-arm { animation: il-tap .5s var(--ease-out) var(--d) infinite alternate; }
+.il-bot .dr-arm { transform-box: view-box; transform-origin: 67px 72px; animation: none; }
+.il-b3.on .il-bot .dr-arm { animation: il-tap .5s var(--ease-out) var(--d) infinite alternate; }
 @keyframes il-nod { from { transform: rotate(-3deg); } to { transform: rotate(4deg) translateY(1px); } }
 @keyframes il-tap { from { transform: rotate(-18deg); } to { transform: rotate(8deg); } }
+
+/* ---------- the Reject button wears out, the droid swaps it (SPEC §4d). Effects sit outside the button so :disabled can't dim them ---------- */
+.reject-slot { position: relative; display: inline-flex; }
+.rw-fx { position: absolute; inset: 0 0 4px; pointer-events: none; border-radius: 14px; }
+.rw-fx i { position: absolute; display: block; }
+.rw-char { inset: 0; border-radius: inherit; opacity: 0; transition: opacity 240ms var(--ease-in);
+  background:
+    radial-gradient(ellipse 30% 46% at 76% 26%, color-mix(in srgb,var(--night-900) 88%, transparent), transparent 74%),
+    radial-gradient(ellipse 24% 36% at 16% 72%, color-mix(in srgb,var(--night-900) 78%, transparent), transparent 76%),
+    radial-gradient(ellipse 62% 70% at 54% 56%, color-mix(in srgb,var(--ink) 52%, transparent), transparent 82%); mix-blend-mode: multiply; }
+.rw-puff { left: 50%; top: 10%; width: 30px; height: 30px; margin-left: -15px; border-radius: 50%; opacity: 0; filter: blur(3px);
+  background: radial-gradient(circle at 42% 38%, color-mix(in srgb,var(--snow-shade) 85%, var(--board)), color-mix(in srgb,var(--board-dark) 75%, transparent) 62%, transparent 74%); }
+.rw-spark { left: 50%; top: 30%; width: 3px; height: 13px; margin: -6px 0 0 -1.5px; border-radius: 2px; opacity: 0; background: linear-gradient(var(--snow), var(--lamp) 45%, var(--lamp-deep));
+  box-shadow: 0 0 6px var(--lamp), 0 0 12px var(--lamp-deep); }
+.reject-slot[data-wear="2"] .rw-puff:nth-of-type(2), .reject-slot[data-wear="2"] .rw-puff:nth-of-type(3) { animation: rw-rise 2.4s ease-out var(--d) infinite; }
+.reject-slot[data-wear="3"] .rw-puff, .reject-slot[data-wear="4"] .rw-puff { animation: rw-rise 1.8s ease-out var(--d) infinite; }
+.reject-slot[data-wear="3"] .rw-char { opacity: .62; }
+.reject-slot[data-wear="4"] .rw-char { opacity: .82; }
+.reject-slot[data-wear="3"] .keycap-reject { --kc: color-mix(in srgb,var(--bad) 52%, var(--wood-dark)); --kc2: color-mix(in srgb,var(--bad) 46%, var(--night-900)); }
+.reject-slot[data-wear="4"] .keycap-reject { --kc: color-mix(in srgb,var(--bad) 30%, var(--board-dark)); --kc2: color-mix(in srgb,var(--bad) 18%, var(--night-900)); color: color-mix(in srgb,var(--ink) 80%, var(--board)); }
+.reject-slot[data-wear="4"] .rw-spark { animation: rw-spark .55s ease-out var(--d) 3 both; }
+.reject-slot[data-wear="4"] .rw-char::after { content: ""; position: absolute; inset: 0; border-radius: inherit; animation: rw-flash .5s steps(2) 2 both;
+  background: radial-gradient(ellipse 60% 80% at 50% 40%, color-mix(in srgb,var(--snow) 75%, transparent), transparent 75%); }
+@keyframes rw-rise { 0% { opacity: 0; transform: translate(0, 4px) scale(.45); } 18% { opacity: .75; } 100% { opacity: 0; transform: translate(var(--x), -62px) scale(1.7); } }
+@keyframes rw-spark { 0% { opacity: 1; transform: rotate(calc(var(--a) + 90deg)) translateY(-6px) scaleY(.5); } 70% { opacity: 1; } 100% { opacity: 0; transform: rotate(calc(var(--a) + 90deg)) translateY(calc(-1 * var(--r))) scaleY(1.1); } }
+@keyframes rw-flash { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.droid-bay { position: fixed; inset: 0; z-index: 17; overflow: hidden; pointer-events: none; }   /* clips the droid at the screen edge, so it never adds sideways scroll */
+.droid { position: absolute; left: 100%; top: 0; width: clamp(92px, 12vw, 128px); filter: drop-shadow(0 6px 8px var(--ui-sh)); }
+.droid[hidden] { display: none; }
+.droid svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dr-old { opacity: 0; }
+.droid.swapped .dr-new { opacity: 0; }
+.droid.swapped .dr-old { opacity: 1; }
+.droid.rolling .dr-tread { animation: dr-tread .34s linear infinite; }
+.droid.rolling .dr-bob { animation: dr-bob .22s ease-in-out infinite alternate; }
+.dr-arm { transform-box: fill-box; transform-origin: 100% 60%; animation: dr-sway 2s ease-in-out infinite alternate; }
+.droid.swapped .dr-arm { animation: dr-swap .5s var(--ease-in) both; }
+.dr-eye { animation: dr-eye 1.6s ease-in-out infinite alternate; }
+.dr-led { animation: dr-led 1s steps(1) infinite; }   /* one blink a second, well under 3 flashes/s */
+@keyframes dr-tread { to { stroke-dashoffset: 18; } }
+@keyframes dr-bob { to { transform: translateY(-1.6px) rotate(-.6deg); } }
+@keyframes dr-sway { to { transform: rotate(-3deg); } }
+@keyframes dr-swap { 0% { transform: translateY(0); } 45% { transform: translateY(8px) rotate(3deg); } 100% { transform: rotate(-2deg); } }
+@keyframes dr-eye { to { opacity: .7; } }
+@keyframes dr-led { 50% { opacity: .25; } }
+body[data-phase="paused"] .reject-slot *, body[data-phase="paused"] .reject-slot *::after, body[data-phase="paused"] .droid * { animation-play-state: paused; }
 
 /* reduced motion: still frames, crossfades only */
 .il-reduced *, .il-reduced .il-beat.on * { animation: none !important; }
 .il-reduced .il-beat, .il-reduced .il-beat.on { transition-duration: 200ms; }
 .reduced .keycap, .reduced .title-settings input { transition: none; }
 .reduced .sl-item, .reduced .toast, .reduced .timerfill { animation: none !important; }
+.reduced .rw-puff { animation: none; opacity: .4; transform: translate(var(--x), -26px) scale(1.1); }
+.reduced .rw-spark { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .il *, .sl-item, .toast, .timerfill { animation: none !important; }
+  .rw-puff { animation: none; opacity: .4; transform: translate(var(--x), -26px) scale(1.1); }
+  .rw-spark { display: none; }
   .il-beat, .il-beat.on { transition-duration: 200ms; }
 }
 

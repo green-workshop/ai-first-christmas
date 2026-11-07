@@ -22,10 +22,11 @@
     <h1 id="titleHeading" class="sr-only">North Pole Ltd: AI-First Christmas</h1>
     <div class="title-logo" id="titleLogo"></div>
     <div class="title-dash" id="titleDash"></div>
-    <p class="title-strap">The board has mandated an AI-first Christmas. You're the elf who checks what the AI decides.</p>
+    <p class="title-strap">The board gets its AI-first Christmas. You make sure the children still get the right presents.</p>
     <div class="title-actions">
       <button id="btnStart" class="keycap keycap-pack">Start shift</button>
-      <button id="btnIntro" class="keycap keycap-plain">Replay intro</button>
+      <button id="btnIntro" class="keycap keycap-plain" hidden>Replay intro</button>
+      <button id="btnEnding" class="keycap keycap-plain" hidden>Replay ending</button>
     </div>
     <div class="title-settings" role="group" aria-label="Settings">
       <label><input type="checkbox" id="setSound"> Sound</label>
@@ -69,7 +70,14 @@
       <div class="controls">
         <button id="btnPack" class="keycap keycap-pack"><span class="k-ico" data-icon="arrow-left"></span> Pack</button>
         <div id="sleigh" class="sleigh-strip" aria-label="Packed gifts"></div>
-        <button id="btnReject" class="keycap keycap-reject">Reject <span class="k-ico" data-icon="arrow-right"></span></button>
+        <div id="rejectSlot" class="reject-slot" data-wear="0">
+          <button id="btnReject" class="keycap keycap-reject">Reject <span class="k-ico" data-icon="arrow-right"></span></button>
+          <div class="rw-fx" aria-hidden="true">
+            <i class="rw-char"></i>
+            <i class="rw-puff" style="--x:-14px;--d:0s"></i><i class="rw-puff" style="--x:10px;--d:-.9s"></i><i class="rw-puff" style="--x:-30px;--d:-.5s"></i><i class="rw-puff" style="--x:26px;--d:-1.4s"></i>
+            <i class="rw-spark" style="--a:-155deg;--r:46px;--d:.02s"></i><i class="rw-spark" style="--a:-120deg;--r:62px;--d:.1s"></i><i class="rw-spark" style="--a:-90deg;--r:54px;--d:0s"></i><i class="rw-spark" style="--a:-65deg;--r:66px;--d:.14s"></i><i class="rw-spark" style="--a:-30deg;--r:44px;--d:.06s"></i><i class="rw-spark" style="--a:-105deg;--r:38px;--d:.2s"></i>
+          </div>
+        </div>
       </div>
       <p class="keys-hint kb">← / A pack · → / D reject · Esc pause</p>
     </div>
@@ -81,7 +89,7 @@
       <div class="memo-head">NORTH POLE LTD · INTERNAL</div>
       <h2 id="briefTitle">Your shift: checking the AI</h2>
       <div class="brief-demo" id="briefDemo" aria-hidden="true"></div>
-      <p><b>Read the letter.</b> Then check what the AI chose.</p>
+      <p><b>Read the letter.</b> The AI wrote the order and the workshop built it. Check what came out.</p>
       <p class="brief-keys kb"><span class="kbd">←</span> or <span class="kbd">A</span> <b>pack it</b> &nbsp;·&nbsp; <span class="kbd">→</span> or <span class="kbd">D</span> <b>reject it</b></p>
       <p class="brief-keys tch"><b>Swipe left</b> to pack it &nbsp;·&nbsp; <b>swipe right</b> to reject it &nbsp;·&nbsp; or use the buttons</p>
       <p class="brief-skip"><span class="kb">Read the letter already? Press any arrow or Space to drop the gift now.</span><span class="tch">Read the letter already? Tap the belt to drop the gift now.</span></p>
@@ -93,7 +101,6 @@
   <!-- Intro and epilogue -->
   <div id="intro" class="overlay overlay-full" hidden></div>
   <div id="epilogue" class="overlay overlay-full" hidden></div>
-  <div id="memo" class="overlay" hidden></div>
 
   <!-- Interlude -->
   <div id="interlude" class="overlay overlay-full" hidden></div>
@@ -123,10 +130,13 @@
       <div class="report-top">
         <div class="plate"><span class="plate-label">Right presents</span><span class="plate-value" id="rRight"></span></div>
         <div class="plate plate-board"><span class="plate-label">AI adoption</span><span class="plate-value" id="rAdopt"></span></div>
+        <div class="plate" id="rYouPlate" hidden><span class="plate-label">You</span><span class="plate-value" id="rYou"></span></div>
+        <div class="plate plate-ai" id="rAiPlate" hidden><span class="plate-label">The AI you trained</span><span class="plate-value" id="rAi"></span></div>
       </div>
       <table class="report-table" id="reportTable"></table>
       <ul id="reportNotes" class="report-notes"></ul>
       <div id="reportSleigh" class="report-sleigh"></div>
+      <div id="reportChain" class="report-chain"></div>
       <p class="closing">The only skill in this game was a human checking the output.</p>
       <div class="report-actions">
         <button id="btnAgain" class="keycap keycap-pack">Another shift</button>
@@ -137,6 +147,7 @@
     </div>
   </div>
 
+  <div id="droidBay" class="droid-bay" aria-hidden="true"><div id="droid" class="droid" hidden></div></div>
   <div id="toast" class="toast" hidden></div>
   <div id="live" class="sr-only" aria-live="polite"></div>
 </div>

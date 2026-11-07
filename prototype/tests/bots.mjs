@@ -3,8 +3,8 @@
 //   node tests/bots.mjs [--persona name|all] [--runs N] [--seed S] [--headed] [--relaxed]
 //                       [--rounds N] [--skipintro] [--parallel N] [--slice path/to/slice.html] [--verbose]
 //
-// Full game: title -> intro -> briefing -> 6 rounds x 4 children with 5 interludes, the automation
-// memo after child 12 (plus a 2x montage of 3 automated children if accepted) -> epilogue -> report.
+// Full game: title -> intro -> briefing -> 5 played rounds x 4 children with 5 interludes (the last
+// is the sacking) -> round 6 as a 2x montage of 4 unchecked children -> epilogue -> report.
 //
 // Bots drive the game ONLY with real input (CDP Input.dispatchKeyEvent / dispatchMouseEvent /
 // dispatchTouchEvent). They READ window.__game.state() and the DOM purely for perception and
@@ -88,51 +88,51 @@ const PERSONAS = {
     device: 'phone', input: 'touch', wpm: 160, phoneReadFactor: 0.77,
     misjudge: 0.10, skimMisjudge: 0.45, slip: 0.02, slipRise: 0.02, double: 0, hold: 0,
     onOverrun: 0.6, abandonP: 0.15, title: 'tap', briefing: 'tapFast', interlude: 'tap',
-    intro: 'button', epilogue: 'button', memoAccept: 0.7,
+    intro: 'button', epilogue: 'button',
   },
   carefulReader: {
     device: 'desktop', input: 'keys', mouseShare: 0.3, wpm: 150,
     misjudge: 0.05, skimMisjudge: 0.30, slip: 0.01, slipRise: 0.01, double: 0.02, hold: 0.05,
     onOverrun: 'miss', title: 'clickSlow', briefing: 'read', interlude: 'watch',
-    intro: 'watch20', epilogue: 'watch', memoAccept: 0, memoStray: 'ArrowRight',
+    intro: 'watch20', epilogue: 'watch',
   },
   masher: {
     device: 'desktop', input: 'mash', wpm: null, glanceMs: 300, readsLetter: false,
     misjudge: 0, skimMisjudge: 0, slip: 0.04, slipRise: 0.03, double: 0, hold: 0.5,
     rejectIfWrong: 0.30, rejectIfRight: 0.10, previewMash: true,
     onOverrun: 'panic', title: 'click', briefing: 'glance', interlude: 'mash',
-    intro: 'button', epilogue: 'button', memoAccept: 0.7, memoMash: true,
+    intro: 'button', epilogue: 'button',
   },
   sceptic: {
     device: 'desktop', input: 'keys', wpm: 220, readFraction: 0.6, alwaysSkim: true,
     misjudge: 0.10, skimMisjudge: 0.25, slip: 0.02, slipRise: 0.02, double: 0.04, hold: 0.1,
     rejectBias: 0.8, onOverrun: 'panic', title: 'click', briefing: 'skim', interlude: 'watch',
-    intro: 'keyS', epilogue: 'watch', memoAccept: 0, memoStray: 'ArrowRight',
+    intro: 'keyS', epilogue: 'watch',
   },
   distracted: {
     device: 'desktop', input: 'keys', mouseShare: 0.15, wpm: 220,
     misjudge: 0.08, skimMisjudge: 0.40, slip: 0.02, slipRise: 0.02, double: 0.04, hold: 0.08,
     distractions: [2, 3], awayMs: [5000, 30000],
     onOverrun: 0.7, title: 'click', briefing: 'skim', interlude: 'watch',
-    intro: 'keyEnter', epilogue: 'watch', memoAccept: 0.5, memoStray: 'ArrowLeft',
+    intro: 'keyEnter', epilogue: 'watch',
   },
   skipper: {
     device: 'desktop', input: 'keys', wpm: 300, readFraction: 0.7, alwaysSkim: true,
     misjudge: 0.08, skimMisjudge: 0.25, slip: 0.03, slipRise: 0.03, double: 0.06, hold: 0.1,
     onOverrun: 'panic', title: 'mashThenClick', briefing: 'mash', interlude: 'mash',
-    intro: 'mash', epilogue: 'mash', memoAccept: 0.5, memoStray: 'Enter',
+    intro: 'mash', epilogue: 'mash',
   },
   keyboardOnly: {
     device: 'desktop', input: 'arrows', wpm: 200,
     misjudge: 0.07, skimMisjudge: 0.40, slip: 0.02, slipRise: 0.02, double: 0.03, hold: 0.05,
     onOverrun: 0.7, title: 'tab', briefing: 'tab', interlude: 'keys', checkLive: true,
-    intro: 'tab', epilogue: 'watch', memoAccept: 0.5, memoVia: 'tab', memoStray: 'Enter',
+    intro: 'tab', epilogue: 'watch',
   },
   secondRun: {
     device: 'desktop', input: 'keys', mouseShare: 0.1, wpm: 230,
     misjudge: 0.07, skimMisjudge: 0.40, slip: 0.02, slipRise: 0.02, double: 0.04, hold: 0.08,
     onOverrun: 0.7, title: 'click', briefing: 'skim', interlude: 'keys', twoPasses: true,
-    intro: 'button', epilogue: 'keyEnter', memoAccept: 0.5, memoStray: 'ArrowLeft',
+    intro: 'button', epilogue: 'keyEnter',
   },
 };
 
@@ -143,10 +143,10 @@ const VIEWPORTS = {
 
 // 'result' is not in ARCHITECTURE.md but the engine uses it between a child's outcome and the next letter.
 const KNOWN_PHASES = ['title', 'intro', 'briefing', 'preview', 'belt', 'apology', 'flight', 'result', 'interlude',
-                      'memo', 'montage', 'epilogue', 'paused', 'report'];
+                      'montage', 'epilogue', 'paused', 'report'];
 // Cutscene-like phases. While one of them shows a visible button, the normal stuck rule does not apply
 // (the player is meant to sit there), but more than CUTSCENE_FLAG_MS in one is still flagged.
-const CUTSCENE_PHASES = ['intro', 'interlude', 'memo', 'montage', 'epilogue'];
+const CUTSCENE_PHASES = ['intro', 'interlude', 'montage', 'epilogue'];
 const STUCK_MS = 40000;          // no phase change for this long outside 'paused' = stuck
 const STUCK_ABORT_MS = 60000;    // give up on the run after this long stuck
 const CUTSCENE_FLAG_MS = 120000;
@@ -158,8 +158,6 @@ const PASS_TIMEOUT_MS = 25 * 60000;
 const SEL = {
   introSkip: { scopes: ['#intro'], classes: ['.in-skip', '[data-action="skip"]', '.skip'], re: 'skip' },
   epilogueSkip: { scopes: ['#epilogue'], classes: ['.ep-skip', '[data-action="skip"]', '.skip'], re: 'skip' },
-  memoYes: { scopes: ['#memo', '#interlude', '.am-memo'], classes: ['.am-yes', '[data-choice="yes"]'], re: 'automate' },
-  memoNo: { scopes: ['#memo', '#interlude', '.am-memo'], classes: ['.am-no', '[data-choice="no"]'], re: "no thanks|i'?ll check|^\\s*no\\b" },
 };
 
 class Abort extends Error { constructor(kind, msg) { super(msg); this.kind = kind; } }
@@ -188,7 +186,7 @@ async function runOne(personaName, runIdx, args) {
     stuck: [], consoleErrors: [], unknownPhases: [], unknownNudges: 0, unexpectedPauses: 0,
     distractions: [], live: null, briefing: null,
     // full game: per-pass cutscene records (the final pass is copied here; secondRun keeps pass 1 in firstPass)
-    intro: null, epilogue: null, memo: null, montage: null, interludes: 0, cutscenes: null,
+    intro: null, epilogue: null, montage: null, interludes: 0, cutscenes: null,
     cutscenesNotAutoSkipped: [], automation: null, gameBugs: [],
     timeToFirstGiftMs: null, sessionMs: null, phaseLog: [], screenshots: [],
   };
@@ -214,13 +212,13 @@ async function runOne(personaName, runIdx, args) {
 
     const ctx = ctxRef = makeCtx({ b, P, rng, result, tag, log, args, t0 });
     if (P.twoPasses) {
-      // Pass 1: a first play (fresh profile, no ?fresh=1). Pass 2: reload as a returning player.
+      // Pass 1: a first play (no ?fresh=1). Pass 2: back to the title and a repeat shift. Progress lasts only while the page is open, so no reload.
       const first = await playPass(ctx, url, { label: 'pass1' });
       result.firstPass = first;
-      log('pass 1 done, reloading as a returning player');
+      log('pass 1 done, starting a repeat shift');
       await sleep(rng.range(1500, 3000));
       ctx.resetPass();
-      const second = await playPass(ctx, url, { label: 'pass2', reload: true });
+      const second = await playPass(ctx, url, { label: 'pass2', again: true });
       Object.assign(result, second);
     } else {
       Object.assign(result, await playPass(ctx, url, { label: 'main' }));
@@ -234,11 +232,11 @@ async function runOne(personaName, runIdx, args) {
       if (b) { try { result.screenshots.push(await b.screenshot(join(OUT, `${tag}-error.png`))); } catch { /* ignore */ } }
     }
     try { if (b) await finishOutcomes(b, result); } catch { /* ignore */ }
-    // keep what the unfinished pass saw (cutscenes, memo, ...)
+    // keep what the unfinished pass saw (cutscenes, montage, ...)
     const p = ctxRef && ctxRef.pass;
     if (p && !p.completed) {
       if (p.segments) { p.segments.push({ phase: ctxRef.lastPhase, t: ctxRef.lastPhaseAt - ctxRef.passStart, ms: now() - ctxRef.lastPhaseAt, round: null }); p.cutscenes = cutsceneTimes(p.segments); delete p.segments; }
-      for (const k of ['intro', 'epilogue', 'memo', 'montage', 'interludes', 'cutscenes', 'cutscenesNotAutoSkipped', 'timeToFirstGiftMs']) result[k] = p[k];
+      for (const k of ['intro', 'epilogue', 'montage', 'interludes', 'leavingElves', 'cutscenes', 'cutscenesNotAutoSkipped', 'timeToFirstGiftMs']) result[k] = p[k];
     }
   } finally {
     result.sessionMs = result.sessionMs ?? now() - t0;
@@ -261,22 +259,20 @@ function summariseRun(r) {
     const pr = (r.perRound[x.round] = r.perRound[x.round] || { total: 0, right: 0, caught: 0, missed: 0, talked: 0, unchecked: 0, correct: 0 });
     pr.total++; pr[x.outcome] = (pr[x.outcome] || 0) + 1; if (x.correct) pr.correct++;
   }
-  // Automated children (SPEC §4f): the engine may mark them { automated: true }; otherwise they are the
-  // 3 outcomes recorded right after an accepted memo. They should all be 'unchecked'.
+  // Round 6 (SPEC §4f): the AI the player trained runs it unchecked, as right as they were in rounds 1-5
   r.automation = null;
-  if (r.memo) {
-    const accepted = r.memo.choice === 'yes';
-    let auto = [];
-    if (o.some((x) => x.automated || x.auto)) auto = o.filter((x) => x.automated || x.auto);
-    else if (accepted && r.memo.outcomesBefore != null) auto = o.slice(r.memo.outcomesBefore, r.memo.outcomesBefore + 3);
+  const auto = o.filter((x) => x.auto), mine = o.filter((x) => !x.auto);
+  if (auto.length) {
+    const right = mine.filter((x) => x.correct).length;
     r.automation = {
-      accepted, choiceVia: r.memo.via, resolvedBy: r.memo.resolvedBy, montageSeen: !!r.montage,
+      montageSeen: !!r.montage, buttonsDisabled: r.montage ? r.montage.buttonsDisabled : null,
       children: auto.map((x) => ({ round: x.round, name: x.name, outcome: x.outcome, correct: x.correct })),
-      wrong: auto.filter((x) => !x.correct).length,
-      allUnchecked: auto.length ? auto.every((x) => x.outcome === 'unchecked') : null,
+      playerRight: right, playerTotal: mine.length, aiRight: auto.filter((x) => x.correct).length,
+      expectedRight: mine.length ? Math.round((auto.length * right) / mine.length) : 0,
+      allUnchecked: auto.every((x) => x.outcome === 'unchecked'),
     };
   }
-  const autoN = r.automation ? r.automation.children.filter((x) => x.outcome === 'unchecked').length : 0;
+  const autoN = auto.filter((x) => x.outcome === 'unchecked').length;
   r.timeouts = o.filter((x) => x.outcome === 'unchecked').length - autoN;
   r.accidentalCount = r.accidental.length;
   r.accidentalNonSlip = r.accidental.filter((a) => a.cause !== 'slip').length;
@@ -291,8 +287,6 @@ function makeCtx({ b, P, rng, result, tag, log, args, t0 }) {
   ctx.wpm = P.wpm ? P.wpm * (phone ? (P.phoneReadFactor || 0.77) : 1) : null;
   ctx.readMs = (n) => (ctx.wpm ? (n / ctx.wpm) * 60000 : 0);
   ctx.reaction = () => rng.clampNormal(640, 130, 400, 900);
-  // The memo choice has its own stream, so it does not depend on how many gifts this build dealt.
-  ctx.memoRng = makeRng(hashStr(tag + ':memo') ^ (args.seed * 7919));
 
   ctx.resetPass = () => {
     ctx.passStart = now();
@@ -317,9 +311,9 @@ function makeCtx({ b, P, rng, result, tag, log, args, t0 }) {
     const s = await b.evaluate(`(() => {
       const g = window.__game; if (!g || typeof g.state !== 'function') return null;
       const s = g.state(); const live = document.getElementById('live');
-      // visible buttons on an open overlay (cutscene skip, interlude Continue, memo choices)
+      // visible buttons on an open overlay (cutscene skip, interlude Continue)
       let btns = 0;
-      for (const el of document.querySelectorAll('.overlay button, #intro button, #epilogue button, #memo button, #interlude button')) {
+      for (const el of document.querySelectorAll('.overlay button, #intro button, #epilogue button, #interlude button')) {
         if (el.closest('[hidden]')) continue;
         const r = el.getBoundingClientRect(); if (r.width > 0 && r.height > 0) btns++;
       }
@@ -420,17 +414,17 @@ const giftKey = (s) => `${s.round}:${s.child}:${s.rejectsThisChild}`;
 // ---------------------------------------------------------------------------
 // A pass: load the page and play until the report.
 // ---------------------------------------------------------------------------
-async function playPass(ctx, url, { label, reload = false }) {
+async function playPass(ctx, url, { label, again = false }) {
   const { b, P, rng, result, log } = ctx;
   const passT0 = now();
   ctx.passStart = passT0;
   ctx.lastPhaseAt = passT0;
-  if (reload) await b.reload(); else await b.navigate(url);
-  await installLiveLog(b);
+  if (again) await b.clickSelector('#btnReportTitle');
+  else { await b.navigate(url); await installLiveLog(b); }
   log(`${label}: loaded ${url}`);
 
   const pass = { label, timeToFirstGiftMs: null, sessionMs: null, completed: false, outcomes: [],
-                 intro: null, epilogue: null, memo: null, montage: null, interludes: 0, cutscenes: null,
+                 intro: null, epilogue: null, montage: null, interludes: 0, cutscenes: null,
                  cutscenesNotAutoSkipped: [], segments: [] };
   ctx.pass = pass;
   ctx.lastPhase = null; ctx.lastPhaseAt = passT0;
@@ -447,9 +441,6 @@ async function playPass(ctx, url, { label, reload = false }) {
         break;
       case 'epilogue':
         await doCutscene(ctx, 'epilogue', s);
-        break;
-      case 'memo':
-        await doMemo(ctx, s);
         break;
       case 'montage':
         await doMontage(ctx, s);
@@ -626,7 +617,7 @@ function childInfo(ctx, s) {
 
 async function doPreview(ctx, s) {
   const { b, P, rng } = ctx;
-  if (inAutomation(ctx, s)) { await sleep(60); return; }   // automated child: just watch
+  if (s.automated) { await sleep(60); return; }   // round 6 runs without the player: just watch
   const c = childInfo(ctx, s);
   if (P.previewMash && !c.mashed) {
     // The masher hammers ← while the letter is up; the game must ignore (and not buffer) it.
@@ -698,7 +689,7 @@ async function playGift(ctx, s0) {
   let s = await ctx.snap();
   if (!s || s.phase !== 'belt' || giftKey(s) !== key) { if (s) await classifyStray(ctx, s0, s, 'at decision'); return; }
   const truth = s.giftCorrect ? 'pack' : 'reject';
-  const final = s.rejectsThisChild >= 3 || /FINAL|NO FURTHER REWORK/i.test(s.tag || '');
+  const final = s.rejectsThisChild >= 4 || /FINAL|NO FURTHER REWORK/i.test(s.tag || '');
   let intended;
   if (final) intended = 'pack';
   else if (P.input === 'mash') intended = rng.chance(s.giftCorrect ? P.rejectIfRight : P.rejectIfWrong) ? 'reject' : 'pack';
@@ -738,7 +729,7 @@ async function playGift(ctx, s0) {
     // effect none: the input did nothing (too-short swipe, tap, lockout, FINAL barrier…)
     result.ignoredInputs++;
     if (final && pressed === 'reject') result.finalBounces++;
-    if (s.rejectsThisChild >= 3 || final) intended = 'pack';
+    if (s.rejectsThisChild >= 4 || final) intended = 'pack';
     await sleep(rng.range(250, 600));
   }
   ctx.doneKey = key;
@@ -955,6 +946,23 @@ async function doCutscene(ctx, phase, s0) {
   const cur = async () => (await ctx.snap())?.phase;
   const still = async () => (await cur()) === phase;
   const waitGone = async (ms) => { const end = now() + ms; while (now() < end) { const p = await cur(); if (p !== phase) return p; await sleep(80); } return phase; };
+  // A viewer of the closing film: its last scenes hold on a Next button, so read each one, then press it
+  const nextShown = () => b.evaluate(`(() => { const n = document.querySelector('#epilogue .ep-next'); return !!n && getComputedStyle(n).visibility === 'visible'; })()`).catch(() => false);
+  const watchFilm = async (ms) => {
+    const end = now() + ms;
+    while (now() < end) {
+      const p = await cur();
+      if (p !== phase) return p;
+      if (phase === 'epilogue' && await nextShown()) {
+        rec.heldScenes = (rec.heldScenes || 0) + 1;
+        await sleep(rng.range(2500, 5000));
+        if (phone) await b.tapSelector('#epilogue .ep-next'); else await b.key(rng.chance(0.5) ? 'Enter' : 'Space');
+        rec.presses++; rec.via.push('next');
+        await sleep(rng.range(700, 1000));
+      } else await sleep(80);
+    }
+    return phase;
+  };
 
   // One "skip" gesture of the given kind; if it is still up a moment later (e.g. "Press again to
   // skip", which disarms after a few seconds), press again promptly, like a person reading the hint.
@@ -989,12 +997,12 @@ async function doCutscene(ctx, phase, s0) {
   let endPhase = phase;
   switch (style) {
     case 'watch20': {                       // careful reader: watches about 20s, then skips
-      endPhase = await waitGone(rng.range(18000, 22000));
+      endPhase = await watchFilm(rng.range(18000, 22000));
       if (endPhase === phase) endPhase = await skip('button');
       break;
     }
-    case 'watch': {                         // watches it all (the epilogue is ~15s); nudges if it never ends
-      endPhase = await waitGone(45000);
+    case 'watch': {                         // watches it all, pressing Next on the held scenes; nudges if it never ends
+      endPhase = await watchFilm(45000);
       for (let i = 0; endPhase === phase && i < 10; i++) { await b.key('Space'); rec.presses++; rec.via.push('key:Space'); endPhase = await waitGone(3000); }
       if (endPhase === phase) endPhase = await skip('Enter');
       break;
@@ -1038,146 +1046,25 @@ async function doCutscene(ctx, phase, s0) {
 }
 
 // ---------------------------------------------------------------------------
-// The automation memo (SPEC §4f, §6a): input ignored for 1s, arrows only move focus, nothing focused
-// by default. Every persona sends a stray key in the first second; the masher hammers ← throughout.
-// The memo resolving before the bot's deliberate choice is a GAME BUG.
+// Round 6 (SPEC §4f): the engine shows phase 'montage' while each of the 4 gifts rides the belt, with
+// preview / flight / result in between. The player has been sacked, so the buttons must be disabled.
 // ---------------------------------------------------------------------------
-async function doMemo(ctx, s0) {
-  const { b, P, rng, result, pass, log, tag } = ctx;
-  const phone = P.device === 'phone';
-  if (pass.memo && pass.memo.done) {
-    // already answered; it is still up (or back after a pause): nudge with the chosen button
-    await sleep(500);
-    if ((await ctx.snap())?.phase === 'memo' && now() - ctx.lastPhaseAt > 3000) {
-      const btn = await ctx.findBtn(pass.memo.choice === 'yes' ? SEL.memoYes : SEL.memoNo);
-      result.ignoredInputs++;
-      if (btn) await ctx.pressAt(btn); else await b.key('Enter');
-      await sleep(rng.range(800, 1400));
-    }
-    return;
-  }
-  const t = now();
-  const memo = pass.memo = pass.memo || {
-    seenAtMs: t - ctx.passStart, outcomesBefore: (s0.outcomes || []).length, round: s0.round,
-    intended: ctx.memoRng.chance(P.memoAccept || 0) ? 'yes' : 'no', stray: [], strayResolved: false, resolvedBy: null,
-    choice: null, via: null, initialFocus: null, tabFocus: null, attempts: 0, done: false, buttons: null,
-  };
-  setTimeout(() => ctx.shot(`${pass.label === 'pass1' ? 'pass1-' : ''}memo`), 1100);
-  memo.initialFocus = await ctx.focusDesc().catch(() => null);
-  const inMemo = async () => { const p = (await ctx.snap())?.phase; return p === 'memo' || p === 'paused'; };
-  const strayCheck = async () => {
-    const p = (await ctx.snap())?.phase;
-    if (p !== 'memo' && p !== 'paused') {
-      memo.strayResolved = true; memo.resolvedBy = 'stray'; memo.nextPhase = p; memo.done = true;
-      const keys = memo.stray.map((x) => `${x.key}@${x.atMs}ms`).join(' ');
-      result.gameBugs.push({ kind: 'memo-resolved-by-stray-input', detail: `memo left for "${p}" after stray input ${keys}` });
-      console.warn(`[${tag}] GAME BUG: the automation memo resolved from stray input (${keys}) -> ${p}`);
-      return true;
-    }
-    return false;
-  };
-
-  // --- stray input (once; not again after a pause/resume, when the 1s lock may not re-apply) ---
-  const doStray = !memo.strayDone;
-  memo.strayDone = true;
-  if (!doStray) { /* re-entry */ }
-  else if (P.memoMash) {
-    // masher: keeps hammering ← (with the odd hold) for 1.5–2.5s from the moment the memo appears
-    const end = t + rng.range(1500, 2500);
-    while (now() < end) {
-      const hold = rng.chance(0.3) ? rng.range(200, 500) : 0;
-      await b.key('ArrowLeft', { holdMs: hold });
-      memo.stray.push({ key: hold ? `←(${Math.round(hold)}ms)` : '←', atMs: now() - t });
-      if (await strayCheck()) return;
-      await sleep(rng.range(50, 130));
-    }
-  } else if (phone) {
-    // a thumb still tapping from the interlude: a tap on the memo inside the first second
-    await sleep(rng.range(200, 600));
-    const btn = await ctx.findBtn(rng.chance(0.5) ? SEL.memoYes : SEL.memoNo);
-    if (btn) { await ctx.pressAt(btn); memo.stray.push({ key: 'tap:' + btn.text.slice(0, 20), atMs: now() - t }); }
-    else { await b.tapSelector('#memo', { jitter: 0.2 }).catch(() => {}); memo.stray.push({ key: 'tap:memo', atMs: now() - t }); }
-    if (await strayCheck()) return;
-  } else {
-    // a key carried over from the interlude (Enter / Space) or from the belt (← / →)
-    await sleep(rng.range(150, 600));
-    const k = P.memoStray || 'ArrowLeft';
-    await b.key(k);
-    memo.stray.push({ key: k, atMs: now() - t });
-    // a second stray only while still well inside the first second (keys after 1s are legitimate input)
-    if (rng.chance(0.5) && now() - t < 650) { await sleep(rng.range(60, 150)); const k2 = rng.pick(['ArrowLeft', 'ArrowRight', 'Enter']); await b.key(k2); memo.stray.push({ key: k2, atMs: now() - t }); }
-    if (await strayCheck()) return;
-  }
-  // Let the first second pass for sure and check again (a buffered stray must not fire late either).
-  if (doStray) { await sleep(Math.max(0, t + 1300 - now())); if (await strayCheck()) return; }
-
-  // --- read it ---
-  const text = await b.evaluate(`(() => { const m = document.querySelector('#memo:not([hidden])') || document.querySelector('.am-memo') || document.querySelector('#interlude'); return m ? m.innerText : ''; })()`).catch(() => '');
-  memo.words = words(text);
-  const readMs = P.memoMash ? rng.range(400, 1000) : ctx.readMs(memo.words) * (P.readFraction || 1) + ctx.reaction();
-  const readEnd = now() + Math.min(readMs, 20000);
-  while (now() < readEnd) { if (await strayCheck()) return; if (!(await inMemo())) return; await sleep(150); }
-  if (await strayCheck()) return;
-
-  // --- choose ---
-  const spec = memo.intended === 'yes' ? SEL.memoYes : SEL.memoNo;
-  memo.buttons = { yes: !!(await ctx.findBtn(SEL.memoYes)), no: !!(await ctx.findBtn(SEL.memoNo)) };
-  if (!memo.buttons.yes || !memo.buttons.no) console.warn(`[${tag}] WARN memo buttons not found (yes ${memo.buttons.yes}, no ${memo.buttons.no}); using keys`);
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    memo.attempts = attempt;
-    if ((await ctx.snap())?.phase === 'paused') return;   // main loop resumes, then we come back
-    if (P.memoVia === 'tab' || !(await ctx.findBtn(spec))) {
-      // Tab to the intended button (keyboardOnly, or the fallback when the button cannot be found)
-      let ok = false;
-      for (let i = 0; i < 10 && !(ok = await ctx.focusIs(spec)); i++) { await b.key('Tab'); await sleep(rng.range(150, 350)); }
-      if (!ok) for (let i = 0; i < 4 && !(ok = await ctx.focusIs(spec)); i++) { await b.key(rng.chance(0.5) ? 'ArrowRight' : 'ArrowLeft'); await sleep(rng.range(150, 300)); }
-      if (memo.tabFocus == null) memo.tabFocus = ok;
-      await sleep(rng.range(200, 500));
-      await b.key('Enter');
-      memo.via = ok ? 'tab+Enter' : 'Enter(unfocused)';
-    } else {
-      const btn = await ctx.findBtn(spec);
-      memo.via = await ctx.pressAt(btn);
-    }
-    const end = now() + 3000;
-    let p = 'memo';
-    while (now() < end && (p = (await ctx.snap())?.phase) === 'memo') await sleep(80);
-    if (p !== 'memo' && p !== 'paused') {
-      memo.choice = memo.intended; memo.resolvedBy = 'bot'; memo.nextPhase = p; memo.done = true;
-      memo.ms = now() - t;
-      log(`memo: chose ${memo.choice} via ${memo.via} after ${(memo.ms / 1000).toFixed(1)}s (stray: ${memo.stray.map((x) => x.key).join(' ')}) -> ${p}`);
-      return;
-    }
-    result.ignoredInputs++;
-    log(`memo: ${memo.via} did nothing (attempt ${attempt})`);
-    await sleep(rng.range(400, 900));
-  }
-  memo.done = true; memo.choice = null;
-  console.warn(`[${tag}] WARN the automation memo did not respond to ${memo.via}`);
-}
-
-// True while the accepted automation's 3 children are still running (the engine shows phase 'montage'
-// while each automated gift rides the belt, with preview / flight / result in between).
-function inAutomation(ctx, s) {
-  const m = ctx.pass && ctx.pass.memo;
-  return !!(m && m.choice === 'yes' && m.outcomesBefore != null && (s.outcomes || []).length < m.outcomesBefore + 3);
-}
-
 async function doMontage(ctx, s0) {
-  const { pass, result, tag } = ctx;
+  const { b, pass, result, tag } = ctx;
   if (pass.montage) pass.montage.segments++;
   if (!pass.montage) {
-    pass.montage = { seenAtMs: now() - ctx.passStart, outcomesAtStart: (s0.outcomes || []).length, segments: 1, ms: 0 };
-    if (!pass.memo || pass.memo.choice === 'no') {
-      result.gameBugs.push({ kind: 'montage-without-accept', detail: `montage after memo choice ${pass.memo ? pass.memo.choice : '(no memo seen)'}` });
-      console.warn(`[${tag}] GAME BUG: montage shown although automation was not accepted`);
+    pass.montage = { seenAtMs: now() - ctx.passStart, outcomesAtStart: (s0.outcomes || []).length, segments: 1, ms: 0, round: s0.round };
+    if (s0.round !== 6 || !s0.automated) {
+      result.gameBugs.push({ kind: 'montage-outside-round-6', detail: `montage in round ${s0.round}, automated ${s0.automated}` });
+      console.warn(`[${tag}] GAME BUG: montage in round ${s0.round}`);
     }
-    if (pass.memo && pass.memo.resolvedBy === 'stray') pass.memo.choice = 'yes';   // what the stray input picked
     setTimeout(() => ctx.shot(`${pass.label === 'pass1' ? 'pass1-' : ''}montage`), 2000);
   }
-  const end = now() + 60000;   // just wait (~8s in all)
+  const off = await b.evaluate(`document.getElementById('btnPack').disabled && document.getElementById('btnReject').disabled`).catch(() => null);
+  if (off !== null) pass.montage.buttonsDisabled = pass.montage.buttonsDisabled !== false && off;
+  const end = now() + 60000;   // just wait (under 4s per child)
   while (now() < end) { const s = await ctx.snap(); if (!s || s.phase !== 'montage') break; await sleep(100); }
-  // first automated belt to the end of the latest one (covers all 3 children with the gaps between)
+  // first belt to the end of the latest one (covers all 4 children with the gaps between)
   pass.montage.ms = now() - ctx.passStart - pass.montage.seenAtMs;
   pass.montage.outcomesAtEnd = ((await ctx.snap())?.outcomes || []).length;
 }
@@ -1209,15 +1096,18 @@ function cutsceneTimes(segs) {
   }
   const one = (p) => { const x = list.filter((c) => c.phase === p); return x.length ? x.reduce((a, c) => a + c.ms, 0) : null; };
   return { intro: one('intro'), interludes: list.filter((c) => c.phase === 'interlude').map((c) => c.ms),
-           memo: one('memo'), montage: one('montage'), epilogue: one('epilogue'), list };
+           montage: one('montage'), epilogue: one('epilogue'), list };
 }
 
 // ---------------------------------------------------------------------------
 // Interlude
 // ---------------------------------------------------------------------------
 async function doInterlude(ctx) {
-  const { b, P, rng } = ctx;
+  const { b, P, rng, pass } = ctx;
   const t = now();
+  // the floor is in the DOM from the first beat: count the elves walking out of this interlude
+  const leaving = await b.evaluate(`document.querySelectorAll('#interlude .il-walk').length`).catch(() => null);
+  if (leaving !== null) (pass.leavingElves = pass.leavingElves || []).push(leaving);
   const still = async () => (await ctx.snap())?.phase === 'interlude';
   switch (P.interlude) {
     case 'mash': {
@@ -1348,17 +1238,15 @@ function printSummary(results) {
     rp.push([p, ...v.map((x) => (x ? fmt(x.pct, 0) : '-')), v[0] && v[4] ? fmt(v[0].pct - v[4].pct, 0) : '-']);
   }
   table(rp);
-  // 3. cutscenes, memo and automation
-  const cs = [['persona', 'intro s', 'intro via', 'interludes', 'interlude s (mean)', 'memo s', 'accepted', 'auto wrong/n', 'montage s', 'epilogue s', 'epi via']];
+  // 3. cutscenes and round 6
+  const cs = [['persona', 'intro s', 'intro via', 'interludes', 'interlude s (mean)', 'AI right/n', 'montage s', 'epilogue s', 'epi via']];
   for (const [p, rs] of Object.entries(by)) {
     const c = (f) => rs.map((r) => (r.cutscenes ? f(r.cutscenes) : null));
     const via = (k) => [...new Set(rs.map((r) => (!r[k] ? null : r[k].via.length ? r[k].via[r[k].via.length - 1].split('(')[0] : 'watched')).filter(Boolean))].join('/') || '-';
-    const mem = rs.filter((r) => r.automation);
     const auto = rs.flatMap((r) => (r.automation ? r.automation.children : []));
     cs.push([p, secs(c((x) => x.intro)), via('intro'), sum(rs, (r) => r.interludes) || '-',
-      secs(c((x) => (x.interludes.length ? avg(x.interludes) : null))), secs(c((x) => x.memo)),
-      mem.length ? `${mem.filter((r) => r.automation.accepted).length}/${mem.length}` : '-',
-      auto.length ? `${auto.filter((x) => !x.correct).length}/${auto.length}` : '-',
+      secs(c((x) => (x.interludes.length ? avg(x.interludes) : null))),
+      auto.length ? `${auto.filter((x) => x.correct).length}/${auto.length}` : '-',
       secs(rs.map((r) => (r.montage ? r.montage.ms : null))), secs(c((x) => x.epilogue)), via('epilogue')]);
   }
   table(cs);
@@ -1366,8 +1254,7 @@ function printSummary(results) {
   for (const r of results) {
     for (const g of r.gameBugs || []) console.log(`  ${r.persona}#${r.run} GAME BUG ${g.kind}: ${g.detail}`);
     if (r.unknownPhases.length) console.log(`  ${r.persona}#${r.run} unknown phases: ${r.unknownPhases.join(', ')}`);
-    if (r.memo) console.log(`  ${r.persona}#${r.run} memo: intended ${r.memo.intended}, chose ${r.memo.choice ?? '-'} via ${r.memo.via ?? '-'} (resolved by ${r.memo.resolvedBy ?? '-'}; stray ${r.memo.stray.map((x) => x.key).join(' ') || 'none'}; focus at open ${r.memo.initialFocus ? (r.memo.initialFocus.id || r.memo.initialFocus.tag) + (r.memo.initialFocus.button ? ' [BUTTON]' : '') : '-'})`);
-    if (r.automation && r.automation.accepted) console.log(`  ${r.persona}#${r.run} automated: ${r.automation.children.map((x) => `${x.name || '?'} ${x.outcome}${x.correct ? '+' : 'x'}`).join(', ') || 'none recorded'}`);
+    if (r.automation) console.log(`  ${r.persona}#${r.run} round 6: player ${r.automation.playerRight}/${r.automation.playerTotal}, AI ${r.automation.aiRight}/${r.automation.children.length} (expected ${r.automation.expectedRight}): ${r.automation.children.map((x) => `${x.name || '?'} ${x.outcome}${x.correct ? '+' : 'x'}`).join(', ')}`);
     if (r.error) console.log(`\n  ${r.persona}#${r.run} ERROR: ${r.error.split('\n')[0]}`);
     for (const e of r.consoleErrors.slice(0, 3)) console.log(`  ${r.persona}#${r.run} console: ${String(e.text).split('\n')[0].slice(0, 160)}`);
     for (const s of r.stuck) console.log(`  ${r.persona}#${r.run} ${s.kind === 'cutscene>120s' ? 'over 120s in' : 'stuck in'} "${s.phase}" at ${fmt(s.t / 1000)}s (round ${s.round}, child ${s.child})`);
@@ -1408,31 +1295,27 @@ function checkTargets(results, args = {}) {
       t.length ? Math.max(...t) <= 20000 : false, t.length ? `max ${fmt(Math.max(...t) / 1000)}s` : 'never reached a gift');
   }
   {
-    const withMemo = results.filter((r) => r.memo);
-    const stray = withMemo.filter((r) => r.memo.strayResolved);
-    add('automation memo never resolved by a stray key/tap', withMemo.length ? stray.length === 0 : null,
-      withMemo.length ? `${stray.length}/${withMemo.length} memo(s) resolved by stray input` : 'memo never shown');
-    // only expected when a run got past child 12
-    const reached = results.filter((r) => (r.outcomes || []).length >= 12);
-    if (reached.length) add('automation memo shown after child 12', reached.every((r) => r.memo),
-      `${reached.filter((r) => r.memo).length}/${reached.length} run(s) past child 12 saw phase "memo"`);
-    const acc = withMemo.filter((r) => r.automation && r.automation.accepted);
-    if (acc.length) add('accepted automation: 2x montage, 3 children shipped unchecked',
-      acc.every((r) => r.automation.montageSeen && r.automation.allUnchecked && r.automation.children.length === 3),
-      acc.map((r) => `${r.persona}#${r.run}: montage ${r.automation.montageSeen ? 'yes' : 'NO'}, ${r.automation.children.map((x) => x.outcome).join('/') || 'none'}`).join('; '));
-    const kb = of('keyboardOnly').filter((r) => r.memo && r.memo.resolvedBy === 'bot');
-    if (kb.length) add('memo answerable with Tab + Enter (keyboardOnly)', kb.every((r) => r.memo.tabFocus), kb.map((r) => `tabFocus ${r.memo.tabFocus}`).join(', '));
-    const foc = withMemo.filter((r) => r.memo.initialFocus);
-    if (foc.length) add('memo opens with neither button focused', foc.every((r) => !r.memo.initialFocus.button),
-      foc.filter((r) => r.memo.initialFocus.button).map((r) => `${r.persona}#${r.run}: ${r.memo.initialFocus.text}`).join(', ') || 'ok');
+    const done = results.filter((r) => (r.outcomes || []).length >= 24);
+    const ai = done.filter((r) => r.automation);
+    if (done.length) {
+      add('round 6 is a montage of 4 unchecked children', done.every((r) => r.automation && r.automation.montageSeen && r.automation.children.length === 4 && r.automation.children.every((x) => x.round === 6) && r.automation.allUnchecked),
+        done.map((r) => `${r.persona}#${r.run}: ${r.automation ? r.automation.children.map((x) => x.outcome).join('/') : 'no AI round'}`).join('; '));
+      add('both buttons disabled during round 6', ai.length ? ai.every((r) => r.automation.buttonsDisabled === true) : false,
+        ai.filter((r) => r.automation.buttonsDisabled !== true).map((r) => `${r.persona}#${r.run}`).join(', ') || 'ok');
+      add("AI's right count = the player's rounds 1-5 rate, rounded", ai.length ? ai.every((r) => r.automation.aiRight === r.automation.expectedRight) : false,
+        ai.map((r) => `${r.persona}#${r.run}: ${r.automation.playerRight}/${r.automation.playerTotal} -> ${r.automation.aiRight}/4`).join('; '));
+    }
   }
   if (of('secondRun').length) {
     const sr = of('secondRun').filter((r) => r.completed);
     add('secondRun: cutscenes auto-skipped on the second play', sr.length ? sr.every((r) => !r.cutscenesNotAutoSkipped.length) : null,
       sr.map((r) => r.cutscenesNotAutoSkipped.join('+') || 'none shown').join(', ') || 'no completed second pass');
+    const again = sr.filter((r) => r.leavingElves && r.leavingElves.length);
+    add('secondRun: a repeat shift shows no leaving elves', again.length ? again.every((r) => r.leavingElves.every((n) => n === 0)) : null,
+      again.map((r) => `pass 1 ${(r.firstPass && r.firstPass.leavingElves || []).join('/') || '-'}, pass 2 ${r.leavingElves.join('/')}`).join('; ') || 'no interlude seen on the second pass');
   }
   {
-    const bugs = results.flatMap((r) => r.gameBugs || []).filter((g) => g.kind !== 'memo-resolved-by-stray-input' && g.kind !== 'cutscene-not-auto-skipped');
+    const bugs = results.flatMap((r) => r.gameBugs || []).filter((g) => g.kind !== 'cutscene-not-auto-skipped');
     if (bugs.length) add('no other game bugs seen by the harness', false, bugs.map((g) => g.kind).join(', '));
     const unk = [...new Set(results.flatMap((r) => r.unknownPhases))];
     if (unk.length) add('no phases outside the contract', false, unk.join(', '));

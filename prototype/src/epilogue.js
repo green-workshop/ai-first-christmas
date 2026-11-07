@@ -1,8 +1,8 @@
 window.NP = window.NP || {};
 
-// Epilogue (SPEC §3a): E1 the year-end board meeting and its giant cheque, E2 the basement, E3 the verdict
-// (+ an automation beat). Plays on its own (~15s); reduced motion = still panels that wait for next().
-// The engine owns all input; this only exposes next/skip/pause/resume/done.
+// Closing film (SPEC §3a): E1 the year-end board meeting and its giant cheque, E2 the verdict, E3 out of work,
+// E4 the autumn letter, E5 the contract. E1 and E2 play on their own; E3 to E5 hold for the Next button, because the joke needs reading.
+// Reduced motion = still panels that all hold. The engine owns the keys; this only exposes next/skip/pause/resume/held/done.
 (function (NP) {
   'use strict';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -62,31 +62,26 @@ window.NP = window.NP || {};
     lg('metal', V('board'), M('board-dark', 'night-900', 70)) +
     lg('sack', M('wood', 'paper-shade', 55), M('wood-dark', 'wood', 70)) +
     lg('tag', M('bad', 'lamp', 70), M('bad', 'pole-red-dark', 75)) +
+    lg('bp', M('good', 'night-600', 42), M('night-600', 'night-900', 62)) +
+    lg('autumn', M('lamp', 'lamp-deep', 60), M('lamp-deep', 'pole-red-dark', 70), 0, 1) +
+    lg('box', M('paper-shade', 'wood', 55), M('wood', 'wood-dark', 70)) +
     '</defs>';
 
   /* ---------- copy ---------- */
   var DEF = {
     date: '27 December · Year-end board meeting',
-    chair: 'Chair: "100% adoption. A record year."',
+    chair: 'Chair: "{adoption}% adoption. A record year."',
     cheque: 'BONUSES: AI TRANSFORMATION', useCase: 'Use case: TBC (next year)',
-    basement: 'Meanwhile, in the basement.',
-    automated: 'Chair: "Special thanks to our elf for embracing automation."',
+    jobless: 'January. Out of work. You kept the box.',
+    autumn: 'Board: "The AI performed at 100%. Unfortunately, the children changed."',
+    rehire: 'Back as a contractor, on double the day rate. Chair: "We have always believed in people."',
     verdicts: ['A thank-you letter arrives for "the elf". The board credits the AI.',
       'A returns sack thuds onto the table. Board: "Lessons will be learned."',
       'The dashboard is green. The window is full of upset children. Chair: "Promotion likely."']
   };
   function copy(k) { var e = (NP.content && NP.content.epilogue) || {}; return e[k] != null && typeof e[k] !== 'object' ? String(e[k]) : DEF[k]; }
   function band(p) { p = +p || 0; return p >= 90 ? 0 : p >= 40 ? 1 : 2; }
-  function bandLine(p) {
-    var v = NP.content && NP.content.verdicts, e = (NP.content && NP.content.epilogue) || {};
-    if (Array.isArray(e.verdicts) && e.verdicts[band(p)]) return String(e.verdicts[band(p)].line || e.verdicts[band(p)].text || e.verdicts[band(p)]);
-    if (Array.isArray(v) && v.length) {
-      var hit = v.slice().sort(function (a, b) { return (b.min || 0) - (a.min || 0); }).filter(function (x) { return (+p || 0) >= (x.min || 0); })[0];
-      if (hit && (hit.line || hit.text)) return String(hit.line || hit.text);
-    }
-    return DEF.verdicts[band(p)];
-  }
-  function verdictLine(o) { o = o || {}; return bandLine(o.pct) + (o.automated ? ' ' + copy('automated') : ''); }
+  function verdict(p) { var v = NP.content && NP.content.verdicts; return (Array.isArray(v) && v[band(p)] && v[band(p)].e3) || { caption: '', line: DEF.verdicts[band(p)] }; }
 
   /* ---------- the boardroom ---------- */
   var NAMES = ['CFO', 'VP SYNERGY', 'CHAIR', 'HEAD OF AI', 'NON-EXEC'];
@@ -193,19 +188,19 @@ window.NP = window.NP || {};
       R(-22, -40, 44, 40, 6, M('pole-red', 'paper-shade', 70)) + R(-4, -40, 8, 40, 0, V('gold'));
     return G('translate(' + f(x) + ' ' + f(y) + ') scale(' + s + ')', g);
   }
-  // the rejects pile: real size, stacked bottom-up in rows of 8, 7, 6 …
-  function pile(n, S, base0) {
+  // the rejects pile: real size, stacked bottom-up in rows of 8, 7, 6 … and never narrower than 3, so a big pile is a heap and not a spire. Squashes to fit maxH
+  function pile(n, S, base0, maxH) {
     n = Math.max(0, Math.min(36, Math.round(+n || 0)));
     seed = 11;
-    var out = '', i = 0, r = 0, xs = S * 0.74, ys = S * 0.5, base = Math.min(base0 || 8, Math.max(2, n)), items = [];
-    while (i < n) {
-      var cnt = Math.max(1, base - r), take = Math.min(cnt, n - i);
-      for (var j = 0; j < take; j++, i++) items.push([(j - (take - 1) / 2) * xs + (rnd() - 0.5) * S * 0.2, -r * ys + (rnd() - 0.5) * 6, (rnd() - 0.5) * 34, i]);
-      r++;
+    var out = '', i = 0, r = 0, xs = S * 0.74, base = Math.min(base0 || 8, Math.max(2, n)), rows = [], items = [];
+    while (i < n) { var take = Math.min(Math.max(3, base - rows.length), n - i); rows.push(take); i += take; }
+    var ys = Math.min(S * 0.5, (maxH - S) / Math.max(1, rows.length - 1));
+    i = 0;
+    for (r = 0; r < rows.length; r++) {
+      for (var j = 0; j < rows[r]; j++, i++) items.push([(j - (rows[r] - 1) / 2) * xs + (rnd() - 0.5) * S * 0.2, -r * ys + (rnd() - 0.5) * 6, (rnd() - 0.5) * 34, i]);
     }
     out += ao(0, 6, (Math.min(n, base) * xs) / 2 + S * 0.6, 16 + r * 3, 0.65);
-    items.forEach(function (t) { out += toy(t[3], t[0], t[1], S / 64, f(t[2])); });
-    return out;
+    return out + G({ 'class': 'ep-pile' }, items.map(function (t) { return toy(t[3], t[0], t[1], S / 64, f(t[2])); }).join(''));
   }
   function ticket(x, y, r, red, w) {
     w = w || 38;
@@ -213,8 +208,8 @@ window.NP = window.NP || {};
       R(-w / 2, -w * 0.32, w, w * 0.16, 2, red ? V('pole-red') : V('board')) + R(-w / 2 + 4, -w * 0.06, w * 0.6, 2.2, 1, V('ink-soft'), op(0.55)) + R(-w / 2 + 4, w * 0.06, w * 0.75, 2.2, 1, V('ink-soft'), op(0.45)));
   }
   // Father Christmas asleep face-down on his bug tickets (matches scene.js: cloud beard, reading glasses, plain red coat)
-  // local: desk surface back edge y = -30, front edge y = 10
-  function fcAsleep() {
+  // local: desk surface back edge y = -30, front edge y = 10. front = how far the desk's front runs down
+  function fcAsleep(front) {
     var s = '', i;
     s += lit(rr(-86, -200, 172, 174, 36), 'url(#ep-metal)', 1.5) + R(-70, -188, 140, 5, 2.5, V('snow'), op(0.08));
     // hunched shoulders, plain red coat
@@ -226,7 +221,7 @@ window.NP = window.NP || {};
     seed = 5;
     for (i = 0; i < 13; i++) s += ticket(-176 + i * 28 + (rnd() - 0.5) * 18, -12 + (rnd() - 0.5) * 22, (rnd() - 0.5) * 50, i % 4 === 1);
     // desk front, with tickets hanging over the edge
-    s += R(-232, 10, 464, 300, 0, 'url(#ep-woodd)') + R(-232, 10, 464, 3, 0, V('lamp'), op(0.4)) + R(-232, 13, 464, 14, 0, V('night-900'), op(0.2)) +
+    s += ao(0, 10 + front, 250, 14, 0.6) + R(-232, 10, 464, front, 0, 'url(#ep-woodd)') + R(-232, 10, 464, 3, 0, V('lamp'), op(0.4)) + R(-232, 13, 464, 14, 0, V('night-900'), op(0.2)) +
       ticket(150, 24, 8, true, 40) + ticket(-110, 28, -14, false, 40);
     // folded arms, head down on them; the hat's point has flopped onto the desk
     s += G({ 'class': 'ep-br' },
@@ -251,17 +246,17 @@ window.NP = window.NP || {};
   }
   function basement(W, H, wide, n) {
     var s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)');
-    var fy = wide ? 520 : 470, py = wide ? 548 : 420, px = wide ? 290 : 225, fx = wide ? 850 : 225, dy = wide ? 476 : 640;
+    var fy = wide ? 520 : 470, py = wide ? 548 : 506, px = wide ? 290 : 128, fx = wide ? 850 : 225, dy = wide ? 476 : 590, ds = wide ? 1.22 : 0.72;
     s += R(-400, 22, W + 800, 16, 8, 'url(#ep-metal)') + R(-400, 24, W + 800, 3, 0, V('snow-shade'), op(0.25));
     s += win(wide ? 120 : 280, wide ? 80 : 70, wide ? 150 : 100, wide ? 90 : 70);
     s += E(wide ? 200 : 330, fy, 260, 50, 'url(#ep-cool)', op(0.5));
-    s += R(-400, fy, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fy, W + 800, 2, 0, V('lamp-deep'), op(0.3));
-    s += G('translate(' + (px - 70) + ' ' + (wide ? 170 : 112) + ') rotate(-3)', R(0, 0, 140, 40, 3, 'url(#ep-paper)') + R(62, -6, 16, 10, 1, V('paper-shade'), op(0.9)) +
+    s += R(-400, fy, W + 800, 600, 0, 'url(#ep-floor)', { 'class': 'ep-flr' }) + R(-400, fy, W + 800, 2, 0, V('lamp-deep'), op(0.3));
+    s += G({ 'class': 'ep-sign', transform: 'translate(' + (px - 70) + ' ' + (wide ? 170 : 112) + ') rotate(-3)' }, R(0, 0, 140, 40, 3, 'url(#ep-paper)') + R(62, -6, 16, 10, 1, V('paper-shade'), op(0.9)) +
       Tx(70, 28, 22, 'REJECTS', { 'text-anchor': 'middle', fill: V('ink-soft'), 'font-weight': 800, 'letter-spacing': '.08em' }));
-    s += G('translate(' + px + ' ' + py + ')', n ? pile(n, wide ? 72 : 52, wide ? 7 : 7) : ao(0, 4, 90, 10, 0.3) + Tx(0, -10, 18, '(empty)', { 'text-anchor': 'middle', fill: V('snow-shade'), 'font-weight': 700 }));
+    s += G('translate(' + px + ' ' + py + ')', n ? pile(n, wide ? 72 : 52, 7, py - (wide ? 222 : 164)) : ao(0, 4, 90, 10, 0.3) + Tx(0, -10, 18, '(empty)', { 'text-anchor': 'middle', fill: V('snow-shade'), 'font-weight': 700 }));
     // the desk lamp: the only warm light down here
     s += E(fx - 40, dy - 50, 400, 230, 'url(#ep-glow)', op(0.5));
-    s += G('translate(' + fx + ' ' + dy + ') scale(' + (wide ? 1.22 : 0.88) + ')', fcAsleep() +
+    s += G({ 'class': 'ep-desk', transform: 'translate(' + fx + ' ' + dy + ') scale(' + ds + ')' }, fcAsleep(wide ? 100 : 92) +
       G('translate(184 -30)', ao(0, 0, 40, 6) + R(-4, -96, 8, 96, 4, 'url(#ep-metal)') + lit('M-40 -96Q-34 -134 0 -136Q34 -134 40 -96Z', 'url(#ep-green)', 1.5) + E(0, -96, 34, 6, V('lamp')) +
         C(0, -92, 40, 'url(#ep-glow)') + E(0, 0, 34, 6, 'url(#ep-metal)')) +
       G('translate(-186 -22)', ao(0, 0, 20, 4) + R(-13, -30, 26, 30, 5, V('pole-green')) + R(-13, -30, 9, 30, 4, V('snow'), op(0.12)) + E(0, -30, 13, 3.5, M('pole-green', 'snow', 70)) + E(0, -29.6, 10.5, 2.4, V('wood-dark')) +
@@ -297,15 +292,81 @@ window.NP = window.NP || {};
       R(-17, 3, 12, 3.4, 1.7, V('ink'), { transform: 'rotate(-18 -11 4)' }) + R(5, 3, 12, 3.4, 1.7, V('ink'), { transform: 'rotate(18 11 4)' }) +
       C(-10, 12, 3, V('ink')) + C(10, 12, 3, V('ink')) + L('M-9 25Q0 18 9 25', V('ink'), 2.8) + (tear ? P('M14 17c2 4 3 6 3 7.5a3 3 0 0 1-6 0c0-1.5 1-3.5 3-7.5Z', V('good'), op(0.8)) : ''));
   }
-  function certificate(w, h) {
-    return ao(w / 2, h + 12, w * 0.5, 12, 0.5) + R(0, 0, w, h, 6, 'url(#ep-gold)') + R(10, 10, w - 20, h - 20, 3, 'url(#ep-paper)') +
-      Tx(w / 2, 56, 19, 'CERTIFICATE OF', { 'text-anchor': 'middle', 'font-weight': 800, 'letter-spacing': '.14em', fill: V('ink-soft') }) +
-      Tx(w / 2, 100, 38, 'AUTOMATION', { 'text-anchor': 'middle', 'font-weight': 900 }) +
-      R(w / 2 - 90, 116, 180, 2, 1, V('gold-dark'), op(0.6)) +
-      Tx(w / 2, 146, 18, 'awarded to our elf,', { 'text-anchor': 'middle', 'font-weight': 600, 'font-style': 'italic', fill: V('ink-soft') }) +
-      Tx(w / 2, 170, 18, 'for not checking', { 'text-anchor': 'middle', 'font-weight': 700, 'font-style': 'italic', fill: V('pole-red-dark') }) +
-      G('translate(' + (w - 30) + ' 30)', P('M-12 10L-18 34L-6 28L0 38L4 12Z', V('pole-red')) + P('M8 10L18 34L6 30L2 38L-2 12Z', V('pole-red-dark')) + C(0, 0, 24, 'url(#ep-gold)') + C(-6, -7, 7, V('lamp'), op(0.6)));
+  /* ---------- the elf: the same figure as the intro film (intro.js elf). Feet at y = 0 ---------- */
+  function el(cx, cy, rx, ry) { return 'M' + f(cx - rx) + ' ' + f(cy) + 'a' + rx + ' ' + ry + ' 0 1 0 ' + 2 * rx + ' 0a' + rx + ' ' + ry + ' 0 1 0 ' + -2 * rx + ' 0Z'; }
+  function elf(x, y, s, o) {
+    o = o || {};
+    var hood = 'M-44-100C-54-150-28-196 8-214C30-226 54-226 66-212C44-210 30-198 34-170C44-148 48-124 44-100Z';
+    var eyes = o.sad ? L('M-17 -112q6 5 12 0M5 -112q6 5 12 0', V('ink'), 3.2) + L('M-19 -122l12 -4M19 -122l-12 -4', V('ink'), 2.4, op(0.7)) :
+      C(-11 + (o.look || 0), -114, 4.8, V('ink')) + C(11 + (o.look || 0), -114, 4.8, V('ink')) + C(-12.4 + (o.look || 0), -115.6, 1.3, V('snow')) + C(9.6 + (o.look || 0), -115.6, 1.3, V('snow'));
+    var e = ao(0, 4, 54, 6, 0.5) +
+      lit('M-42 0C-46-42-36-82 0-86C36-82 46-42 42 0Z', 'url(#ep-green)', 2.4) +
+      P('M10-84C34-78 44-44 42 0H22C26-34 22-66 10-84Z', V('night-900'), op(0.2)) +
+      P('M-30-82L0-60L30-82C20-88-20-88-30-82Z', 'url(#ep-fur)') +
+      (o.badge ? R(-31, -58, 62, 17, 3, 'url(#ep-gold)') + R(-29, -57.4, 58, 1.8, 0.9, V('lamp'), op(0.7)) + Tx(0, -45, 10.4, 'CONTRACTOR', { 'text-anchor': 'middle', 'font-weight': 900, textLength: 54, lengthAdjust: 'spacingAndGlyphs' }) : '') +
+      lit(hood, 'url(#ep-green)', 2.4) + P('M30-170C34-196 50-212 66-212C54-206 44-196 42-178Z', V('pole-green-dark'), op(0.6)) +
+      lit(el(0, -116, 39, 41), M('pole-green', 'pole-green-dark', 45), 1.6) +
+      lit(el(0, -112, 31, 32), 'url(#ep-skin)', 1.4) +
+      E(4, -92, 20, 7, M('lamp-deep', 'paper', 30), op(0.25)) + eyes +
+      C(0, -103, 4.2, M('lamp-deep', 'pole-red', 66)) +
+      lit(el(66, -212, 10, 10), 'url(#ep-fur)', 1.4);
+    return G('translate(' + x + ' ' + y + ') scale(' + s + ')', G({ 'class': 'ep-br' }, e));
   }
+  function mitten(x, y, s) {
+    return G('translate(' + x + ' ' + y + ') scale(' + s + ')', ao(0, 12, 30, 5, 0.4) + R(8, -4, 26, 20, 8, V('snow-shade')) + lit(el(-4, 0, 26, 18), 'url(#ep-red)', 1.6) + E(-8, -6, 10, 5, V('snow'), op(0.16)));
+  }
+  // the cardboard box from the sacking, with what was on the desk
+  function box(x, y, s) {
+    return G('translate(' + x + ' ' + y + ') scale(' + s + ')', ao(0, 2, 62, 7, 0.55) +
+      E(-16, -66, 5, 9, V('pole-green'), { transform: 'rotate(-20 -16 -66)' }) + E(-6, -68, 5, 9, V('pole-green-dark'), { transform: 'rotate(10 -6 -68)' }) + R(14, -72, 16, 16, 3, V('hue-red')) +
+      P('M-50 -58L-64 -72L-30 -70L-24 -58Z', 'url(#ep-paper)') + P('M50 -58L64 -72L30 -70L24 -58Z', M('wood', 'paper-shade', 70)) +
+      lit(rr(-50, -58, 100, 58, 4), 'url(#ep-box)', 1.6) + R(-50, -58, 100, 6, 2, V('wood-dark'), op(0.5)) + R(-50, -36, 100, 8, 0, V('paper'), op(0.28)));
+  }
+  // a drawing board, facing us, floor at y = 0, with a new toy on it
+  function drawingBoard(x, y, s) {
+    return ao(x, y + 3, 250 * s, 11, 0.6) + G('translate(' + x + ' ' + y + ') scale(' + s + ')',
+      R(-150, -176, 16, 176, 5, 'url(#ep-woodd)') + R(134, -176, 16, 176, 5, 'url(#ep-woodd)') + R(-160, -96, 320, 12, 5, 'url(#ep-woodd)') +
+      lit('M-226 -160L226 -160L190 -430L-190 -430Z', 'url(#ep-wood)', 2.4) + P('M-204 -176L204 -176L172 -414L-172 -414Z', 'url(#ep-bp)') +
+      // the Wobblepod: an egg on a spring, with feelers
+      L('M-58 -296a58 44 0 1 0 116 0a58 44 0 1 0-116 0M-26 -304a7 7 0 1 0 14 0a7 7 0 1 0-14 0M12 -304a7 7 0 1 0 14 0a7 7 0 1 0-14 0M-14 -276q14 10 28 0' +
+        'M-22 -338q-14 -22 -32 -24M22 -338q14 -22 32 -24M-24 -252q24 8 48 0M-24 -242q24 8 48 0M-24 -232q24 8 48 0', V('snow'), 3) +
+      L('M-132 -224H132M-132 -230V-218M132 -230V-218', V('lamp'), 2) +
+      Tx(0, -378, 15, 'NEW TOY · REV 1', { 'text-anchor': 'middle', fill: V('snow-shade'), 'font-weight': 800, 'letter-spacing': '.1em' }) +
+      lit(rr(-190, -212, 380, 16, 4), 'url(#ep-metal)', 1.2));
+  }
+  function bot(x, y, w, carry) {
+    var a = NP.art && NP.art.droidSVG ? NP.art.droidSVG(carry) : '';
+    return a.replace('<svg ', '<svg x="' + x + '" y="' + f(y - w * 118 / 136) + '" width="' + w + '" height="' + f(w * 122 / 136) + '" ');
+  }
+  // E4's letter: why they want you back
+  function notice(w, h) {
+    var k = w / 520, x = 34 * k, line = function (i, t, o) { return Tx(x, (116 + i * 46) * k, 23.5 * k, t, X({ 'font-weight': 600 }, o)); };
+    return ao(w / 2, h + 10, w * 0.52, 12, 0.55) + R(0, 0, w, h, 4, 'url(#ep-paper)') + R(0, 0, w, 4, 2, V('snow'), op(0.6)) +
+      G('translate(' + (x + 16 * k) + ' ' + 34 * k + ')', C(0, 0, 17 * k, V('pole-red')) + C(-5 * k, -6 * k, 5 * k, V('lamp'), op(0.45)) + Tx(0, 5.4 * k, 14 * k, 'NP', { 'text-anchor': 'middle', fill: V('paper'), 'font-weight': 900 })) +
+      Tx(x + 46 * k, 40 * k, 16 * k, 'NORTH POLE LTD · THE BOARD', { 'font-weight': 800, 'letter-spacing': '.1em', fill: V('pole-red-dark') }) +
+      R(x, 60 * k, w - 2 * x, 2, 1, V('pole-red'), op(0.5)) +
+      line(0, 'Dear Elf,', { 'font-weight': 800 }) + line(1, 'A child asked for a Wobblepod. The AI', {}) + line(2, 'only makes what it learned, so it', {}) +
+      line(3, 'offered a teddy bear with wheels.', {}) + line(4, 'The robots built it perfectly.', { fill: V('pole-red-dark'), 'font-weight': 800 }) +
+      line(5, 'Please come back and teach it new toys.', {});
+  }
+  // the wrong answer, beautifully made
+  function wheelyBear(x, y, s) {
+    var g = NP.giftSVG ? NP.giftSVG({ icon: 'teddy', hue: 'brown' }) : '';
+    g = g.replace('width="100%" height="100%"', 'x="-32" y="-60" width="64" height="64"');
+    var w = function (wx) { return C(wx, 3, 8.5, 'url(#ep-metal)') + C(wx, 3, 3, V('night-900')) + C(wx - 2.4, 0.6, 1.8, V('snow'), op(0.5)); };
+    return G('translate(' + x + ' ' + y + ') scale(' + s + ')', ao(0, 16, 46, 5, 0.6) + g + R(-34, -6, 68, 8, 4, 'url(#ep-red)') + R(-34, -6, 68, 2, 1, V('lamp'), op(0.5)) + w(-23) + w(23));
+  }
+  // the deal: same gold frame and seal as every award the board gives itself
+  function contract(w, lines) {
+    var k = w / 400, h = (118 + lines.length * 27 + 62) * k, row = function (t, i) { return Tx(26 * k, (120 + i * 27) * k, 18.5 * k, t, { 'font-weight': 600 }); };
+    return ao(w / 2, h + 12, w * 0.5, 12, 0.5) + R(0, 0, w, h, 6, 'url(#ep-gold)') + R(9, 9, w - 18, h - 18, 3, 'url(#ep-paper)') +
+      Tx(w / 2, 46 * k, 14.5 * k, 'HUMAN-IN-THE-LOOP PROGRAMME', { 'text-anchor': 'middle', 'font-weight': 800, 'letter-spacing': '.08em', fill: V('ink-soft') }) +
+      Tx(w / 2, 82 * k, 30 * k, 'CONTRACT OFFER', { 'text-anchor': 'middle', 'font-weight': 900 }) +
+      R(w / 2 - 90 * k, 94 * k, 180 * k, 2, 1, V('gold-dark'), op(0.6)) + lines.map(row).join('') +
+      Tx(26 * k, h - 26 * k, 17 * k, 'Sign here:', { 'font-weight': 600, 'font-style': 'italic', fill: V('ink-soft') }) + R(112 * k, h - 24 * k, w - 200 * k, 1.6, 0.8, V('ink')) +
+      G('translate(' + (w - 46 * k) + ' ' + (h - 44 * k) + ') scale(' + 0.68 * k + ')', P('M-12 10L-18 34L-6 28L0 38L4 12Z', V('pole-red')) + P('M8 10L18 34L6 30L2 38L-2 12Z', V('pole-red-dark')) + C(0, 0, 24, 'url(#ep-gold)') + C(-6, -7, 7, V('lamp'), op(0.6)));
+  }
+  var TERMS = ['Role: designing new toys and training', 'the AI on them. Also checking the gifts,', "since you're there.", 'All designs remain the property of the AI.', 'Mittens not provided.'];
   /* ---------- scenes ---------- */
   function svg(W, H, inner) {
     return '<svg class="ep-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="ep-cam" style="transform-origin:' + W / 2 + 'px ' + H * 0.55 + 'px">' + inner + '</g></svg>';
@@ -314,7 +375,34 @@ window.NP = window.NP || {};
     var W = wide ? 1200 : 450, H = wide ? 675 : 800, s = '', ad = Math.round(+o.adoption || 100);
     var xs = wide ? [360, 480, 600, 720, 840] : [65, 145, 225, 305, 385], ty = wide ? 450 : k === 'e1' ? 430 : k === 'bad' ? 610 : 570, ms = wide ? 1 : 0.74;
     var dW = wide ? 310 : 300, dH = wide ? 200 : 186, dpos = wide ? 'translate(830 60)' : 'translate(75 74)';
-    if (k === 'e2') return svg(W, H, basement(W, H, wide, o.pileCount));
+    if (k === 'jobless') return svg(W, H, basement(W, H, wide, o.pileCount) + G({ 'class': 'ep-keep' }, wide ? box(650, 612, 1.1) + elf(536, 620, 1.2, { sad: 1 }) : box(344, 728, 0.9) + elf(116, 730, 0.92, { sad: 1 })));
+    if (k === 'autumn') {
+      var fyA = wide ? 560 : 610;
+      s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)') + E(wide ? 860 : 225, 240, 420, 300, 'url(#ep-glow)', op(0.3));
+      var wa = wide ? [720, 70, 330, 300] : [70, 432, 310, 124];
+      s += R(wa[0] - 10, wa[1] - 10, wa[2] + 20, wa[3] + 20, 12, 'url(#ep-metal)') + R(wa[0], wa[1], wa[2], wa[3], 4, 'url(#ep-autumn)');
+      s += L('M' + (wa[0] + wa[2] * 0.3) + ' ' + (wa[1] + wa[3]) + 'C' + (wa[0] + wa[2] * 0.32) + ' ' + (wa[1] + wa[3] * 0.6) + ' ' + (wa[0] + wa[2] * 0.2) + ' ' + (wa[1] + wa[3] * 0.4) + ' ' + (wa[0] + wa[2] * 0.1) + ' ' + (wa[1] + wa[3] * 0.2) + 'M' + (wa[0] + wa[2] * 0.3) + ' ' + (wa[1] + wa[3] * 0.6) + 'C' + (wa[0] + wa[2] * 0.4) + ' ' + (wa[1] + wa[3] * 0.4) + ' ' + (wa[0] + wa[2] * 0.5) + ' ' + (wa[1] + wa[3] * 0.25) + ' ' + (wa[0] + wa[2] * 0.56) + ' ' + (wa[1] + wa[3] * 0.1), V('wood-dark'), 7);
+      s += '<clipPath id="ep-wclip"><rect x="' + wa[0] + '" y="' + wa[1] + '" width="' + wa[2] + '" height="' + wa[3] + '"/></clipPath><g clip-path="url(#ep-wclip)">';
+      for (var li = 0; li < 7; li++) s += G('translate(' + f(wa[0] + wa[2] * (0.1 + li * 0.13)) + ' ' + f(wa[1] + wa[3] * 0.3) + ')', P('M0 -7C6 -5 8 2 0 8C-8 2 -6 -5 0 -7Z', li % 2 ? V('lamp-deep') : V('pole-red'), { 'class': 'ep-leaf', style: '--d:-' + (li * 0.57).toFixed(2) + 's' }));
+      s += '</g>';
+      s += R(wa[0] + wa[2] / 2 - 4, wa[1], 8, wa[3], 0, 'url(#ep-metal)') + R(wa[0], wa[1] + wa[3] * 0.48, wa[2], 8, 0, 'url(#ep-metal)');
+      s += R(-400, fyA, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fyA, W + 800, 2, 0, V('lamp-deep'), op(0.3));
+      var nw = wide ? 540 : 400, nh = nw * 0.74;
+      s += G('translate(' + (wide ? 120 : 25) + ' ' + (wide ? 100 : 104) + ') rotate(-1.5 ' + nw / 2 + ' ' + nh / 2 + ')', G({ 'class': 'ep-letter' }, notice(nw, nh)));
+      s += wide ? wheelyBear(890, fyA + 34, 3.2) : wheelyBear(340, fyA + 58, 1.9);
+      return svg(W, H, s);
+    }
+    if (k === 'rehire') {
+      var fyR = wide ? 568 : 708, cw = wide ? 370 : 400;
+      s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)') + E(wide ? 420 : 225, wide ? 300 : 520, 520, 330, 'url(#ep-glow)', op(0.55));
+      s += wide ? pendant(420, 20, 430, 1) : pendant(150, 372, 520, 0);
+      s += R(-400, fyR, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fyR, W + 800, 2, 0, V('lamp'), op(0.3));
+      s += G('translate(' + (wide ? 782 : 25) + ' ' + (wide ? 78 : 122) + ') rotate(' + (wide ? 1.5 : -0.8) + ')', G({ 'class': 'ep-cert' }, contract(cw, TERMS)));
+      var sleeve = function (a, b, c, d, k) { return L('M' + a + ' ' + b + 'Q' + ((a + c) / 2 + 12 * k) + ' ' + ((b + d) / 2 + 8 * k) + ' ' + c + ' ' + d, V('pole-green-dark'), 19 * k) + L('M' + a + ' ' + (b - 2) + 'Q' + ((a + c) / 2 + 11 * k) + ' ' + ((b + d) / 2 + 5 * k) + ' ' + c + ' ' + (d - 2), V('pole-green'), 13 * k); };
+      s += wide ? drawingBoard(450, fyR, 0.86) + elf(232, fyR + 4, 1.24, { badge: 1, look: 5 }) + sleeve(278, fyR - 80, 344, fyR - 196, 1.5) + mitten(362, fyR - 200, 0.8) + bot(640, fyR + 6, 190, 'pad') :
+        drawingBoard(224, fyR, 0.44) + elf(100, fyR + 4, 0.8, { badge: 1, look: 5 }) + sleeve(130, fyR - 52, 166, fyR - 104, 0.9) + mitten(176, fyR - 108, 0.46) + bot(304, fyR + 6, 130, 'pad');
+      return svg(W, H, s);
+    }
     var kids = '', wr = null;
     if (k === 'bad') {
       var hs = ['red', 'blue', 'yellow', 'green', 'purple', 'pink'];
@@ -338,51 +426,64 @@ window.NP = window.NP || {};
         letter(lw, lh) + E(16, lh - 18, 14, 11, V('snow-shade')) + E(lw - 16, lh - 22, 14, 11, V('snow-shade'))));
     } else if (k === 'mid') {
       s += G('translate(' + W / 2 + ' ' + (ty + 18) + ')' + (wide ? '' : ' scale(.86)'), sack(wide));
-    } else if (k === 'auto') {
-      var aw = wide ? 420 : 380, ah = 190;
-      s += G('translate(' + (W - aw) / 2 + ' ' + (wide ? 470 : ty + 22) + ') rotate(1.5)', G({ 'class': 'ep-cert' }, certificate(aw, ah)));
     }
     return svg(W, H, s);
   }
   NP.epilogue = {
-    verdictLine: verdictLine,
     play: function (el, o) {
       o = o || {};
       var reduced = !!o.reduced || document.documentElement.classList.contains('reduced');
       var wide = (el.clientWidth || window.innerWidth) >= 640 && (el.clientWidth || window.innerWidth) >= (el.clientHeight || window.innerHeight) * 0.85;
       var b = band(o.pct), vk = ['good', 'mid', 'bad'][b], ad = Math.round(+o.adoption || 100), n = Math.max(0, Math.round(+o.pileCount || 0));
+      var chair = copy('chair').replace('{adoption}', ad), vd = verdict(o.pct);
       var sc = [
-        { k: 'e1', t: 5000, slug: copy('date'), cap: copy('chair'),
-          sr: 'The year-end board meeting, 27 December. A giant cheque reads ' + copy('cheque') + '. ' + copy('useCase') + '. The dashboard shows AI adoption at ' + ad + ' percent. ' + copy('chair') },
-        { k: 'e2', t: 4000, slug: 'The basement', cap: copy('basement'),
-          sr: 'The basement. Father Christmas is asleep face-down on a pile of bug tickets, his glasses askew. Behind him, the pile of broken toys: ' + n + (n === 1 ? ' toy.' : ' toys.') },
-        { k: vk, t: 6000, slug: 'The verdict', cap: bandLine(o.pct), sr: bandLine(o.pct) }
+        { k: 'e1', t: 5000, slug: copy('date'), cap: chair,
+          sr: 'The year-end board meeting, 27 December. A giant cheque reads ' + copy('cheque') + '. ' + copy('useCase') + '. The dashboard shows AI adoption at ' + ad + ' percent. ' + chair },
+        { k: vk, t: 5000, slug: 'The verdict', cap: vd.line, sr: vd.caption + ' ' + vd.line },
+        { k: 'jobless', hold: true, slug: 'January', cap: copy('jobless'),
+          sr: 'The basement. You stand miserably beside your cardboard box. Father Christmas is asleep on a pile of bug tickets, and behind him is the pile of broken toys: ' + n + (n === 1 ? ' toy. ' : ' toys. ') + copy('jobless') },
+        { k: 'autumn', hold: true, slug: 'Autumn', cap: copy('autumn'),
+          sr: 'A letter from the board: A child asked for a Wobblepod. The AI only makes what it learned, so it offered a teddy bear with wheels. The robots built it perfectly. Please come back and teach it new toys. ' + copy('autumn') },
+        { k: 'rehire', hold: true, slug: 'Next year', cap: copy('rehire'),
+          sr: 'You are back at your drawing board wearing a contractor badge, with a robot beside you taking notes. The contract reads: ' + TERMS.join(' ') + ' ' + copy('rehire') }
       ];
-      if (o.automated) sc.push({ k: 'auto', t: 3500, slug: 'One more thing', cap: copy('automated'), sr: 'The board applauds a certificate of automation. ' + copy('automated') });
       var NB = sc.length;
       el.innerHTML = '<div class="il ep' + (reduced ? ' il-reduced' : '') + '"><svg class="ep-defs" width="0" height="0" aria-hidden="true">' + DEFS + '</svg><div class="il-stage">' +
         sc.map(function (s) { return '<section class="il-beat ep-sc ep-' + s.k + '" aria-hidden="true">' + sceneSVG(s.k, o, wide) + '<p class="ep-slug">' + esc(s.slug) + '</p></section>'; }).join('') +
         '</div><div class="il-foot ep-foot"><p class="il-cap" aria-hidden="true"></p><p class="sr-only" aria-live="polite"></p>' +
         '<div class="il-dots" aria-hidden="true">' + sc.map(function () { return '<i></i>'; }).join('') + '</div>' +
-        '<p class="il-hint"><span class="kb">' + (reduced ? 'Space or tap: next' : 'Space or tap: next scene') + ' · Enter or S: skip</span><span class="tch">Tap: next</span></p></div>' +
+        '<button type="button" class="keycap keycap-pack il-next ep-next">Next</button>' +
+        '<p class="il-hint"><span class="kb"></span><span class="tch">Tap: next</span></p></div>' +
         '<button type="button" class="keycap keycap-plain ep-skip">Skip</button></div>';
       el.hidden = false;
       var root = el.firstChild, beats = root.querySelectorAll('.ep-sc'), dots = root.querySelectorAll('.il-dots i');
       var cap = root.querySelector('.il-cap'), srl = root.querySelector('.sr-only');
       var cur = -1, timer = 0, left = 0, t0 = 0, paused = false, over = false, shownAt = 0, resolve;
       var done = new Promise(function (r) { resolve = r; });
-      function arm(ms) { clearTimeout(timer); left = ms; t0 = Date.now(); if (!reduced && !paused) timer = setTimeout(function () { show(cur + 1, true); }, ms); }
+      var nextBtn = root.querySelector('.ep-next'), hint = root.querySelector('.il-hint .kb');
+      function held() { return reduced || !!sc[cur].hold; }
+      function focusNext() { if (held()) try { nextBtn.focus({ preventScroll: true }); } catch (e) { nextBtn.focus(); } }
+      function arm(ms) { clearTimeout(timer); left = ms; t0 = Date.now(); if (!held() && !paused) timer = setTimeout(function () { show(cur + 1, true); }, ms); }
       function show(i, auto) {
         if (over) return;
-        if (!auto && Date.now() - shownAt < 350) return;          // a double-tap shouldn't skip a scene unseen
+        if (!auto && Date.now() - shownAt < (held() ? 600 : 350)) return;          // a double-tap shouldn't skip a scene unseen
         if (i >= NB) return finish();
         cur = i; shownAt = Date.now();
+        requestAnimationFrame(function () { requestAnimationFrame(function () { if (cur === i) shownAt = Date.now(); }); });   // a heavy scene change can delay the second tap of a double-tap: count from the paint
         for (var j = 0; j < NB; j++) {
           beats[j].classList.toggle('on', j === i);
           dots[j].className = j < i ? 'past' : j === i ? 'now' : '';
         }
-        cap.textContent = sc[i].cap; srl.textContent = sc[i].sr;
+        cap.textContent = sc[i].cap;
+        setTimeout(function () { if (cur === i) srl.textContent = sc[i].sr; }, 60);   // a live region announces changes, so not the text it was inserted with
+        if (i === NB - 1 && o.onFinal) o.onFinal();
+        var last = i === NB - 1;
+        nextBtn.classList.toggle('show', held());              // it keeps its space while hidden, so the scene doesn't jump
+        nextBtn.textContent = last ? (o.lastLabel || 'See your report') : 'Next';
+        nextBtn.setAttribute('aria-label', last ? nextBtn.textContent : 'Next scene');
+        hint.textContent = held() ? 'Space, Enter or tap: next · S: skip' : 'Space or tap: next scene · Enter or S: skip';
         arm(sc[i].t);
+        focusNext();
       }
       function finish() {
         if (over) return;
@@ -393,6 +494,7 @@ window.NP = window.NP || {};
       var skipBtn = root.querySelector('.ep-skip');
       ['pointerdown', 'touchstart', 'mousedown'].forEach(function (t) { skipBtn.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true }); });
       skipBtn.addEventListener('click', function (e) { e.stopPropagation(); finish(); });
+      nextBtn.addEventListener('click', function (e) { e.stopPropagation(); if (!paused) show(cur + 1); });
       show(0, true);
       return {
         next: function () { if (!paused) show(cur + 1); },
@@ -406,7 +508,9 @@ window.NP = window.NP || {};
           if (!paused || over) return;
           paused = false; root.classList.remove('il-paused');
           arm(Math.max(600, left));
+          focusNext();
         },
+        held: held,
         done: done
       };
     }

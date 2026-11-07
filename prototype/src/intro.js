@@ -1,4 +1,4 @@
-/* intro.js: the ~68s intro film (SPEC §3 storyboard, §9 art). Contract: ARCHITECTURE.md "intro.js".
+/* intro.js: the ~69s intro film (SPEC §3 storyboard, §9 art). Contract: ARCHITECTURE.md "intro.js".
    NP.intro.play(el, { reduced }) -> { next, skip, pause, resume, done }
    Every scene is one <svg> built at cut time, framed for portrait or landscape by the width at that moment.
    A scene registers cues on its own clock; animations are WAAPI (transform/opacity only) so pause/resume
@@ -66,6 +66,7 @@ window.NP = window.NP || {};
     lg('lbox', V('paper'), M('paper', 'lamp', 62), VERT) +
     lg('pine', M('pole-green-dark', 'night-600', 60), M('night-900', 'pole-green-dark', 75)) +
     lg('boot', M('ink', 'board-dark', 55), V('ink')) +
+    lg('bp', M('good', 'night-600', 42), M('night-600', 'night-900', 62)) +
     rg('gg', V('pole-green'), 0.75) + rg('fl', V('lamp'), 1);
   function ensureDefs(root) {
     if (NP.scene && NP.scene.fcArt) NP.scene.fcArt();   // makes sure the shared sc-* defs exist
@@ -111,7 +112,7 @@ window.NP = window.NP || {};
     front += G({ 'class': 'in-hclap', opacity: 0 }, lit(sleeve, 'url(#in-suit)', null, 1.6) + Pa(sleeve, 'url(#in-suit)', { transform: 'scale(-1 1)' }) +
       G({ 'class': 'in-hl' }, hand(-17, -94, 14, 18)) + G({ 'class': 'in-hr' }, hand(17, -94, 14, 18)));
     if (name) {
-      front += at(cx, 0, ck, ao(0, 58, 56, 6, 0.4) + Pa('M-50 22H50L44 56H-44Z', u('paper')) + R(-50, 20, 100, 5, 2, V('paper-shade')) +
+      front += at(cx, 0, ck, ao(0, 58, 56, 6, 0.4) + R(-50, 22, 100, 34, 2, u('paper')) + R(-50, 20, 100, 5, 2, V('paper-shade')) +
         Tm(0, 47, 17, name, { style: 'font-weight:800;letter-spacing:.06em' }));
     }
     return { b: back, f: at(x, y, s, G({ 'class': 'in-mf' }, front)) };
@@ -259,7 +260,7 @@ window.NP = window.NP || {};
   }
   function nod(S, n) { S.qa('.in-mh').forEach(function (h) { anim(h, [{ transform: 'translateY(0)' }, { transform: 'translateY(8px)' }, { transform: 'translateY(0)' }], { duration: 440, iterations: n || 2, easing: 'ease-in-out', fill: 'none' }); }); }
   function turn(S, on) { S.qa('.in-mh').forEach(function (h) { anim(h.parentNode, [{ transform: on ? 'translateX(' + 7 * h.getAttribute('data-dir') + 'px) rotate(' + 2 * h.getAttribute('data-dir') + 'deg)' : 'none' }], { duration: 300, easing: 'ease-out' }); }); }
-  function speak(S, i) { var b = S.qa('.in-mb')[i]; anim(b && b.parentNode, [{ transform: 'translateY(0)' }, { transform: 'translateY(-6px)' }, { transform: 'translateY(0)' }], { duration: 320, iterations: 3, fill: 'none' }); }
+  function speak(S, i) { var b = S.qa('.in-mb')[i]; anim(b, [{ transform: 'translateY(0)' }, { transform: 'translateY(-6px)' }, { transform: 'translateY(0)' }], { duration: 320, iterations: 3, fill: 'none' }); }
   function clap(S) {
     S.qa('.in-hrest').forEach(function (n) { anim(n, [O(1), O(0)], { duration: 120 }); });
     S.qa('.in-hclap').forEach(function (n) { anim(n, [O(0), O(1)], { duration: 120 }); });
@@ -421,6 +422,86 @@ window.NP = window.NP || {};
 
   // 4. The grind: day and night through the window, calendar 2 -> 22 Dec, mugs, sticky notes, frazzle
   var NOTES = ['prompt', 'prompt v2', 'prompt v3 (better)', 'PROMPT FINAL', 'FINAL final', 'PROMPT FINAL final v7'];
+  // a sheet of the elf's own work: blueprint paper, white linework (0 teddy, 1 rocket, 2 train)
+  function blueprint(w, h, kind) {
+    var k = w / 220, s = ao(w / 2, h + 6, w * 0.5, 8, 0.45) + R(0, 0, w, h, 3, 'url(#in-bp)') + R(0, 0, w, 3, 1, V('snow'), O(0.35));
+    for (var x = 20; x < w; x += 20) s += R(x, 0, 1, h, 0, V('snow'), O(0.1));
+    for (var y = 20; y < h; y += 20) s += R(0, y, w, 1, 0, V('snow'), O(0.1));
+    var d = ['M78 72a30 30 0 1 0 60 0a30 30 0 1 0-60 0M84 50a11 11 0 1 1-1 18M132 50a11 11 0 1 0 1 18M70 128a38 28 0 1 0 76 0a38 28 0 1 0-76 0',
+             'M110 22C132 44 136 84 128 116H92C84 84 88 44 110 22ZM92 96L68 128H92M128 96L152 128H128M98 116L110 138L122 116M97 62a13 13 0 1 0 26 0a13 13 0 1 0-26 0',
+             'M42 110V70H96V110ZM96 110V52H148V110ZM58 70V50H74V70M42 110H162L176 96M64 126a13 13 0 1 0 0.1 0M130 126a13 13 0 1 0 0.1 0'][kind % 3];
+    s += G({ transform: 'scale(' + k + ')' }, Ln(d, V('snow'), 2.4, O(0.92)) + Ln('M20 150H200M20 146V154M200 146V154', V('lamp'), 1.6, O(0.8)));
+    return s + Tx(10, h - 8, 11 * k, 'DRAWN BY: ELF', { fill: V('snow-shade'), style: 'font-family:var(--font-mono);font-weight:700' });
+  }
+  // the drawing office: the elf designs, Father Christmas carries the work off to the AI
+  function sD(c) {
+    var P = c.P, W = c.W, H = c.H, s = '', fy = P ? 1400 : 790;
+    var bx = P ? 400 : 620, bs = P ? 1.05 : 1.3, ex = P ? 190 : 340, es = P ? 2.3 : 1.95, lx = P ? 690 : 1230, ls = P ? 1.75 : 1.6;
+    var lapX = lx + (P ? 76 : 70), lapY = fy - (P ? 190 : 170);
+    s += R(0, 0, W, fy, 0, 'url(#in-warm)');
+    for (var i = 0; i < W; i += 120) s += R(i, 0, 3, fy, 0, V('night-900'), O(0.08));
+    s += R(0, 96, W, 6, 0, V('lamp'), O(0.12)) + glow(bx - 40, fy - 300, P ? 520 : 640, P ? 500 : 420, 0.5);
+    s += R(0, fy - 8, W, H, 0, 'url(#in-tbl)') + R(0, fy - 8, W, H, 0, V('night-900'), O(0.3)) + R(0, fy - 8, W, 3, 0, V('lamp'), O(0.4));
+    s += pendant(bx - 60, P ? 40 : 30, 0.34);
+    // the pinned designs, which leave the wall one at a time
+    var pins = P ? [[60, 300, -3], [340, 360, 2], [590, 280, -2]] : [[130, 160, -3], [870, 120, 2], [1140, 170, -2]], sw = P ? 250 : 230, sh = sw * 0.72;
+    pins.forEach(function (p, n) {
+      s += G({ 'class': 'in-sh', 'data-x': lapX - (p[0] + sw / 2), 'data-y': lapY - (p[1] + sh / 2) },
+        at(p[0], p[1], 1, G({ transform: 'rotate(' + p[2] + ' ' + sw / 2 + ' ' + sh / 2 + ')' }, blueprint(sw, sh, n) + C(sw / 2, 8, 6, V('pole-red')) + C(sw / 2 - 2, 6, 2, V('snow'), O(0.7)))));
+    });
+    // the drawing board, facing us, with today's design on it
+    s += ao(bx, fy + 2, 250 * bs, 12, 0.6) + at(bx, fy, bs,
+      R(-150, -176, 16, 176, 5, u('woodd')) + R(134, -176, 16, 176, 5, u('woodd')) + R(-160, -96, 320, 12, 5, u('woodd')) +
+      lit('M-226 -160L226 -160L190 -430L-190 -430Z', u('wood'), null, 2.4) + Pa('M-204 -176L204 -176L172 -414L-172 -414Z', 'url(#in-bp)') +
+      Pa('M-204 -176L204 -176L198 -214L-199 -214Z', V('night-900'), O(0.18)) +
+      at(-112, -392, 1, G({ transform: 'scale(1.05)' }, Ln('M78 72a30 30 0 1 0 60 0a30 30 0 1 0-60 0M84 50a11 11 0 1 1-1 18M132 50a11 11 0 1 0 1 18M70 128a38 28 0 1 0 76 0a38 28 0 1 0-76 0', V('snow'), 2.6) +
+        Ln('M20 150H200M20 146V154M200 146V154', V('lamp'), 1.8))) +
+      lit(rr(-190, -212, 380, 16, 4), u('metal'), null, 1.2) + Pa(rr(-30, -216, 60, 24, 6), u('metald')));
+    // the elf, a mitten on the board with a pencil in it
+    s += elf(ex, fy, es);
+    var hx = bx - 92 * bs, hy = fy - 262 * bs;
+    var sx = ex + 30 * es, sy = fy - 62 * es, qx = (sx + hx) / 2 + 10, qy = (sy + hy) / 2 + 26;
+    s += Ln('M' + sx + ' ' + sy + 'Q' + qx + ' ' + qy + ' ' + (hx - 20) + ' ' + (hy + 6), V('pole-green-dark'), 40) +
+      Ln('M' + sx + ' ' + (sy - 5) + 'Q' + qx + ' ' + (qy - 5) + ' ' + (hx - 22) + ' ' + (hy + 1), 'url(#sc-green)', 30);
+    s += G({ 'class': 'in-pen' }, Ln('M' + (hx + 18) + ' ' + (hy + 6) + 'L' + (hx + 74) + ' ' + (hy + 46), V('gold'), 7) + Ln('M' + (hx + 74) + ' ' + (hy + 46) + 'L' + (hx + 84) + ' ' + (hy + 53), V('ink'), 4) + mitten(hx, hy, 1.1, true));
+    // the upload, floating over his laptop
+    var uw = P ? 330 : 300, ux = Math.min(W - uw - (P ? 76 : 24), lx - uw / 2 + 40), uy = fy - (P ? 640 : 520);
+    s += G({ 'class': 'in-upl', opacity: 0 }, lit(rr(ux, uy, uw, 96, 12), u('metald'), null, 1.6) + Pa(rr(ux + 8, uy + 8, uw - 16, 80, 7), u('screen')) +
+      Tm(ux + uw / 2, uy + 42, P ? 25 : 23, 'UPLOADING DESIGNS', { fill: V('snow'), style: 'font-weight:800;letter-spacing:.06em' }) +
+      R(ux + 28, uy + 60, uw - 56, 12, 6, V('night-900')) + G({ 'class': 'in-upb', style: 'transform-box:fill-box;transform-origin:0 50%' }, R(ux + 28, uy + 60, uw - 56, 12, 6, V('pole-green'))));
+    s += G({ 'class': 'in-fcw' }, fc(0, 0, ls, { legs: true, lap: true, cls: 'in-fcd' }));
+    return {
+      m: G({ 'class': 'in-cam' }, s),
+      run: function (S) {
+        var fw = S.q('.in-fcw'), off = W + 260;
+        S.at(0, function () {
+          fcSet(S.sv, { fz: 1, eyes: 'open' });
+          anim(S.q('.in-cam'), [{ transform: camT(W / 2, H / 2, 1) }, { transform: camT(W / 2, H / 2, 1.04) }], { duration: 5000, easing: 'ease-in-out' });
+          anim(fw, [{ transform: px(off, fy) }], { duration: 1 });
+          anim(S.q('.in-eeyes'), [{ transform: 'translate(6px,1px)' }], { duration: 1 });
+          anim(S.q('.in-pen'), [{ transform: 'translate(-8px,2px)' }, { transform: 'translate(8px,-3px)' }], { duration: 190, iterations: 12, direction: 'alternate', easing: 'ease-in-out', fill: 'none' });
+        });
+        S.at(800, function () {
+          anim(fw, [{ transform: px(off, fy) }, { transform: px(lx, fy) }], { duration: 1200, easing: 'cubic-bezier(.2,.7,.3,1)' });
+          anim(S.q('.in-fcd .in-fc'), [{ transform: 'translateY(0)' }, { transform: 'translateY(-10px)' }], { duration: 170, iterations: 6, direction: 'alternate', easing: 'ease-out', fill: 'none' });
+          anim(S.q('.in-fcd .in-lg1'), [{ transform: 'translate(-3px,0)' }, { transform: 'translate(4px,-7px)' }], { duration: 170, iterations: 6, direction: 'alternate', fill: 'none' });
+          anim(S.q('.in-fcd .in-lg2'), [{ transform: 'translate(4px,-7px)' }, { transform: 'translate(-3px,0)' }], { duration: 170, iterations: 6, direction: 'alternate', fill: 'none' });
+        });
+        S.at(1900, function () {
+          anim(S.q('.in-upl'), [O(0), O(1)], { duration: 240 });
+          anim(S.q('.in-upb'), [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 2300, easing: 'linear' });
+        });
+        S.qa('.in-sh').forEach(function (n, i) {
+          S.at(2100 + i * 600, function () {
+            anim(n, [{ transform: 'none', opacity: 1 }, { transform: px(+n.getAttribute('data-x'), +n.getAttribute('data-y')) + ' scale(.16)', opacity: 0.9, offset: 0.92 }, { transform: px(+n.getAttribute('data-x'), +n.getAttribute('data-y')) + ' scale(.1)', opacity: 0 }],
+              { duration: 620, easing: 'cubic-bezier(.5,0,.75,0)' });
+          });
+        });
+        S.at(3200, function () { anim(S.q('.in-eeyes'), [{ transform: 'translate(6px,1px)' }, { transform: 'translate(0,3px)' }], { duration: 300 }); });
+      }
+    };
+  }
+
   function s4(c) {
     var P = c.P, W = c.W, H = c.H, s = '';
     var wx = P ? 70 : 150, wy = P ? 150 : 110, ww = P ? 380 : 420, wh = P ? 420 : 460;
@@ -482,32 +563,32 @@ window.NP = window.NP || {};
         var num = S.q('.in-num'), tnum = S.q('.in-tnum'), tear = S.q('.in-tear'), ta = null;
         S.at(0, function () {
           fcSet(S.sv, { fz: 0, eyes: 'open' });
-          anim(S.q('.in-cam'), [{ transform: camT(hcx, hcy, 1) }, { transform: camT(hcx, hcy, 1.06) }], { duration: 18000, easing: 'ease-in-out' });
-          anim(S.q('.in-day'), [O(0), O(1), O(0)], { duration: 800, iterations: 20, delay: 500, easing: 'ease-in-out' });
+          anim(S.q('.in-cam'), [{ transform: camT(hcx, hcy, 1) }, { transform: camT(hcx, hcy, 1.06) }], { duration: 12000, easing: 'ease-in-out' });
+          anim(S.q('.in-day'), [O(0), O(1), O(0)], { duration: 533, iterations: 20, delay: 500, easing: 'ease-in-out' });
           anim(S.q('.in-fc4 .sc-hand'), [{ transform: 'translateY(-4px)' }, { transform: 'translateY(1px)' }], { duration: 130, iterations: Infinity, direction: 'alternate', fill: 'none' });
           anim(S.q('.in-fc4 .sc-hand-l'), [{ transform: 'translateY(1px)' }, { transform: 'translateY(-4px)' }], { duration: 110, iterations: Infinity, direction: 'alternate', fill: 'none' });
           anim(S.q('.in-sglow'), [O(0.22), O(0.4)], { duration: 900, iterations: Infinity, direction: 'alternate', fill: 'none' });
           anim(S.q('.in-fc4 .sc-head'), [{ transform: 'translateY(2px) rotate(2deg)' }], { duration: 300 });
         });
         for (var d = 3; d <= 22; d++) (function (d) {
-          S.at(500 + (d - 2) * 800, function () {
+          S.at(500 + (d - 2) * 533, function () {
             num.textContent = d; tnum.textContent = d - 1;
             if (ta) ta.cancel();
             ta = anim(tear, [{ opacity: 1, transform: 'none' }, { opacity: 1, transform: 'translate(10px,60px) rotate(8deg)', offset: 0.5 }, { opacity: 0, transform: 'translate(30px,170px) rotate(22deg)' }], { duration: 520, easing: 'cubic-bezier(.5,0,.75,0)' });
           });
         })(d);
         S.qa('.in-mug').forEach(function (m, n) {
-          S.at(900 + n * 1550, function () { anim(m, [{ opacity: 0, transform: 'translateY(-40px)' }, { opacity: 1, transform: 'translateY(0)', offset: 0.6 }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 360, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
+          S.at(600 + n * 1030, function () { anim(m, [{ opacity: 0, transform: 'translateY(-40px)' }, { opacity: 1, transform: 'translateY(0)', offset: 0.6 }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 360, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
         });
         S.qa('.in-note').forEach(function (m, n) {
-          S.at([2000, 4700, 7500, 10300, 12500, 14600][n], function () { anim(m, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.08)', offset: 0.65 }, { opacity: 1, transform: 'scale(1)' }], { duration: 300, easing: 'cubic-bezier(.34,1.56,.64,1)' }); });
+          S.at([1300, 3100, 5000, 6900, 8300, 9700][n], function () { anim(m, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.08)', offset: 0.65 }, { opacity: 1, transform: 'scale(1)' }], { duration: 300, easing: 'cubic-bezier(.34,1.56,.64,1)' }); });
         });
-        S.at(4200, function () { fcSet(S.sv, { fz: 1 }); anim(S.q('.in-fc4 .sc-sweat'), [{ transform: 'translateY(-3px)' }, { transform: 'translateY(8px)' }], { duration: 900, iterations: Infinity, fill: 'none' }); });
-        S.at(6200, function () { brows(S, -1); });
-        S.at(8800, function () { fcSet(S.sv, { fz: 2, eyes: 'half' }); });
-        S.at(11800, function () { fcSet(S.sv, { eyes: 'wide' }); brows(S, 1); });
-        S.at(13400, function () { fcSet(S.sv, { fz: 3, eyes: 'half' }); brows(S, -1); });
-        S.at(15700, function () { fcSet(S.sv, { eyes: 'spiral' }); anim(S.q('.in-fc4 .sc-head'), [{ transform: 'translateY(6px) rotate(-6deg)' }], { duration: 500 }); });
+        S.at(2800, function () { fcSet(S.sv, { fz: 1 }); anim(S.q('.in-fc4 .sc-sweat'), [{ transform: 'translateY(-3px)' }, { transform: 'translateY(8px)' }], { duration: 900, iterations: Infinity, fill: 'none' }); });
+        S.at(4100, function () { brows(S, -1); });
+        S.at(5900, function () { fcSet(S.sv, { fz: 2, eyes: 'half' }); });
+        S.at(7900, function () { fcSet(S.sv, { eyes: 'wide' }); brows(S, 1); });
+        S.at(8900, function () { fcSet(S.sv, { fz: 3, eyes: 'half' }); brows(S, -1); });
+        S.at(10400, function () { fcSet(S.sv, { eyes: 'spiral' }); anim(S.q('.in-fc4 .sc-head'), [{ transform: 'translateY(6px) rotate(-6deg)' }], { duration: 500 }); });
       }
     };
   }
@@ -764,7 +845,7 @@ window.NP = window.NP || {};
   }
 
   /* ---------- storyboard (SPEC §3, locked) ---------- */
-  var MELT = '<svg class="in-melt" viewBox="0 0 48 48" role="img" aria-label="a drawn melting face" xmlns="http://www.w3.org/2000/svg">' +
+  var MELT = '<span class="sr-only">a melting face</span><svg class="in-melt" viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
     '<path d="M6 22a18 18 0 0 1 36 0c0 6-1 9 0 14 1 5-3 7-5 3-1-3-3-3-4 0-1 6-6 6-6 0-1-3-3-3-4 1-1 4-6 4-6-1 0-3-3-3-4 0-2 4-6 2-5-3 1-5-2-8-2-14z" fill="var(--gold)"/>' +
     '<path d="M30 6a18 18 0 0 1 12 16c0 6-1 9 0 14 1 5-3 7-5 3 0-8 0-22-7-33z" fill="var(--gold-dark)" opacity=".5"/>' +
     '<path d="M14 20q3-4 6 0M28 21q3-4 6 0" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>' +
@@ -773,10 +854,11 @@ window.NP = window.NP || {};
     { d: 2000, b: s1, still: 1900, caps: [[150, 'nar', '', '1 December. Quarterly board meeting.']] },
     { d: 12000, b: s2, still: 10500, caps: [[900, 'say', 'Chair', '“Everyone’s doing AI.”'], [3600, 'say', 'Member 2', '“Our competitors are doing AI.”'], [6600, 'say', 'Father Christmas', '“We don’t have competitors.”'], [9300, 'say', 'Member 3', '“Exactly. Imagine if we did.”']] },
     { d: 9000, b: s3, still: 7900, caps: [[400, 'big', '', 'EDICT: CHRISTMAS WILL BE AI-FIRST.'], [4000, 'say', 'Father Christmas', '“…What will the AI do?”'], [6200, 'say', 'Chair', '“AI.”'], [7400, 'say', 'All', '“Use case to follow.”']] },
-    { d: 18000, b: s4, still: 16700, caps: [[0, 'clear'], [1300, 'flash', 'Day 3', '“What is a token?”', 3600], [6100, 'flash', 'Day 9', '“Make it better. Please.”', 3600], [11700, 'flash', 'Day 16', '“Why does it keep saying I’m right?”', 3600], [15700, 'flash', 'Day 21', MELT, 2300]] },
+    { d: 5000, b: sD, still: 4400, caps: [[0, 'clear'], [300, 'nar', '', 'You design the toys.'], [1900, 'nar', '', 'Father Christmas uploads your designs to the AI.']] },
+    { d: 12000, b: s4, still: 11100, caps: [[0, 'clear'], [800, 'flash', 'Day 3', '“What is a token?”', 2500], [3800, 'flash', 'Day 9', '“Make it better. Please.”', 2500], [6900, 'flash', 'Day 16', '“Why does it keep saying I’m right?”', 2700], [10400, 'flash', 'Day 21', MELT, 1500]] },
     { d: 6000, b: s5, still: 4200, caps: [[0, 'clear'], [2600, 'say', 'Father Christmas (exhausted)', '“It’s… done.”']] },
     { d: 8000, b: s6, still: 5000, cut: 'hard', caps: [[0, 'clear'], [2600, 'say', 'Board', '“Transformational.”'], [4300, 'say', 'Board', '“Seamless.”'], [6000, 'say', 'Board', '“Promotions all round.”']] },
-    { d: 10000, b: s7, still: 9700, cut: 'hard', caps: [[0, 'clear'], [700, 'nar', '', 'Christmas Eve. The AI is live. Someone has to check it.'], [6600, 'nar', '', 'That someone is you.']] },
+    { d: 12000, b: s7, still: 9700, cut: 'hard', caps: [[0, 'clear'], [700, 'nar', '', 'Christmas Eve. The AI is live. Someone has to check it.'], [6000, 'nar', '', 'That someone is you.'], [8200, 'nar', '', 'You used to design the toys. Now you check what the AI does with them.']] },
     { d: 3000, b: s8, still: 1500, caps: [[0, 'clear']] }
   ];
   var ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5.5l7 6.5-7 6.5M12.5 5.5l7 6.5-7 6.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';

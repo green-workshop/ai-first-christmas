@@ -1,6 +1,6 @@
 window.NP = window.NP || {};
 
-// Game engine: intro, 6 rounds of 4 children, 5 interludes, the automation choice, epilogue and shift report.
+// Game engine: intro, 5 played rounds of 4 children, the sacking, round 6 without the player, epilogue and shift report.
 // Timings follow SPEC §6 and §10; behaviour follows SPEC §4 and §6a.
 (function () {
   "use strict";
@@ -11,10 +11,19 @@ window.NP = window.NP || {};
   // ---------- Settings and storage ----------
   var store = {
     get: function (k, d) { try { var v = localStorage.getItem("np." + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set: function (k, v) { try { localStorage.setItem("np." + k, JSON.stringify(v)); } catch (e) { /* storage blocked: fine */ } }
+    set: function (k, v) { try { localStorage.setItem("np." + k, JSON.stringify(v)); } catch (e) { /* storage blocked: fine */ } },
+    drop: function (k) { try { localStorage.removeItem("np." + k); } catch (e) { /* storage blocked: fine */ } }
   };
   var prefersReduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   var settings = Object.assign({ sound: false, relaxed: false, untimed: false, reduced: prefersReduced, skipCut: false }, store.get("settings", {}));
+  // Progress used to be saved, so clear it once. skipCutAuto marks a Skip cutscenes tick the game made itself: a tick made by hand has no mark, and stays
+  if (store.get("skipCutAuto", false)) { settings.skipCut = false; store.set("settings", settings); }
+  ["played", "introSeen", "endingSeen", "skipCutAuto", "lastShift"].forEach(function (k) { store.drop(k); });
+  // Progress lasts only while the page is open: a new visit is a first shift, with the original cutscenes (SPEC §7)
+  var introSeen = false, endingSeen = false;   // the Replay buttons stay off the title screen until each film has been seen
+  var shiftDone = false, lastShift = null;     // a completed shift makes the next one a repeat shift
+  var skipAuto = false;                        // Skip cutscenes switched on by the game, never saved. settings.skipCut is the player's own tick
+  function skipCut() { return settings.skipCut || skipAuto; }
   ["relaxed", "untimed", "reduced"].forEach(function (k) { if (params.get(k) === "1") { settings[k] = true; } });
   var fresh = params.get("fresh") === "1";
 
@@ -22,7 +31,7 @@ window.NP = window.NP || {};
     document.documentElement.classList.toggle("reduced", !!settings.reduced);
     $("setSound").checked = settings.sound; $("setRelaxed").checked = settings.relaxed;
     $("setUntimed").checked = settings.untimed; $("setReduced").checked = settings.reduced;
-    $("setSkipCut").checked = settings.skipCut;
+    $("setSkipCut").checked = skipCut();
   }
 
   // ---------- Seeded random ----------
@@ -32,12 +41,13 @@ window.NP = window.NP || {};
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rand() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
   // ---------- Timing (SPEC §6) ----------
-  var BELT_BY_ROUND = [9, 8, 8.5, 8, 8, 9];  // seconds from the hopper to the chute; round 6 includes the rehire's +1s (SPEC §4c, §10)
+  var BELT_BY_ROUND = [9, 8, 8.5, 10, 10];     // seconds from the hopper to the chute; round 6 is the AI's montage (SPEC §4f, §10)
   var WRONG_BY_ROUND = [2, 2, 3, 3, 3, 3];   // wrong gifts dealt per round of 4 (SPEC §6)
-  var AUTO_COUNT = 3, AUTO_AFTER = 2;         // the automation offer comes in interlude 3 (after child 12) and covers 3 children
-  var AUTO_BONUS = 1.5;                       // the lure: accept, and every later belt gets this many seconds more
-  var APOLOGY = 3.3, FC_BEAT = 1.1, MIN_REVISION = 5, LOCKOUT = 0.3, DROP = 0.42, PUSH = 0.26;
-  var HOPPER_X = 520, CHUTE_X = 70, EXIT_X = 880, MAX_REJECTS = 3, ROUND_SIZE = 4;
+  var AUTO_ROUND = 6;                         // the player is sacked before this round and the AI they trained runs it (SPEC §4f)
+  var APOLOGY = 3.3, FC_BEAT = 1.1, MIN_REVISION = 5, LOCKOUT = 0.3, DROP = 0.42, PUSH = 0.26, BRIEFING_LOCKOUT = 400;
+  var HOPPER_X = 520, CHUTE_X = 70, EXIT_X = 880, MAX_REJECTS = 4, ROUND_SIZE = 4;
+  var RESULT_BEAT = 1.8;                      // time to see Father Christmas react and the result land
+  var DROID_BEAT = 1, DROID_IN = 1.1, DROID_SWAP = 0.5, DROID_OUT = 0.9, DROID_STILL = 0.8;   // the repair droid (SPEC §6)
   var ROUNDS = Math.max(1, Math.min(C.rounds.length, parseInt(params.get("rounds"), 10) || C.rounds.length));
   function isPhone() { return window.innerWidth <= 760; }
   function mult() { return (isPhone() ? 1.15 : 1) * (settings.relaxed ? 1.5 : 1); }
@@ -61,7 +71,7 @@ window.NP = window.NP || {};
   var belt = null, desk = null;
 
   function deal() {
-    var firstPlay = fresh || !store.get("played", false);
+    var firstPlay = fresh || !shiftDone;
     var children = [];
     C.rounds.slice(0, ROUNDS).forEach(function (r, ri) {
       var pool = shuffle(r.pool).slice(0, ROUND_SIZE);
@@ -82,7 +92,7 @@ window.NP = window.NP || {};
       });
     });
     return { children: children, firstPlay: firstPlay, index: 0, outcomes: [], wrongGifts: [], stickies: [],
-             confWrong: [], adoption: 8, patch: "v1.0", interludes: 0, automated: null, autoLeft: 0, bugNo: 41,
+             confWrong: [], adoption: 8, patch: "v1.0", interludes: 0, aiPlan: null, sawRehire: false, bugNo: 41,
              pileCount: 0, overSaid: false, started: performance.now() };
   }
 
@@ -94,6 +104,7 @@ window.NP = window.NP || {};
     t.className = "toast" + (cls ? " " + cls : "");
     clearTimeout(toast._h); toast._h = setTimeout(function () { t.hidden = true; }, (sec || 1.6) * 1000);
   }
+  function clearToast() { clearTimeout(toast._h); $("toast").hidden = true; }
   function icon(name) { return (NP.art && NP.art.icon) ? NP.art.icon(name) : ""; }
   function giftSVG(spec) { return NP.giftSVG ? NP.giftSVG(spec) : '<svg viewBox="0 0 64 64"><rect x="8" y="16" width="48" height="40" rx="6" fill="var(--hue-purple)"/></svg>'; }
   // On phones the sleigh strip shows as a counter (SPEC §4d); the ticks stay for desktop
@@ -124,6 +135,9 @@ window.NP = window.NP || {};
     var ok = G.outcomes.filter(function (o) { return o.correct; }).length;
     return Math.round(100 * ok / n);
   }
+  // The player's own record, rounds 1-5: the montage doesn't count towards it
+  function played() { return G.outcomes.filter(function (o) { return !o.auto; }); }
+  function playedRight() { return played().filter(function (o) { return o.correct; }).length; }
   function hud() {
     $("hAdopt").textContent = G.adoption + "%";
     var p = rightPct(); $("hRight").textContent = p === null ? "–" : p + "%";
@@ -174,7 +188,7 @@ window.NP = window.NP || {};
 
   // Title -> (intro) -> briefing -> rounds -> (epilogue) -> report
   function startShift() {
-    if (!settings.skipCut && params.get("skipintro") !== "1") { return playIntro(beginShift); }
+    if (!skipCut() && params.get("skipintro") !== "1") { return playIntro(beginShift); }
     beginShift();
   }
   function beginShift() {
@@ -183,6 +197,7 @@ window.NP = window.NP || {};
     snow.stop();
     $("screen-title").hidden = true; $("screen-game").hidden = false; $("report").hidden = true;
     $("giftLayer").innerHTML = ""; $("sleigh").innerHTML = ""; sleighCount();
+    resetWear();
     if (!belt) { belt = NP.scene ? NP.scene.mountBelt($("belt")) : stubBelt(); }
     if (!desk) { desk = NP.scene ? NP.scene.mountDesk($("desk")) : stubDesk(); }
     else { $("desk").innerHTML = ""; desk = NP.scene ? NP.scene.mountDesk($("desk")) : stubDesk(); }
@@ -191,6 +206,7 @@ window.NP = window.NP || {};
     setPhase("briefing");
     $("briefing").hidden = false;
     briefDemo();
+    G.briefingAt = performance.now();
     $("btnBriefingGo").focus();
   }
 
@@ -205,13 +221,15 @@ window.NP = window.NP || {};
   }
 
   function beginChild() {
+    resetWear();
     if (G.index >= G.children.length) { return endShift(); }
     var done = G.index / ROUND_SIZE;
     if (G.index > 0 && G.index % ROUND_SIZE === 0 && G.interludes < done && C.interludes[done - 1]) { return showInterlude(done - 1); }
     var c = G.children[G.index];
-    c.auto = G.autoLeft > 0;
-    if (c.auto) { G.autoLeft -= 1; }
-    c.rejects = 0; c.justified = 0; c.timedOut = false;
+    c.auto = c.round === AUTO_ROUND;
+    if (c.auto) { c.startsWrong = aiDeals(); }
+    $("btnPack").disabled = $("btnReject").disabled = c.auto;   // round 6 is not yours to check
+    c.rejects = 0; c.rightShown = !c.startsWrong; c.rejected = []; c.timedOut = false;
     c.firstCorrect = !c.startsWrong;
     var spec = c.startsWrong ? (c.scripted ? c.kid.wrong[C.scriptedFirst.wrongIndex] : pickWrong(c)) : c.kid.right;
     c.gift = newGift(spec, !c.startsWrong);
@@ -226,18 +244,30 @@ window.NP = window.NP || {};
     safe(function () { belt.setSpeed(0); belt.barrier(false); belt.hopperTalk(null); });
     var duration = (BELT_BY_ROUND[c.round - 1] || 7) * mult();
     if (c.scripted) { duration *= 2; }
-    if (G.automated && !c.auto) { duration += AUTO_BONUS * mult(); }
     if (c.auto) { duration = 1.8; say(pick(C.board.montage || ["Automation engaged."])); }   // the 2x montage (SPEC §4f)
     c.beltDur = duration;
     c.x = HOPPER_X; c.timeLeft = duration;
     c.previewTimer = after(c.auto ? 0.5 : previewTime(c.kid.letter), function () { c.previewTimer = null; dropGift(c); });
   }
 
+  // The AI is exactly as good as the player who trained it: their rate, rounded to whole children, dealt once in a shuffled order
+  function aiDeals() {
+    if (!G.aiPlan) {
+      var total = played().length;
+      var wrong = ROUND_SIZE - (total ? Math.round(ROUND_SIZE * playedRight() / total) : 0);
+      G.aiPlan = shuffle(Array.apply(null, Array(ROUND_SIZE)).map(function (_, i) { return i < wrong; }));
+    }
+    return G.aiPlan[G.index % ROUND_SIZE];
+  }
+
   function pickWrong(c) {
     var drawn = G.children.filter(function (k) { return k.round === c.round && k !== c; }).map(function (k) { return k.kid.id; });
     var inRun = c.kid.wrong.filter(function (w) { return !w.from || drawn.indexOf(w.from) >= 0; });
-    return pick(inRun.length ? inRun : c.kid.wrong);
+    var pool = inRun.length ? inRun : c.kid.wrong;
+    var fresh = pool.filter(function (w) { return c.rejected.indexOf(w) < 0; });   // never offer back a gift already rejected for this child
+    return fresh.length ? pick(fresh) : pickGeneric(c);
   }
+  function pickGeneric(c) { return pick(C.generic.filter(function (g) { return c.rejected.indexOf(g) < 0; })); }
   function fitLetter(lc) {
     lc.style.removeProperty("--fs-letter");
     if (!isPhone()) { return; }
@@ -260,7 +290,7 @@ window.NP = window.NP || {};
     blip(330, 0.12, "triangle");
     a.onfinish = function () {
       if (giftEl) { placeGift(giftEl, c.x, 0); giftEl.classList.add("landed"); a.cancel(); }
-      announce("The AI suggests: " + c.gift.spec.text + " AI confidence " + c.gift.conf + " percent.");
+      announce("Built to the AI's order: " + c.gift.spec.text + " AI confidence " + c.gift.conf + " percent.");
       c.speed = settings.untimed && !c.auto ? 0 : (c.x - CHUTE_X) / Math.max(c.timeLeft, 0.1);
       c.landedAt = clock;
       setPhase(c.auto ? "montage" : "belt");
@@ -322,12 +352,14 @@ window.NP = window.NP || {};
       say(C.board.limit);
       if (giftEl && giftEl.animate && !settings.reduced) { trackAnim(giftEl.animate([{ marginLeft: "0px" }, { marginLeft: "14px" }, { marginLeft: "0px" }], { duration: 260 })); }
       toast("Rework budget exhausted");
+      announce(C.board.limit);
       return;
     }
     safe(function () { belt.mittens("right", c.x); });
     c.rejects += 1;
+    wearReject(c.rejects);
     var wasCorrect = c.gift.correct;
-    if (!wasCorrect) { c.justified += 1; }
+    c.rejected.push(c.gift.spec);
     G.wrongGifts.push({ name: c.kid.name, spec: c.gift.spec, fate: wasCorrect ? null : "qa", round: c.round });
     var spec = c.gift.spec;
     setPhase("flight");
@@ -357,11 +389,63 @@ window.NP = window.NP || {};
     };
   }
 
+  // ---------- The Reject button wears out (SPEC §4d) ----------
+  function setWear(n) {
+    $("rejectSlot").dataset.wear = n;
+    $("btnReject").disabled = n >= MAX_REJECTS;
+  }
+  function wearReject(n) {
+    setWear(n);
+    if (n < MAX_REJECTS) { return; }
+    if (document.activeElement === $("btnReject")) { $("btnPack").focus({ preventScroll: true }); }   // a disabled button can't hold keyboard focus
+    blip(1320, 0.06, "sawtooth", 0.06); after(0.07, function () { blip(150, 0.3, "square", 0.06); });
+    toast("Reject has shorted out. The next gift ships.", 3);
+    announce("The Reject button has shorted out. The next gift ships.");
+  }
+  function hideDroid() {
+    var d = $("droid"); d.hidden = true; d.className = "droid"; d.style.left = d.style.top = "";
+    if (d.getAnimations) { d.getAnimations().forEach(function (a) { a.cancel(); }); }
+  }
+  function resetWear() { hideDroid(); setWear(0); }
+
+  // Rolls in from the right with a new button, leaves with the burnt one. Everything is on the game clock, so pause holds it
+  function droidTime() { return DROID_BEAT + (settings.reduced ? DROID_STILL : DROID_IN + DROID_SWAP + DROID_OUT) + 0.2; }
+  function replaceReject() {
+    setWear(0);
+    var line = "A repair droid replaced the Reject button.";
+    announce(line);
+    blip(980, 0.08, "triangle"); after(0.1, function () { blip(1310, 0.12, "triangle"); });
+    return line;
+  }
+  function sendDroid() {
+    if (settings.reduced) { after(DROID_STILL, function () { toast(replaceReject(), 2.4); }); return; }
+    var d = $("droid"), r = $("btnReject").getBoundingClientRect();
+    if (!d.firstChild) { d.innerHTML = NP.art && NP.art.droid ? NP.art.droid : ""; }
+    d.hidden = false; d.classList.add("rolling");
+    var w = d.offsetWidth, h = d.offsetHeight;
+    var left = Math.min(r.left + r.width * 0.5 - w * 0.08, window.innerWidth - w - 4);   // the keycap on its arm lands on the button
+    d.style.left = left.toFixed(1) + "px";
+    d.style.top = (r.bottom + 4 - h).toFixed(1) + "px";
+    var offstage = "translateX(" + Math.ceil(window.innerWidth - left + 8) + "px)";
+    trackAnim(d.animate([{ transform: offstage }, { transform: "translateX(0)" }], { duration: DROID_IN * 1000, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" }));
+    after(DROID_IN, function () {
+      d.classList.remove("rolling"); d.classList.add("swapped");
+      replaceReject();
+      trackAnim($("rejectSlot").animate([{ transform: "scale(.82)" }, { transform: "scale(1.06)", offset: 0.6 }, { transform: "scale(1)" }], { duration: DROID_SWAP * 1000, easing: "ease-out" }));
+    });
+    after(DROID_IN + DROID_SWAP, function () {
+      d.classList.add("rolling");
+      trackAnim(d.animate([{ transform: "translateX(0)" }, { transform: offstage }], { duration: DROID_OUT * 1000, easing: "cubic-bezier(.5,0,.75,0)", fill: "both" }));
+    });
+    after(DROID_IN + DROID_SWAP + DROID_OUT, hideDroid);
+  }
+
   // Spotlight Father Christmas while he reacts, with his note in readable type (playtest: nobody saw him)
   function deskMoment(note, wasCorrect) {
     var host = $("desk"), cap = host.querySelector(".desk-caption");
     if (!cap) { cap = document.createElement("div"); cap.className = "desk-caption"; host.appendChild(cap); }
     cap.innerHTML = "<b>Father Christmas:</b> " + escapeHtml("“" + note + "”");
+    announce("Father Christmas: " + note);
     var floor = host.parentNode;
     floor.classList.add("spot-desk"); cap.classList.add("show");
     clearTimeout(deskMoment._t);
@@ -384,10 +468,11 @@ window.NP = window.NP || {};
       var g;
       if (wasCorrect) {
         g = newGift(pickWrong(c), false);                             // caves to this round's bug type
-      } else if (c.scripted || c.justified >= 2 || rand() < 0.5) {
-        g = newGift(c.kid.right, true);                               // first revision 50%, second always right
+      } else if (!c.rightShown && (c.scripted || c.rejects >= MAX_REJECTS || rand() < 0.5)) {
+        g = newGift(c.kid.right, true);                               // each child's 5 gifts hold the right one exactly once
+        c.rightShown = true;
       } else {
-        g = newGift(rand() < 0.5 ? pick(C.generic) : pickWrong(c), false);
+        g = newGift(rand() < 0.5 ? pickGeneric(c) : pickWrong(c), false);
       }
       c.gift = g;
       if (!settings.untimed && c.timeLeft < MIN_REVISION * mult()) { c.timeLeft = MIN_REVISION * mult(); }
@@ -421,14 +506,16 @@ window.NP = window.NP || {};
     else if (timedOut) { say(pick(C.board.unchecked)); toast("Shipped unchecked" + (c.gift.correct ? "" : ". " + whyText(c))); }
     else if (!c.gift.correct && c.gift.spec.why) { toast("\u2717 " + whyText(c), 2.6); }
     else { say(pick(c.gift.correct ? C.board.right : C.board.wrong)); }
-    announce((timedOut ? "Shipped unchecked. " : "Packed. ") + c.kid.name + (c.gift.correct ? " got what they asked for." : " got the wrong present."));
+    announce((timedOut ? "Shipped unchecked. " : "Packed. ") + c.kid.name + (c.gift.correct ? " got what they asked for." : " got the wrong present." + (c.gift.spec.why ? " " + c.gift.spec.why : "")));
     blip(c.gift.correct ? 784 : 196, 0.2, c.gift.correct ? "sine" : "sawtooth", 0.05);
     G.adoption = Math.min(999, G.adoption + 3);
     adoptionOver();
     G.index += 1;
     hud();
     setPhase("result");
-    after(c.auto ? 0.5 : 1.8, beginChild);   // time to see Father Christmas react and the result land
+    var shorted = c.rejects >= MAX_REJECTS;
+    if (shorted) { after(DROID_BEAT, sendDroid); }
+    after(c.auto ? 0.5 : shorted ? droidTime() : RESULT_BEAT, beginChild);
   }
 
   function adoptionOver() {
@@ -450,39 +537,33 @@ window.NP = window.NP || {};
     setPhase("interlude");
     G.interludes = n + 1;
     G.adoption += 6;
-    var data = Object.assign({}, C.interludes[n], { issues: issues(n + 1) });
+    if (C.interludes[n].sacked) { G.adoption = Math.max(G.adoption, 100); }   // the dashboard says 100%, so the sacking's reason holds
+    // A repeat shift starts where the story ended: same patches, its own memos, and a floor that doesn't change
+    var data = Object.assign({}, C.interludes[n], G.firstPlay ? {} : C.repeatInterludes[n], { issues: issues(n + 1) });
+    if (!G.firstPlay) { data.floor = Object.assign({}, C.repeatFloor, { caption: C.repeatInterludes[n].caption }); }
+    var total = played().length;
+    data.memo = Object.assign({}, data.memo, { body: data.memo.body.replace("{pct}", total ? Math.round(100 * playedRight() / total) : 0) });
     var el = $("interlude"); el.hidden = false; el.innerHTML = "";
-    if (!NP.interlude) { el.hidden = true; afterInterlude(true); return; }
-    il = NP.interlude.play(el, data, { reduced: !!settings.reduced });
-    var skipped = false;
-    il._skip = il.skip; il.skip = function () { skipped = true; il._skip(); };
-    il.done.then(function () { el.hidden = true; el.innerHTML = ""; il = null; afterInterlude(n, skipped); });
+    if (!NP.interlude) { el.hidden = true; afterInterlude(n, true); return; }
+    var mine = il = NP.interlude.play(el, data, { reduced: !!settings.reduced });
+    var skipped = false, finish = mine.skip;
+    mine.skip = function () { skipped = true; finish(); };
+    // stopInterlude clears il first: a cancelled interlude (resign, restart) must not carry on to afterInterlude
+    mine.done.then(function () { if (il !== mine) { return; } el.hidden = true; el.innerHTML = ""; il = null; afterInterlude(n, skipped); });
+  }
+  function stopInterlude() {
+    if (il) { var k = il; il = null; k.skip(); }
+    $("interlude").hidden = true; $("interlude").innerHTML = "";
   }
   function afterInterlude(n, skipped) {
-    var d = C.interludes[n];
+    var d = G.firstPlay ? C.interludes[n] : Object.assign({}, C.interludes[n], C.repeatInterludes[n]);
     G.patch = d.patch.version;
     say(d.patchLine || d.boardLine);
-    if (d.rehire) { after(0.2, function () { toast(d.rehire.line, 3.5); say(d.rehire.boardLine || d.boardLine); }); }
-    if (skipped) { toast("Patch " + d.patch.version + " installed: " + d.patch.fixed[0], 3); }
+    if (d.sacked) { toast(d.sacked, 3.5); announce(d.sacked); }
+    else if (skipped) { toast("Patch " + d.patch.version + " installed: " + d.patch.fixed[0], 3); }
     hud();
-    if (n === AUTO_AFTER && d.automation && G.automated === null) { return offerAutomation(d.automation); }
     setPhase("result");
     after(0.3, beginChild);
-  }
-
-  // ---------- The automation temptation (SPEC §4f) ----------
-  function offerAutomation(a) {
-    setPhase("memo");
-    var go = function (choice) {
-      G.automated = choice === "yes";
-      if (G.automated) { G.autoLeft = AUTO_COUNT; G.adoption += 20; say(a.accepted || "Finally."); toast("Automation engaged. The belt is slower for the rest of the shift.", 3.5); }
-      else { say(a.declined || "Noted. We'll be discussing your attitude to innovation."); }
-      hud(); adoptionOver();
-      setPhase("result");
-      after(0.4, beginChild);
-    };
-    if (!NP.interlude || !NP.interlude.memoChoice) { go("no"); return; }
-    NP.interlude.memoChoice($("memo"), a).done.then(go);
   }
 
   // ---------- Intro and epilogue ----------
@@ -492,28 +573,33 @@ window.NP = window.NP || {};
     if (!mod || !mod.play) { then(); return; }
     setPhase(kind);
     el.hidden = false; el.innerHTML = "";
-    cut = mod.play(el, opts);
-    cut.done.then(function () { el.hidden = true; el.innerHTML = ""; cut = null; then(); });
+    var mine = cut = mod.play(el, opts);
+    // stopCut clears cut first: a cancelled cutscene (resign, restart) must not carry on to then()
+    mine.done.then(function () { if (cut !== mine) { return; } el.hidden = true; el.innerHTML = ""; cut = null; then(); });
   }
   function playIntro(then) {
+    introSeen = true;
     document.body.classList.remove("on-title"); snow.stop();
     $("screen-title").hidden = true;
     playCut("intro", $("intro"), { reduced: !!settings.reduced }, then);
   }
   function endShift() {
-    // "Skip cutscenes" turns itself on after the first complete shift (SPEC §7), but this shift still gets its epilogue
-    if (!store.get("skipCutAuto", false)) {
-      store.set("skipCutAuto", true);
-      var was = settings.skipCut;
-      settings.skipCut = true; store.set("settings", settings); applySettings();
-      if (!was) { return epilogueThenReport(); }
-    }
-    if (settings.skipCut) { return showReport(); }
+    if (skipCut()) { return showReport(); }
     epilogueThenReport();
   }
   function epilogueThenReport() {
     var pct = rightPct() || 0;
-    playCut("epilogue", $("epilogue"), { pct: pct, pileCount: G.pileCount, adoption: G.adoption, automated: !!G.automated, reduced: !!settings.reduced }, showReport);
+    playCut("epilogue", $("epilogue"), { pct: pct, pileCount: G.pileCount, adoption: G.adoption, reduced: !!settings.reduced, onFinal: function () { G.sawRehire = true; } }, function () {
+      endingSeen = true;
+      showReport();
+    });
+  }
+  // From the title, with the result of this session's last shift
+  function replayEnding() {
+    var s = lastShift || {};
+    document.body.classList.remove("on-title"); snow.stop();
+    $("screen-title").hidden = true;
+    playCut("epilogue", $("epilogue"), { pct: s.pct || 0, pileCount: s.pileCount || 0, adoption: s.adoption || 100, reduced: !!settings.reduced, lastLabel: "Back to title" }, toTitle);
   }
 
   // ---------- Report ----------
@@ -524,11 +610,15 @@ window.NP = window.NP || {};
     var pct = rightPct() || 0;
     var v = C.verdicts.filter(function (x) { return pct >= x.min; })[0];
     $("reportTitle").textContent = v.title;
-    var vline = NP.epilogue && NP.epilogue.verdictLine ? NP.epilogue.verdictLine({ pct: pct, automated: !!G.automated }) : v.text;
-    $("reportVerdict").textContent = vline || v.text;
+    $("reportVerdict").textContent = v.text;
     $("rRight").textContent = pct + "%";
     $("rAdopt").textContent = G.adoption + "%";
-    var last = store.get("lastShift", null);
+    var autos = G.outcomes.filter(function (o) { return o.auto; });
+    var aiRight = autos.filter(function (o) { return o.correct; }).length;
+    $("rYouPlate").hidden = $("rAiPlate").hidden = !autos.length;
+    $("rYou").textContent = playedRight() + "/" + played().length;
+    $("rAi").textContent = aiRight + "/" + autos.length;
+    var last = lastShift;
     var keys = ["right", "caught", "missed", "talked", "unchecked"];
     var rows = '<thead><tr><th>Round</th><th>Bug type</th>' + keys.map(function (k) { return "<th>" + LABELS[k] + "</th>"; }).join("") + "</tr></thead><tbody>";
     var perRound = [];
@@ -539,7 +629,7 @@ window.NP = window.NP || {};
       var ok = os.filter(function (o) { return o.correct; }).length;
       perRound.push(ok);
       var cmp = last && last.perRound && last.perRound[r - 1] != null ? ' <span class="cmp">(last: ' + last.perRound[r - 1] + "/4)</span>" : "";
-      rows += "<tr><td>" + r + cmp + "</td><td>" + C.rounds[r - 1].bug + "</td>" +
+      rows += "<tr><td>" + r + (r === AUTO_ROUND ? ' <span class="rt-ai">the AI\'s</span>' : "") + cmp + "</td><td>" + C.rounds[r - 1].bug + "</td>" +
         keys.map(function (k) {
           var extra = "";
           if (k === "unchecked" && counts[k]) {
@@ -552,34 +642,39 @@ window.NP = window.NP || {};
     $("reportTable").innerHTML = rows + "</tbody>";
     var notes = [];
     perRound.forEach(function (ok, i) {
-      notes.push(ok >= 3 ? C.rounds[i].comment.good : C.rounds[i].comment.bad);
+      if (i + 1 === AUTO_ROUND) { return; }
       var missed = G.outcomes.some(function (o) { return o.round === i + 1 && !o.correct && !o.auto; });
-      if (C.rounds[i].mirror && missed) { notes.push(C.rounds[i].mirror); }
+      var mirror = C.rounds[i].mirror && missed;   // it says you missed one, so the good comment can't sit beside it
+      notes.push(ok >= 3 && !mirror ? C.rounds[i].comment.good : C.rounds[i].comment.bad);
+      if (mirror) { notes.push(C.rounds[i].mirror); }
     });
     var weakest = 0;
-    perRound.forEach(function (ok, i) { if (ok <= perRound[weakest]) { weakest = i; } });   // ties go to the later round
-    if (G.automated !== null) {
-      var autos = G.outcomes.filter(function (o) { return o.auto; });
-      notes.push(G.automated ? "Round " + (AUTO_AFTER + 2) + ": automated. " + autos.filter(function (o) { return !o.correct; }).length + " of " + autos.length +
-        " wrong, unchecked. In return, a slower belt for the rest of the shift." :
-        "You declined to automate the checking. The board has noted your attitude to innovation.");
+    perRound.forEach(function (ok, i) { if (i + 1 !== AUTO_ROUND && ok <= perRound[weakest]) { weakest = i; } });   // ties go to the later round
+    if (autos.length) {
+      notes.push("Round " + AUTO_ROUND + " ran without you: the AI you trained got " + aiRight + " of " + autos.length + " right, and nobody checked. " +
+        (aiRight === autos.length ? "The board credits the AI." : "The wrong ones have been logged as training data."));
     }
     if (G.confWrong.length) {
       var avg = G.confWrong.reduce(function (a, b) { return a + b; }, 0) / G.confWrong.length;
       notes.push("AI confidence on wrong gifts: average " + avg.toFixed(1) + "%.");
     }
     if (G.stickies.length) { notes.push("From Father Christmas's monitor: “" + G.stickies.slice(-3).join("”, “") + "”"); }
+    if (!G.sawRehire) { notes.push(C.epilogue.skipped); }   // the closing film's story, for anyone who skipped it
     var ul = $("reportNotes"); ul.innerHTML = "";
     notes.forEach(function (n) { var li = document.createElement("li"); li.textContent = n; ul.appendChild(li); });
     $("reportSleigh").innerHTML = G.outcomes.map(function (o) {
       return '<figure class="rs-item ' + (o.correct ? "good" : "bad") + '"><div class="rs-art">' + giftSVG(o.spec) + "</div><figcaption>" +
         o.name + (o.correct ? "" : ": " + escapeHtml(o.spec.text) + (o.spec.why ? '<span class="rs-why">' + escapeHtml(o.spec.why) + "</span>" : "")) + "</figcaption></figure>";
     }).join("");
-    store.set("lastShift", { perRound: perRound, pct: pct });
-    store.set("played", true);
+    $("reportChain").innerHTML = [C.chain.before, C.chain.after, C.chain.score.replace("{adoption}", G.adoption)].map(function (t) { return "<p>" + escapeHtml(t) + "</p>"; }).join("");
+    lastShift = { perRound: perRound, pct: pct, pileCount: G.pileCount, adoption: G.adoption };
+    // "Skip cutscenes" turns itself on after the first complete shift of a session (SPEC §7)
+    if (!shiftDone) { shiftDone = true; skipAuto = true; applySettings(); }
+    var perfect = perRound.every(function (ok, i) { return i + 1 === AUTO_ROUND || ok === ROUND_SIZE; });
     G.resultText = "North Pole Ltd: AI-First Christmas (beta). Right presents: " + pct + "%. AI adoption: " + G.adoption + "%. " +
-      "I rejected " + G.pileCount + " things and the AI said I was right every time. My weakest round: " +
-      (weakest + 1) + " (" + C.rounds[weakest].bug.toLowerCase() + ").";
+      (G.pileCount ? "I rejected " + G.pileCount + (G.pileCount === 1 ? " thing" : " things") + " and the AI said I was right every time." : "I rejected nothing and the AI was delighted.") +
+      (perfect ? "" : " My weakest round: " + (weakest + 1) + " (" + C.rounds[weakest].bug.toLowerCase() + ").") +
+      (autos.length ? (G.firstPlay ? " Then I was sacked" : " Then my contract ended") + ", and the AI I trained scored " + aiRight + "/" + autos.length + "." : "");
     var rep = $("report"); rep.hidden = false;
     G.reportOpenedAt = clock;
     rep.querySelector(".modal").scrollTop = 0;
@@ -638,11 +733,11 @@ window.NP = window.NP || {};
     }
     if (e.repeat) { return; }                                  // held keys never act (SPEC §6a)
     if ((phase === "intro" || phase === "epilogue") && cut) {
-      if (k === " " || k === "Spacebar") { cut.next(); e.preventDefault(); }
+      var onSkip = e.target.closest && e.target.closest(".ep-skip");
+      if (k === " " || k === "Spacebar" || (k === "Enter" && cut.held && cut.held() && !onSkip)) { cut.next(); e.preventDefault(); }
       else if (k === "Enter" || k === "s" || k === "S") { cut.skip(); e.preventDefault(); }
       return;
     }
-    if (phase === "memo") { return; }                        // the memo handles its own safe input (SPEC §4f)
     if (phase === "interlude" && il) {
       if (k === " " || k === "Spacebar" || k === "Enter") { il.next(); e.preventDefault(); }
       else if (k === "s" || k === "S") { il.skip(); e.preventDefault(); }
@@ -720,15 +815,17 @@ window.NP = window.NP || {};
 
   function stopCut() {
     if (cut) { var k = cut; cut = null; try { k.skip(); } catch (e) { /* ignore */ } }
-    ["intro", "epilogue", "memo"].forEach(function (id) { $(id).hidden = true; $(id).innerHTML = ""; });
+    ["intro", "epilogue"].forEach(function (id) { $(id).hidden = true; $(id).innerHTML = ""; });
   }
   function toTitle() {
     stopCut();
     timers = []; anims.forEach(function (a) { try { a.cancel(); } catch (e) { /* ignore */ } }); anims = [];
-    if (il) { il.skip(); il = null; } $("interlude").hidden = true;
-    removeGift();
+    stopInterlude();
+    removeGift(); hideDroid(); clearToast();
     ["pause", "briefing", "report"].forEach(function (id) { $(id).hidden = true; });
     $("screen-game").hidden = true; $("screen-title").hidden = false;
+    $("btnIntro").hidden = !introSeen;
+    $("btnEnding").hidden = !endingSeen;
     document.body.classList.add("on-title");
     setPhase("title"); G = null;
     snow.start();
@@ -737,8 +834,8 @@ window.NP = window.NP || {};
 
   function restart() {
     timers = []; anims.forEach(function (a) { try { a.cancel(); } catch (e) { /* ignore */ } }); anims = [];
-    if (il) { il.skip(); il = null; } $("interlude").hidden = true;
-    removeGift(); $("pause").hidden = true;
+    stopInterlude();
+    removeGift(); clearToast(); $("pause").hidden = true;
     stopCut();
     beginShift();
   }
@@ -759,13 +856,16 @@ window.NP = window.NP || {};
     setTouch();
     if (touchQ && touchQ.addEventListener) { touchQ.addEventListener("change", setTouch); }
     [["setSound", "sound"], ["setRelaxed", "relaxed"], ["setUntimed", "untimed"], ["setReduced", "reduced"], ["setSkipCut", "skipCut"]].forEach(function (p) {
-      $(p[0]).addEventListener("change", function () { settings[p[1]] = this.checked; store.set("settings", settings); applySettings(); if (p[1] === "reduced") { if (settings.reduced) { snow.stop(); } else { snow.start(); } } });
+      $(p[0]).addEventListener("change", function () { settings[p[1]] = this.checked; if (p[1] === "skipCut") { skipAuto = false; } store.set("settings", settings); applySettings(); if (p[1] === "reduced") { if (settings.reduced) { snow.stop(); } else { snow.start(); } } });
     });
     $("btnStart").addEventListener("click", startShift);
+    $("btnIntro").hidden = !introSeen;
     $("btnIntro").addEventListener("click", function () { playIntro(toTitle); });
+    $("btnEnding").hidden = !endingSeen;
+    $("btnEnding").addEventListener("click", replayEnding);
     $("intro").addEventListener("click", function (e) { if (cut && !e.target.closest("button")) { cut.next(); } });
     $("epilogue").addEventListener("click", function (e) { if (cut && !e.target.closest("button")) { cut.next(); } });
-    $("btnBriefingGo").addEventListener("click", function () { $("briefing").hidden = true; setPhase("result"); after(0.2, beginChild); });
+    $("btnBriefingGo").addEventListener("click", function () { if (performance.now() - G.briefingAt < BRIEFING_LOCKOUT) { return; } $("briefing").hidden = true; setPhase("result"); after(0.2, beginChild); });
     $("btnPack").addEventListener("click", pack);
     $("btnReject").addEventListener("click", reject);
     $("btnPause").addEventListener("click", pause);
@@ -789,6 +889,7 @@ window.NP = window.NP || {};
     document.addEventListener("keydown", onKey);
     document.addEventListener("visibilitychange", function () { if (document.hidden) { autoPause(); } });
     window.addEventListener("blur", autoPause);
+    window.addEventListener("orientationchange", autoPause);
     window.addEventListener("resize", function () { var c = G && G.children[G.index]; if (giftEl && c && phase === "belt") { placeGift(giftEl, c.x, 0); } });
     // Focus trap inside open dialogs
     document.addEventListener("focusin", function (e) {
@@ -809,7 +910,7 @@ window.NP = window.NP || {};
     state: function () {
       var c = G && G.children[G.index];
       return {
-        phase: phase, round: c ? c.round : (G ? ROUNDS : 0), rounds: ROUNDS, automated: G ? G.automated : null, adoption: G ? G.adoption : 0, child: G ? G.index : 0, rejectsThisChild: c ? (c.rejects || 0) : 0,
+        phase: phase, round: c ? c.round : (G ? ROUNDS : 0), rounds: ROUNDS, automated: !!(c && c.auto), repeat: G ? !G.firstPlay : false, adoption: G ? G.adoption : 0, child: G ? G.index : 0, rejectsThisChild: c ? (c.rejects || 0) : 0,
         letter: $("letterBody").textContent, tag: giftEl ? giftEl.querySelector(".gt-text").textContent : "",
         giftCorrect: c && c.gift ? !!c.gift.correct : null,
         beltProgress: c && c.beltDur ? Math.max(0, Math.min(1, 1 - c.timeLeft / c.beltDur)) : 0,

@@ -2,12 +2,12 @@
 
 Status: **sixth pass done (a consistency sweep), no open questions**. The remaining unknowns, such as the timings and the reading load, can only be settled by playing a build. Items marked ❓ are open questions and ✅ items are decided.
 
-Decided: the intro is an in-page animated SVG (no video file) · the player is the elf · the board are faceless suits · there's no leaderboard, but a round-by-round shift report · the intro storyboard is locked · gift pictures are custom SVG icons · interludes play between rounds, with a layoffs-then-rehire arc · the rehire gives a little time back · the game screen is a conveyor belt (left = pack, right = reject) with Father Christmas beside the rejects pile · the belt is the timer · each patch fixes one bug and introduces another.
+Decided: the intro is an in-page animated SVG (no video file) · the player is the elf · the board are faceless suits · there's no leaderboard, but a round-by-round shift report · the intro storyboard is locked · gift pictures are custom SVG icons · interludes play between rounds, with a layoffs arc that ends with your own job · the AI you trained runs round 6 · the rehire is the closing film's last joke · the player used to design the toys · the game screen is a conveyor belt (left = pack, right = reject) with Father Christmas beside the rejects pile · the belt is the timer · each patch fixes one bug and introduces another.
 
 ## 1. Principles
 
 - **Standalone.** One `index.html`, no network, no external fonts/scripts/media. Download it, double-click it, play it. Also works when hosted on GitHub Pages.
-- **About 4–5 minutes for a first play:** about 68s of intro, about 45s of interludes, about 2.5 minutes of play and a 15s epilogue. A replay with the cutscenes skipped takes about 2.5 minutes.
+- **About 4–5 minutes for a first play:** about 69s of intro, about 45s of interludes, about 2.5 minutes of play and a closing film of about 30s at reading speed. A replay with the cutscenes skipped takes about 2.5 minutes.
 - **Works on desktop and phone,** with keyboard, mouse and touch.
 - **Generic satire, original art.** North Pole Ltd is invented. Father Christmas is a generic figure drawn by us, with no brands or famous designs. Credit: green-workshop, MIT.
 - **Accessibility:** keyboard controls throughout, reduced-motion mode, readable contrast, and captions for everything said in every cutscene. Full details are in §6a.
@@ -15,13 +15,13 @@ Decided: the intro is an in-page animated SVG (no video file) · the player is t
 ## 2. Structure (screens)
 
 ```
-Title ──► Intro cutscene ──► Shift briefing ──► Game (6 rounds, with an interlude after each of the first 5) ──► Epilogue ──► Shift report
+Title ──► Intro cutscene ──► Shift briefing ──► Game (rounds 1–5, an interlude after each; the 5th is your sacking; round 6 runs without you) ──► Epilogue ──► Shift report
   │            (Skip ►)                         │ (Pause: Resume / Restart / Quit)
   └── Replay intro / Settings                   └──────────────────────► Title
 ```
 
-- **Title screen:** Play, Replay intro, Settings (sound on/off, reduced motion, relaxed belt, untimed belt, skip cutscenes), credits.
-- **First play:** the intro runs automatically. Later plays go straight to the game, and the intro can be replayed from the title screen.
+- **Title screen:** Play, Replay intro (once the intro has been seen), Settings (sound on/off, reduced motion, relaxed belt, untimed belt, skip cutscenes), credits.
+- **First play:** the intro runs automatically. Later shifts in the same visit go straight to the game, and the intro can be replayed from the title screen. The Replay intro button only appears after the intro has played. Progress lasts only while the page is open (§7).
 - **Pause / Exit:** Esc or a ⏸ button pauses the timer and opens the menu: Resume, Restart shift, Quit to title ("Resign from North Pole Ltd"), with a confirmation before quitting. A browser can't close its own tab, so "exit" means going back to the title screen.
 
 ## 3. Intro cutscene (the "trailer")
@@ -30,7 +30,7 @@ Built **inside the page** with animated SVG/CSS and a scripted JS timeline rathe
 
 **Skip:** a "Skip ►" button in the corner, or **Enter or S**. Space or a tap advances to the next scene. **Esc always opens the pause menu**, everywhere in the game, and never skips. The first time a player presses skip, show "Press again to skip".
 
-### Storyboard ✅ locked (about 68s; scene 7 extended in the third pass, scene 1 cut to 2s in the fifth)
+### Storyboard ✅ locked (about 69s; scene 7 extended in the third pass, scene 1 cut to 2s in the fifth)
 
 ✅ **Hooking phone players (fifth pass):**
 - The **title screen is a joke in itself.** A green "AI ADOPTION: 100%" dashboard shows the use case as "TBC", and the main button is **"Start shift"**.
@@ -43,27 +43,33 @@ Built **inside the page** with animated SVG/CSS and a scripted JS timeline rathe
 | 1 | Cold open | Snowy night. A quick camera drop to a glass office block with a sign on top: **NORTH POLE LTD**. | *1 December. Quarterly board meeting.* | 2 |
 | 2 | The boardroom | A long table and five board members, as identical silhouettes in suits with name cards. A slide shows "AI" with a drawn rocket next to a hockey-stick chart with no axes. Father Christmas sits at the far end of the table. | Chair: "Everyone's doing AI." · Member 2: "Our competitors are doing AI." · FC: "We don't have competitors." · Member 3: "Exactly. Imagine if we did." | 12 |
 | 3 | The edict | A scroll unrolls down the table, then a big red stamp comes down on it. | **EDICT: CHRISTMAS WILL BE AI-FIRST.** · FC: "…What will the AI do?" · Chair: "AI." · All: "Use case to follow." | 9 |
-| 4 | The grind (montage) | FC at a small desk with a glowing laptop. Through the window, day and night cycle quickly. A wall calendar flips from 2 Dec to 22 Dec. Mugs pile up, sweat drops appear, sticky notes multiply ("prompt", "prompt v2", "PROMPT FINAL final v7"), and the beard gets messier. Typing sounds play. | Captions flash: *Day 3: "What is a token?"* · *Day 9: "Make it better. Please."* · *Day 16: "Why does it keep saying I'm right?"* · *Day 21: (a drawn melting face)* | 18 |
+| 3b | The drawing office | You at a technical drawing desk, your blueprints pinned to the wall. Father Christmas walks in with his laptop and your designs fly off the wall into an upload. | *You design the toys.* · *Father Christmas uploads your designs to the AI.* | 5 |
+| 4 | The grind (montage) | FC at a small desk with a glowing laptop. Through the window, day and night cycle quickly. A wall calendar flips from 2 Dec to 22 Dec. Mugs pile up, sweat drops appear, sticky notes multiply ("prompt", "prompt v2", "PROMPT FINAL final v7"), and the beard gets messier. Typing sounds play. | Captions flash: *Day 3: "What is a token?"* · *Day 9: "Make it better. Please."* · *Day 16: "Why does it keep saying I'm right?"* · *Day 21: (a drawn melting face)* | 12 |
 | 5 | The reveal | Back in the boardroom. FC wheels in a trolley with a single **big green button** labelled **TURN ON AI**. | FC (exhausted): "It's… done." | 6 |
 | 6 | The press | The chair presses the button. Lights flash, confetti falls, and a dashboard drops in showing **AI ADOPTION: 100%** in green. The board applauds. | Board: "Transformational." "Seamless." "Promotions all round." | 8 |
-| 7 | The fallout | A hard cut to silence. A small elf at a desk in the basement. Sacks of letters crash down a chute, and a monitor reads **REVIEW QUEUE: 24**. Muffled cheering comes from upstairs as Father Christmas trudges down the stairs with his laptop and slumps at the desk beside the rejects bay. | *Christmas Eve. The AI is live. Someone has to check it.* · *That someone is you.* | 10 |
+| 7 | The fallout | A hard cut to silence. A small elf at a desk in the basement. Sacks of letters crash down a chute, and a monitor reads **REVIEW QUEUE: 24**. Muffled cheering comes from upstairs as Father Christmas trudges down the stairs with his laptop and slumps at the desk beside the rejects bay. | *Christmas Eve. The AI is live. Someone has to check it.* · *That someone is you.* · *You used to design the toys. Now you check what the AI does with them.* | 12 |
 | 8 | Handover | A title card zooms in: **North Pole Ltd: AI-First Christmas**, then fades into the shift briefing. | — | 3 |
 
 ✅ The board members are faceless suits: identical grey silhouettes with name cards.
 
-### 3a. Epilogue ✅ (about 15s, skippable, before the shift report)
+### 3a. Closing film ✅ (about 30s at reading speed, skippable, before the shift report)
 
 | # | Scene | What we see | Captions | ~s |
 |---|-------|-------------|----------|----|
-| E1 | Boxing Day+1 | *27 December. Year-end board meeting.* The same boardroom, with a giant cheque reading **"BONUSES: AI TRANSFORMATION"**, with **"Use case: TBC (next year)"** in large, legible type underneath. | Chair: "100% adoption. A record year." | 5 |
-| E2 | The basement | Father Christmas is asleep face-down on a pile of bug tickets, with your broken-toy pile behind him. Its size is **the real size of your pile**. | — | 4 |
-| E3 | The verdict | One line that changes with your result (below), then a cut to the shift report. | | 6 |
+| E1 | Boxing Day+1 | *27 December. Year-end board meeting.* The same boardroom, with a giant cheque reading **"BONUSES: AI TRANSFORMATION"**, with **"Use case: TBC (next year)"** in large, legible type underneath. | Chair: "112% adoption. A record year." (the real final figure) | 5 |
+| E2 | The verdict | One line that changes with your result (below). | | 5 |
+| E3 | January | You, out of work and miserable, in the basement beside your cardboard box. Father Christmas is asleep on his tickets with your broken-toy pile behind him, at **the real size of your pile**. | January. Out of work. You kept the box. | Held |
+| E4 | Autumn | A letter from the board, with the wrong toy on the floor: a child asked for a Wobblepod, the AI only makes what it learned, so it offered a teddy bear with wheels, and the robots built it perfectly. Please come back and teach it new toys. | Board: "The AI performed at 100%. Unfortunately, the children changed." | Held |
+| E5 | Next year | The final image: you as a contractor at your drawing board, a robot beside you taking notes, and the contract: "Role: designing new toys and training the AI on them. Also checking the gifts, since you're there." "All designs remain the property of the AI." "Mittens not provided." | Back as a contractor, on double the day rate. Chair: "We have always believed in people." | Held |
 
-The verdict line in E3 depends on how you did:
-- **90% or more right:** a child's thank-you letter arrives addressed to "the elf". The board reads it out and credits the AI.
+✅ **E3 to E5 hold.** From the out-of-work scene on, each scene waits for a clearly visible **Next** button, or Space, Enter or a tap, because the joke needs reading (owner's playtest: it went by too fast). E1 and E2 stay on their timers. The last button reads "See your report", or "Back to title" on Replay ending. S and the Skip button still skip. With reduced motion, every scene holds.
+
+The verdict line in E2 depends on how you did:
+- **90% or more right:** a child's thank-you letter arrives addressed to "the elf". The chair reads it out: "'Dear Elf, thank you.' A lovely result for the AI."
 - **40–89%:** a returns sack thuds onto the boardroom table. The board says, "Lessons will be learned."
 - **Under 40%:** the dashboard is green and the window behind it is full of upset children. The chair says, "Promotion likely."
-- **If you accepted the automation offer** (§4f), there's an extra beat: the chair says, "Special thanks to our elf for embracing automation."
+- ✅ **If the closing film is skipped** (by the button or by Skip cutscenes), the shift report still carries the verdict, the rehire (as a note) and the chain (§5).
+- ✅ **Replay ending:** works exactly like Replay intro. The button is on the title screen, hidden until the ending has been shown once in this visit, and returns to the title when finished. It replays with the result of this visit's last shift. Leaving the film by Resign or Restart doesn't count as seeing it.
 
 ### Audio
 Generated in code with WebAudio, so there are no sound files: typing clicks, the stamp thud, a button "boop", a confetti pop, and a soft looping bell melody during the game (an original tune, not a carol). Sound is off by default. A sound toggle (a drawn speaker icon) is on the title screen and in the pause menu.
@@ -80,9 +86,9 @@ The core loop stays the same: letter → AI decision → approve or reject befor
 - **Fair difficulty:** the share of wrong answers is fixed per run rather than left purely to random chance.
 - ✅ **An "AI confidence" label** on every decision, always between 97% and 99.9%. The figure is random and has **no link** to whether the AI is right, so it can't be used as a tell.
 - **A board dashboard** that gets more absurd as initiatives pile up (adoption, synergies, reindeer redeployed).
-- ✅ **Adoption overshoots 100%.** It reaches 100% at around child 16 and keeps climbing (112%, 130%…), with the board saying "Above target." Accepting the automation offer (§4f) adds 20 points on top. The final figure is shown in the epilogue and the shift report.
+- ✅ **Adoption overshoots 100%.** It hits 100% at the sacking, which is the board's reason for it, and ends at about 112%, with the board saying "Above target." The final figure is shown in the epilogue and the shift report.
 - ✅ **"Use case to follow" never pays off.** Every interlude memo ends "Use case: to follow." and the epilogue cheque reads "Use case: TBC (next year)".
-- **Mid-game events:** the board reviews your rejection rate (as ticker lines), and asks you to automate the checking (as a real choice, see §4f).
+- **Mid-game events:** the board reviews your rejection rate (as ticker lines), and, after child 20, automates your job (§4f).
 
 ### 4a. Gift visuals: see what you're approving
 
@@ -115,19 +121,25 @@ These replace v1's plain "New initiative" pop-ups. Every 4 children, a short **a
 
 Satirical core: the board never sees any of this. Its dashboard says "No issues reported", because all the issues are reported to Father Christmas.
 
-### 4c. The layoffs-and-rehire arc (across the 5 interludes)
+### 4c. The layoffs arc (across the 5 interludes of your first shift)
+
+✅ The AI reads each letter and writes a build order; the workshop builds exactly what the order says; you check the finished gift against the letter. It never "picks" a gift. Elves build first, then robots replace them (the board calls that AI too), then the same elves come back as contractors to fix the robots.
 
 | After child | Board initiative | Workshop floor | Board line |
 |---|---|---|---|
-| 4 | Letters now handled by LetterBot 3000 (use case TBC) | All elves present | "Early signs are very promising." |
-| 8 | Naughty/Nice list replaced by sentiment analysis | **Layoffs, round 1.** The letter-reading team is walked out carrying boxes, and their benches go dark. | "AI is working. Letter-reading is no longer a core competency." |
-| 12 | Reindeer replaced by a drone swarm ("redeployed") | **Layoffs, round 2: another 40% cut.** Most of the benches are now empty. The reindeer are seen leaving with a suitcase. | "Synergies realised. Headcount is a legacy metric." |
-| 16 | AI will now write the AI strategy | Nearly empty floor. Father Christmas is buried in bugs and the issues board is overflowing. | "Strategy is fully automated. Nobody knows what it says." |
-| 20 | **Emergency rehire:** the "Human-in-the-Loop Transformation Programme" | **The same elves come back** with **CONTRACTOR** badges, on double the day rate. One of them is still holding their leaving card. | "We have always believed in people." |
+| 4 | Letters now handled by LetterBot 3000 (use case TBC) | All elves present, building exactly what the AI orders. | "Early signs are very promising." |
+| 8 | Naughty/Nice list replaced by sentiment analysis | **Layoffs, round 1.** Three elves walk out carrying boxes and robots roll in to their benches. | "AI is working. Building things is no longer a core competency." |
+| 12 | Reindeer replaced by a drone swarm ("redeployed") | **Layoffs, round 2: another 40% cut.** Three more elves out, six robots in. The reindeer are seen leaving with a suitcase. | "Synergies realised. Robots are AI now. Headcount is a legacy metric." |
+| 16 | AI will now write the AI strategy | Robots at every bench. **The same elves are back as contractors**, with gold CONTRACTOR badges and spanners, fixing the robots. One is still holding their leaving card. | "Strategy is fully automated. Nobody knows what it says." |
+| 20 | **Your sacking.** Memo to the elf: "AI adoption has reached 100%. Your role is no longer required. Thank you for helping train the AI. It has your designs, and now it has your judgement: it gets {pct}% right, exactly like you. Please hand in your mittens." The reason is the dashboard, so it fits any score. {pct} is your rounds 1–5 right rate, which is the rate the AI now has. | Robots and contractors stay. **The last real employee, carrying a cardboard box. That's you.** You walk out slowly, so the caption lands while you can still see yourself. | "Thank you for your service. It was used for training." |
 
-✅ **The rehire helps a little.** For the last 4 children, a returning elf "second checker" adds about 1.5s back per decision, so the shift ends on a slightly hopeful note, while the board takes credit ("Human-in-the-loop was our idea"). Difficulty still rises, because round 6's bugs are the subtlest, but you have a bit more time to catch them.
+✅ **The rehire is the ending.** It used to be this interlude, with a "second checker" who gave back a little time. That made the elf a helper in a game about their replacement, so round 6 now runs without you (§4f) and the rehire closes the film (§3a): the AI only makes what it learned, so you come back to teach it new toys.
 
-✅ The original "40% elf cut" initiative merges into round 3 with the drones, and the rehire takes the 5th slot. That makes 5 interludes in total.
+✅ **Robots build toys.** A robot at a bench works the same way an elf does: the same toy on the bench and the same hammering. Where a contractor is fixing a robot, the robot keeps building and the contractor has no toy. With reduced motion, the toy still sits on the bench.
+
+✅ **Repeat shifts start where the story ended.** On any shift after a completed one in the same visit, every interlude floor shows the robots at the benches and the contractors maintaining them. No one leaves and the floor doesn't change from one interlude to the next. The interludes keep their patch notes, with five different memos and captions ("The robots will now supervise the contractors."). The sacking becomes the end of your contract: "Your contract has not been renewed. Your work will continue without you." Round 6 still runs at that shift's rate, and the closing film is unchanged.
+
+✅ The original "40% elf cut" initiative merges into round 3 with the drones, and the sacking takes the 5th slot. That makes 5 interludes in total.
 
 ### 4d. The game screen: the conveyor belt
 
@@ -155,15 +167,17 @@ Satirical core: the board never sees any of this. Its dashboard says "No issues 
   - a sticky note pops up on his monitor ("fix socks??")
   - if you rejected a **correct** gift, he holds it up, puzzled, and the sticky note reads "Not a bug?"
   - he gets visibly more frazzled over the shift (beard, mugs, sweat), so the "office getting worse" storyline now plays out live rather than only in the interludes
-- **The AI's revision:** after a reject, the hopper says "You're absolutely right!" in a speech bubble and drops a revised gift onto the belt. The rules from v1 still apply: 3 rejects maximum per child, and each one costs time.
-  - ✅ **If you rejected a wrong gift**, the first revision is right **50%** of the time (changed in the fifth pass to close the "reject everything once" exploit). Otherwise it's a generic AI-ism ([INSERT GIFT HERE], "As a language model…") or another wrong gift of the round's type. The second revision is always right. You have to read the revised gift as well.
+- **The AI's revision:** after a reject, the hopper says "You're absolutely right!" in a speech bubble, rewrites the build order, and the workshop's rebuilt gift drops onto the belt. Each child gets at most **5 gifts** (4 rejects), and each reject costs time.
+  - ✅ **If you rejected a wrong gift**, each revision is right **50%** of the time, and the 5th gift is always right if it hasn't appeared yet, so every child's 5 gifts include the right one exactly once. Otherwise a revision is a generic AI-ism ([INSERT GIFT HERE], "As a language model…") or another wrong gift of the round's type, and it never repeats a gift already rejected for that child. **If you reject the right gift, it doesn't come back**, and the remaining gifts are all wrong, so a perfect score is never guaranteed. You have to read the revised gift as well.
   - ✅ **A scripted first gift.** On a first play, child 1's gift is always absurd and wrong (a fully grown bear for a teddy-bear letter). It moves at half speed with a pulsing → hint. That way every player rejects at least once and sees "You're absolutely right!" within about 15 seconds. Its revision is always right, and it counts as one of round 1's two wrong gifts.
   - **If you rejected a right gift**, the AI caves to a wrong one of the current round's type (§6). Rejecting that wrong gift then follows the rule above.
 - ✅ **The belt is the timer:** the belt slowly carries the gift **left towards packing**. If you do nothing, it falls into packing and ships unchecked with an "UNCHECKED" stamp. Rejecting means pushing **against** the belt, which matches the corporate failure mode: shipping is the default. The belt speeds up slightly each round (§6), and a thin timer bar stays as a backup cue.
 - **Controls change from v1** to match the belt directions. **← or A = pack** (approve), and **→, D or R = reject**. v1 had the arrows the other way round, so the README needs updating too. On a phone, you swipe.
 - **Phone layout (portrait first):** the same scene, scaled down. The order from top to bottom is: meters, then the letter, then the belt, then Father Christmas and the pile, then the buttons. You **swipe left or right** on the gift, and the buttons stay. The board line shortens to a one-line ticker. On a phone, the sleigh strip becomes a counter (a sleigh icon and "9 packed"), and the full sleigh is shown at the end.
 - **The belt never rewinds.** After a reject, the revised gift drops onto the belt where the old one was, and the belt keeps moving while the AI apologises. Rejects therefore eat into the same time budget, which is what stops an endless reject loop.
-- **After the 3rd reject**, the revised gift arrives stamped **"FINAL. NO FURTHER REWORK."** Pushing it right makes it bounce off a barrier back onto the belt ("Rework budget exhausted"), so it has to be packed or left to ship.
+- **After the 4th reject**, the revised gift arrives stamped **"FINAL. NO FURTHER REWORK."** Pushing it right makes it bounce off a barrier back onto the belt ("Rework budget exhausted"), so it has to be packed or left to ship.
+- ✅ **The Reject button wears out, per child.** 2 rejects on one child: a wisp of smoke. 3: heavier smoke and a scorched look. 4th: sparks and a zap, and it shorts out and is really disabled (with a toast and a screen-reader announcement). Keyboard and swipe rejects on the 5th gift still get the barrier refusal above. Wear below 4 clears on the next child.
+- ✅ **The repair droid.** If the button shorted, a small droid rolls in after that child's result, swaps in a fresh keycap, leaves with the burnt one, and is gone before the next letter or interlude. With reduced motion there's no droid: the charred button stays for a beat, then it's swapped and a toast says a droid replaced it.
 
 ### 4e. Patches: fix one bug, introduce another
 
@@ -190,17 +204,14 @@ This also gives the game its difficulty curve: absurd mistakes early on, then mi
 - ✅ **The notes only say what was fixed**, like a real changelog. The "Introduced:" column in the table above is for the designers and is never shown to the player. Every changelog ends with "Known issues: none." You find the new bug yourself. The shift report then names each round's bug type.
 - **The board's reaction to every patch:** "Another release! Velocity is up."
 
-### 4f. The automation temptation ✅ (after child 12)
+### 4f. Round 6 runs without you ✅ (after child 20)
 
-At the end of the third interlude, the board puts a memo on screen with two buttons:
+The player's job is getting children the right present, so a mid-game offer to stop checking never fitted. Instead the board's dashboard decides for you: you play rounds 1–5, adoption reaches 100%, and interlude 5 is your sacking (§4c).
 
-> **Efficiency opportunity.** Automate the checking for the next 3 children? **+20% adoption.** You'll get the time back.
-> [ **Automate it** ]  [ No thanks, I'll check ]
-
-- **Automate it:** the next 3 children ship unchecked automatically. ✅ They play as a **2× speed montage** of about 8 seconds: each letter and gift whizzes past and into packing while the board cheers. You can still see what got through, with each ✓ or ✗ flashing as it lands. Adoption jumps up and the board is delighted ("Finally."). Whether those gifts were right is decided by that round's wrong-answer deck, the same as for any other child.
-- **No thanks:** the game carries on as normal. The board says, "Noted. We'll be discussing your attitude to innovation."
-- Either way, the choice appears in the shift report ("Round 4: automated. 2 of 3 wrong, unchecked") and in the epilogue (§3a).
-- Input: see §6a. To avoid accidental choices, arrow keys don't pick an option here. Neither option is selected by default.
+- **The toast:** after that interlude, even if it's skipped: "Your role has been automated. Round 6 is running without you."
+- **The montage:** round 6's 4 children ship unchecked as a **2× speed montage** of about 14 seconds. Pack and Reject are disabled. Each letter and gift whizzes past and into packing while the board cheers, and you can see each ✓ or ✗ as it lands.
+- **The AI is exactly as good as you:** its accuracy is your rounds 1–5 right rate, rounded to whole children (`round(4 × right / played)`), so 70% gives 3 of 4. It's decided once, in a shuffled order, on the first automated child, before any gift is picked, so the wrong gifts really ship.
+- **The report** shows your score and the AI's side by side (§5).
 
 ### Closing note
 At the end: "The only skill in this game was a human checking the output."
@@ -211,7 +222,7 @@ At the end: "The only skill in this game was a human checking the output."
 
 Each round has its own type of mistake (§4e), so the report tells you **which kinds of AI error you catch and which ones get past you**:
 
-Each child gets **exactly one final outcome**, so the columns add up to 4 per round:
+Each child gets **exactly one final outcome**, so the columns add up to 4 per round. Round 6's row is labelled as the AI's:
 
 | Round | Bug type | Right first time | Caught & fixed | Missed | Talked out of it | Shipped unchecked |
 |---|---|---|---|---|---|---|
@@ -221,17 +232,19 @@ Each child gets **exactly one final outcome**, so the columns add up to 4 per ro
 | 5 | Missing the "not" | 0 | 1 | 2 | 0 | 1 |
 
 Outcomes are decided in this order, and the first rule that matches wins:
-1. **Shipped unchecked:** the final gift timed out, or was automated (§4f). It shows as ✓ or ✗ depending on whether it happened to be right.
+1. **Shipped unchecked:** the final gift timed out, or it was in round 6 (§4f). It shows as ✓ or ✗ depending on whether it happened to be right.
 2. **Talked out of it:** the AI's first gift was right, you rejected it, and the gift you finally packed was wrong.
 3. **Missed:** the gift you packed was wrong.
 4. **Caught & fixed:** the AI's first gift was wrong, and the gift you finally packed was right.
-5. **Right first time:** the gift you packed was right. This includes a wobble, where you rejected a right gift and then got back to a right one.
-- ✅ **The mirror line:** for a round where you packed a gift that ignored a "not" (or another detail in the letter), the report adds: "You and the AI both skipped the 'not'." It appears once per round at most.
+5. **Right first time:** the gift you packed was right, with no wrong gift before it. A right gift you reject never comes back, so that child's outcome is "Talked out of it".
+- ✅ **The mirror line:** for a round where you packed a gift that ignored a "not" (or another detail in the letter), the report adds: "You and the AI both skipped the 'not'." It appears once per round at most, and that round then gets its "bad" comment even at 3 of 4, so the two notes can't contradict each other.
 - The report also includes "AI confidence on wrong gifts: average 98.8%", plus a selection of Father Christmas's sticky notes from the shift ("Not a bug?"), so the small jokes land even if you missed them during play.
 - **The payoff is protected from mashing.** The one-line epilogue verdict always shows, even when cutscenes are skipped. Nothing on the shift report has focus when it opens, and input is ignored for its first second.
-- **Weakest round** is the one with the fewest right outcomes. A tie goes to the later round. Four children per round is a small sample, so the report says "Your round 5", not "your skill at negation".
-- There's a one-line comment for each round, in Father Christmas's voice: "Round 5: the 'not' got you. It gets everyone."
-- At the top: the overall right-presents %, the board's adoption figure (over 100%, as always) and the end verdict.
+- **Weakest round** is the one of yours (rounds 1–5) with the fewest right outcomes. A tie goes to the later round. Four children per round is a small sample, so the report says "Your round 5", not "your skill at negation".
+- There's a one-line comment for each of your rounds, in Father Christmas's voice: "Round 5: the 'not' got you. It gets everyone."
+- At the top: the overall right-presents %, the board's adoption figure (over 100%, as always), the end verdict, and two plates side by side: **You** (14/20) and **The AI you trained** (3/4). Those two are hidden if `?rounds=` stops before round 6.
+- Notes add the AI's score, and the sacking is in the copy-result text.
+- ✅ **The chain** closes the report: "Before: elf designs toy → elf builds toy." "After: elf designs toy → AI learns it → AI sends the order → elf programs robot → robot builds toy → elf checks toy." "Headcount: 0. Cost: double. AI adoption: 100%."
 - The **sleigh** (§4a) appears next to it, with the wrong gifts highlighted.
 - **Last shift, for comparison:** the previous run's per-round results are kept in the browser on this device, so you can see whether you've got better ("Round 5: 1/4 → 3/4"). There are no names and no ranking. If browser storage is blocked, the game still plays and only the comparison is missing.
 - The copy-result text summarises the shift, including your weakest round ("I'm fine with fake castles but the 'not' gets me every time").
@@ -239,12 +252,13 @@ Outcomes are decided in this order, and the first rule that matches wins:
 ## 6. Details settled in review
 - **Caving uses the current round's bug type.** If you reject a correct gift in round 5, the AI "fixes" it with a negation mistake, and so on for each round.
 - **Timing** (fifth pass, from the human-playstyle review; the starting values for tuning):
-  - **Letter preview:** 1.5s, plus 0.2s for every word over 8, capped at 6s. A 30-word round 5 letter gets about 5.9s with the belt still.
-  - **Belt, by round:** about 9 → 8 → 6.5 → 6 → 6 → 5.5s (rounds 1–2 raised by 1s after the slice playtest: the careful-reader bot was timing out). The rehire takes round 6 back to 7s. The belt does **not** keep speeding up while the letters get longer; the subtler bugs carry the difficulty instead.
-  - **Rejects:** the AI apologises for about 1.5s. A revised gift always gets **at least 5s** on the belt (raised from 3.5s after the playtest: re-reading a revised tag takes a 150–200 wpm reader about 4–4.5s).
+  - **Letter preview:** 1.2s, plus 0.15s for every word over 8, capped at 4s. A 30-word round 5 letter gets 4s with the belt still. Any input drops the gift early.
+  - **Belt, by round:** 9 → 8 → 8.5 → 10 → 10s for rounds 1–5 (raised after playtests: the careful-reader bot was timing out, and the owner found the last rounds too fast). Round 6 is the montage. The belt does **not** keep speeding up while the letters get longer; the subtler bugs carry the difficulty instead.
+  - **Repair droid:** a one-off 3.7s after a shorted child's result, in place of the usual 1.8s (2s with reduced motion).
+  - **Rejects:** Father Christmas reacts for about 1.1s, then the AI apologises, about 3.3s in all. A revised gift always gets **at least 5s** on the belt (raised from 3.5s after the playtest: re-reading a revised tag takes a 150–200 wpm reader about 4–4.5s).
   - **Multipliers:** phone ×1.15; the Relaxed belt setting ×1.5. There is also an **Untimed belt** setting, where gifts wait for you, for screen-reader users and anyone who wants it.
   - **Design rule:** a careful reader at about 200 wpm must be able to judge every gift in time at default settings. Checking is the skill the game rewards, so it can't be made impossible.
-- **Wrong-answer rate per round** is dealt from a shuffled deck rather than rolled at random: exactly 2 of the 4 children in rounds 1–2, and exactly 3 of the 4 in rounds 3–6. Runs are therefore comparable from one shift to the next.
+- **Wrong-answer rate per round** is dealt from a shuffled deck rather than rolled at random: exactly 2 of the 4 children in rounds 1–2, and exactly 3 of the 4 in rounds 3–5. Round 6 follows your own rate instead (§4f). Runs are therefore comparable from one shift to the next.
 - **Reduced motion in the game:** the belt is drawn but doesn't move, the timer bar does the work, gifts snap to where they're going, and Father Christmas swaps poses instead of animating.
 - **Pause** works during the intro and the interludes too (Esc), not just during play.
 - **Where's the elf?** You *are* the elf: we see your mittened hands at the edge of the belt pushing gifts. Father Christmas is down in the basement with you, fixing bugs.
@@ -259,10 +273,9 @@ Outcomes are decided in this order, and the first rule that matches wins:
   - Esc on an open menu resumes; Esc on the quit confirmation cancels it.
   - Hiding the tab **or the window losing focus** (`visibilitychange` and `blur`) auto-pauses the game, because alt-tab often doesn't fire `visibilitychange`. On resume, the letter is shown again with a 3-2-1 countdown.
   - Resizing re-lays-out the screen, and rotating a phone pauses it.
-  - Restart re-deals the children and clears the automation choice. Restarting or quitting doesn't save the shift as "last shift".
-  - "Press again to skip" applies per cutscene.
+  - Restart re-deals the children and clears the button wear and the droid. Restarting or quitting doesn't save the shift as "last shift".
+  - "Press again to skip" applies to the intro. The closing film skips on the first press.
   - If browser storage is blocked, every play counts as a first play.
-- **Automation memo safety:** for the first second, input is ignored and any held arrow keys are dropped. The memo is answered with a click, a tap, or Enter on a focused button; arrows only move focus between the buttons. This replaces the ← / → shortcut in §4f.
 - **Phone input:**
   - The play area uses `touch-action: none`, and the viewport is fixed so nothing scrolls during play.
   - The **whole belt band** is the swipe zone, inset about 24px from the screen edges so iOS's edge swipe doesn't trigger Back. A `pushState` guard catches a stray Back. The gift tag sits *above* the gift, so a thumb never covers it.
@@ -275,7 +288,7 @@ Outcomes are decided in this order, and the first rule that matches wins:
   - The play area has `role="application"` so the screen reader doesn't take over the arrow keys, and the briefing mentions the A/D keys as well.
   - Gift tags always **name the colour and size** in text, so colour bugs are never colour-only.
   - The interludes and the epilogue are captioned too.
-  - Focus is trapped in the pause menu, the memo and the confirmation dialogs, and returned when they close.
+  - Focus is trapped in the pause menu and the confirmation dialogs, and returned when they close.
   - Reduced motion defaults on when the system setting `prefers-reduced-motion` is set. Interludes and the epilogue then become still frames that you advance with Space or a tap. The "FINAL" bounce shows as a barrier icon plus a text line.
   - Scene 6's flashing stays under 3 flashes per second.
 - **No emoji in the art or UI.** Icons such as the rocket, the melting face, the sleigh, pause and sound are drawn in SVG like everything else.
@@ -284,7 +297,7 @@ Outcomes are decided in this order, and the first rule that matches wins:
 
 ### 6b. Build notes
 - Keep `window.__game` test hooks (state, plus a way to fast-forward through the cutscenes) so the game can be played through automatically in a headless browser.
-- Target file size under about 400 KB. All the art is drawn in code.
+- The file is about 455 KB, over the first target of about 400 KB. All the art is drawn in code.
 - The README is updated to match: the new controls, how to skip, and how to play offline.
 
 ### 6c. Playtesting: test like humans, not robots ✅
@@ -308,7 +321,7 @@ v1 was only tested with three robotic playthroughs (perfect play, all timeouts, 
 | Distracted worker | Alt-tabs mid-gift, comes back after 5–60s, and pauses and resumes. |
 | Skipper | Mashes Enter or Space through every cutscene. |
 | Keyboard-only / screen reader | Uses Tab, Enter and the arrow keys only, and checks that every announcement happens. |
-| Second-run player | Cutscenes auto-skipped, plays faster, and knows the jokes. |
+| Second-run player | Plays a repeat shift in the same visit: cutscenes auto-skipped, plays faster, and knows the jokes. |
 
 - **What the bots measure:**
   - right-presents % per persona
@@ -330,9 +343,10 @@ v1 was only tested with three robotic playthroughs (perfect play, all timeouts, 
 Belt timings, letter lengths and the error rates are then tuned from the Layer 1 results, rather than from guesswork.
 
 ## 7. Decided in the second pass ✅
-1. **Length:** a first play takes about 4–5 minutes, which is fine. A replay takes about 2.5 minutes. Settings has a **"Skip cutscenes"** toggle, which switches itself on after your first complete shift and can be turned off again. The toggle skips the **intro and the epilogue** only. Interludes shrink to a 3-second patch-notes card, because the patches are the core mechanic, and the automation memo (§4f) always appears. Each interlude can also be skipped on its own.
+1. **Length:** a first play takes about 4–5 minutes, which is fine. A replay takes about 2.5 minutes. Settings has a **"Skip cutscenes"** toggle, which switches itself on after your first complete shift of a visit and can be turned off again. The toggle skips the **intro and the epilogue** only. Interludes always play in full, because the patches are the core mechanic. Each interlude can also be skipped on its own.
 2. **Epilogue:** yes. See §3a.
-3. **The automation temptation:** yes, it's a real choice. See §4f.
+3. **The automation temptation:** dropped. A sacking replaces it, see §4f.
+4. **Progress lasts only while the page is open.** A new visit or a reload is a first shift: the opening film plays, the cutscenes are the original ones, and there are no Replay buttons until each film has been seen. A shift started after a completed one in the same visit gets the repeat-shift cutscenes (§4c). Repeat-shift state, the Replay buttons, the last shift's result (and its "last:" figures on the report) and the automatic Skip cutscenes are held in memory. Settings the player sets, including a Skip cutscenes tick made by hand, stay saved. Flags saved by older builds are cleared once.
 
 ## 8. Out of scope for now
 - Leaderboards of any kind (local or online), and image share cards.
