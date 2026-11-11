@@ -2,7 +2,7 @@
 
 A short browser game about checking AI output on Christmas Eve.
 
-> **Beta test.** Play it at **https://green-workshop.github.io/ai-first-christmas/**. If something is broken, unclear or unfunny, please [open an issue](https://github.com/green-workshop/ai-first-christmas/issues) or tell me directly.
+> Play it at **https://green-workshop.github.io/ai-first-christmas/**. If something is broken, unclear or unfunny, please [open an issue](https://github.com/green-workshop/ai-first-christmas/issues) or tell me directly.
 
 The board of North Pole Ltd has mandated an AI-first Christmas, with the use case to follow. You are the elf who designs the toys, until Father Christmas uploads your designs to the AI. Now the AI reads each letter and writes a build order, the workshop builds exactly that, and you check the finished gift against the letter. You pack it or reject it before the belt carries it off unchecked. If you reject something, the AI tells you you're absolutely right and the workshop rebuilds it.
 

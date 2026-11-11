@@ -167,11 +167,6 @@ html.reduced .floor.spot-desk .desk-panel { transform: none; }
 /* The 3-2-1 resume countdown: one big number in the middle, not a stretched bar */
 .toast.count { top: 50%; bottom: auto; transform: translate(-50%, -50%); min-width: 0; width: auto; padding: .2em .7em; font-size: 3.5rem; font-weight: 800; line-height: 1; border-radius: 18px; }
 
-/* Beta test labelling (remove for launch) */
-.beta-tag { position: fixed; left: 10px; bottom: 10px; z-index: 80; pointer-events: none; padding: 3px 8px; border-radius: 6px; font: 800 var(--fs-label)/1.2 var(--font-ui); letter-spacing: .12em; color: var(--ink); background: var(--gold); opacity: .85; }
-.title-beta { max-width: 34em; margin: 0; padding: 8px 14px; border-radius: 10px; font-size: var(--fs-caption); color: var(--ink); background: var(--paper); }
-.title-beta a { color: var(--pole-red); font-weight: 700; }
-
 /* Keyboard vs touch instructions: html.touch is set by the engine from (hover: none) and (pointer: coarse) */
 .tch { display: none; }
 html.touch .kb { display: none !important; }
@@ -223,16 +218,13 @@ html.touch p.tch, html.touch div.tch { display: block; }
 @media (max-width: 760px) {
   .report-actions { grid-template-columns: 1fr 1fr; }
   .report-actions #btnAgain { grid-column: 1 / -1; }
-  /* The beta tag would sit on the Pack button: show it on the title screen only */
-  body:not(.on-title) .beta-tag { display: none; }
   .sl-count .sl-word { display: none; }
   .sl-count > svg { display: none; }   /* the strip already draws a gold sleigh */
 }
 
-/* Phone title screen (beta feedback): start at the top so the logo isn't clipped, stack the two buttons,
-   and leave room under the credit line for the BETA TEST tag */
+/* Phone title screen (beta feedback): start at the top so the logo isn't clipped, and stack the two buttons */
 @media (max-width: 760px) {
-  #screen-title { justify-content: flex-start; min-height: 100dvh; gap: 10px; padding: 8px 0 48px; margin: -8px -10px -10px; padding-inline: 10px; }
+  #screen-title { justify-content: flex-start; min-height: 100dvh; gap: 10px; padding: 8px 0 20px; margin: -8px -10px -10px; padding-inline: 10px; }
   #screen-title .title-actions { flex-direction: column; width: 100%; gap: 8px; }
   #screen-title .title-actions .keycap { min-width: 0; width: 100%; font-size: 1.15rem; }
   #screen-title .title-dash { width: min(360px, 92vw); }

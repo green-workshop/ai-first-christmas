@@ -671,7 +671,7 @@ window.NP = window.NP || {};
     // "Skip cutscenes" turns itself on after the first complete shift of a session (SPEC §7)
     if (!shiftDone) { shiftDone = true; skipAuto = true; applySettings(); }
     var perfect = perRound.every(function (ok, i) { return i + 1 === AUTO_ROUND || ok === ROUND_SIZE; });
-    G.resultText = "North Pole Ltd: AI-First Christmas (beta). Right presents: " + pct + "%. AI adoption: " + G.adoption + "%. " +
+    G.resultText = "North Pole Ltd: AI-First Christmas. Right presents: " + pct + "%. AI adoption: " + G.adoption + "%. " +
       (G.pileCount ? "I rejected " + G.pileCount + (G.pileCount === 1 ? " thing" : " things") + " and the AI said I was right every time." : "I rejected nothing and the AI was delighted.") +
       (perfect ? "" : " My weakest round: " + (weakest + 1) + " (" + C.rounds[weakest].bug.toLowerCase() + ").") +
       (autos.length ? (G.firstPlay ? " Then I was sacked" : " Then my contract ended") + ", and the AI I trained scored " + aiRight + "/" + autos.length + "." : "");
