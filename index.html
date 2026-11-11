@@ -321,6 +321,55 @@ html.touch p.tch, html.touch div.tch { display: block; }
 /* Why a gift was wrong, under its caption in the report */
 .rs-item .rs-why { display: block; margin-top: 3px; font-weight: 700; font-style: italic; color: var(--pole-red); }
 
+/* ---- Graphics pass: the game screen is one console. The two bays sit in a single steel bezel, and the belt bay is
+   drawn 100 units taller (800x400) so the hopper, the lamp and the gift's tag are inside the picture. ---- */
+body::before {   /* worn paint behind everything in the game; the title screen keeps its night sky */
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .55;
+  background: var(--fx-mottle, none) 0 0 / 640px 640px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 20%, transparent 90%); mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 20%, transparent 90%);
+}
+body.on-title::before { display: none; }
+body:not(.on-title) {
+  background:
+    radial-gradient(ellipse 60% 46% at 50% 46%, color-mix(in srgb, var(--lamp-deep) 13%, transparent), transparent 72%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, var(--basement-light), transparent 70%),
+    linear-gradient(180deg, var(--basement) 0%, var(--night-900) 100%);
+  background-color: var(--night-900);
+}
+.belt-panel { aspect-ratio: 800 / 400; }
+.belt-wrap { padding-top: 0; }
+.floor {
+  gap: 8px; padding: 8px 8px 0; border-radius: 22px; align-items: start;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--board) 46%, var(--board-dark)), var(--board-dark) 12%, color-mix(in srgb, var(--board-dark) 62%, var(--night-900)) 100%);
+  box-shadow:
+    inset 0 1.5px 0 color-mix(in srgb, var(--snow) 30%, transparent), inset 0 -2px 0 color-mix(in srgb, var(--night-900) 60%, transparent),
+    0 0 0 1.5px color-mix(in srgb, var(--night-900) 70%, transparent), 0 22px 44px -18px color-mix(in srgb, var(--night-900) 90%, transparent),
+    0 0 70px -20px color-mix(in srgb, var(--lamp) 26%, transparent);
+}
+.belt-panel, .desk-panel { border-radius: 14px; overflow: hidden; background: var(--night-900); }
+.belt-panel::after, .desk-panel::after {   /* the glass: an inner edge and a soft shadow all round */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--night-900) 80%, transparent), inset 0 3px 10px color-mix(in srgb, var(--night-900) 70%, transparent), inset 0 0 26px color-mix(in srgb, var(--night-900) 45%, transparent);
+}
+.desk-caption { z-index: 2; }
+.timerbar { left: 2%; right: 2%; bottom: 1px; }
+.floor.spot-desk .desk-panel { transform: none; filter: none; box-shadow: 0 0 0 2px var(--lamp), 0 0 26px color-mix(in srgb, var(--lamp) 55%, transparent); }
+@media (max-width: 760px) {
+  #screen-game .floor { gap: 5px; padding: 5px 5px 5px; border-radius: 16px; }
+  #screen-game .belt-wrap { padding-top: 0; }
+  #screen-game .belt-panel { aspect-ratio: 800 / 470; }   /* a taller bay on a phone: the tag is bigger there */
+  #screen-game .belt-panel, #screen-game .desk-panel { border-radius: 11px; }
+}
+
+/* Title backdrop: the workshop at night, full-bleed behind the title screen (the snow canvas falls in front of it) */
+#titleScene { position: fixed; inset: 0; z-index: 0; display: none; pointer-events: none; }
+body.on-title #titleScene { display: block; }
+#titleScene svg { display: block; width: 100%; height: 100%; }
+#screen-title { background: none; }
+#screen-title .title-strap { text-shadow: 0 1px 10px var(--night-900), 0 0 2px var(--night-900); }
+#screen-title .title-credit { color: var(--snow); opacity: .85; text-shadow: 0 1px 6px var(--night-900); }
+
 /* ---- ui.css ---- */
 /* ui.css: UI chrome that belongs to the world (SPEC §9.8). Look only; layout.css owns the page grid. */
 :root {
@@ -854,6 +903,8 @@ body[data-phase="paused"] .reject-slot *, body[data-phase="paused"] .reject-slot
 .in-fb { transform-box: fill-box; transform-origin: 50% 50%; }
 .in-btn, .in-sq, .in-stsq { transform-box: fill-box; transform-origin: 50% 100%; }
 .in-red .sc-rig { transition: none; }
+.in-red .fx-mote { animation: none; opacity: var(--o, .5); }
+.in-red .fx-breathe { animation: none; }
 
 /* lens: vignette (§9.3) and static grain */
 .in-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 78% 72% at 50% 45%, transparent 60%, color-mix(in srgb, var(--night-900) 45%, transparent)); }
@@ -883,6 +934,15 @@ body[data-phase="paused"] .reject-slot *, body[data-phase="paused"] .reject-slot
   .in-skip { font-size: .9375rem; }
   .in-hint { max-width: 40%; }
 }
+
+/* Framing: the whole picture always fits. On a window wider than the art (16:10 landscape, 1:2 portrait) the scene keeps its
+   shape in the middle and its side edges melt into the dark, instead of the top and bottom being cropped away. */
+.in-scene.in-l { width: min(100%, 160vh); width: min(100%, 160dvh); margin-inline: auto; }
+.in-scene.in-p { width: min(100%, 52vh); width: min(100%, 52dvh); margin-inline: auto; }
+.in-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; display: none;
+  background: linear-gradient(90deg, var(--night-900), transparent 5%, transparent 95%, var(--night-900)); }
+@media (min-aspect-ratio: 33/20) { .in-scene.in-l::after { display: block; } }
+@media (min-aspect-ratio: 11/20) and (max-aspect-ratio: 9/10) { .in-scene.in-p::after { display: block; } }
 
 /* ---- cutscene.css ---- */
 /* cutscene.css: the epilogue (.ep-*) and the interlude floor additions
@@ -915,12 +975,75 @@ body[data-phase="paused"] .reject-slot *, body[data-phase="paused"] .reject-slot
 @keyframes il-led { 50% { opacity: .25; } }
 @keyframes il-rh { to { transform: rotate(6deg); } }
 
+/* ---------- interlude sets: light, material and dressing (the base il-* look is in ui.css; fx.js bakes the --fx-* tiles) ---------- */
+.il { --k4: color-mix(in srgb,var(--night-900) 46%, transparent); --k7: color-mix(in srgb,var(--night-900) 72%, transparent); --k9: color-mix(in srgb,var(--night-900) 88%, transparent); --l5: color-mix(in srgb,var(--lamp) 50%, transparent); }
+.il-p, .il-set, .il-pool { position: absolute; pointer-events: none; }
+.il-p { overflow: visible; }
+.il-set, .il-pool { inset: 0; width: 100%; height: 100%; }
+/* beat 1: a wooden desk top under one lamp, dark in the far corners */
+.il .il-b1 { background:
+  repeating-linear-gradient(179.3deg, transparent 0 171px, var(--k4) 171px 173px, color-mix(in srgb,var(--lamp) 14%, transparent) 173px 174.5px, transparent 174.5px 177px),
+  var(--fx-wood) 0 0 / 760px 190px,
+  linear-gradient(160deg, color-mix(in srgb,var(--wood) 80%, var(--lamp-deep)), color-mix(in srgb,var(--wood-dark) 82%, var(--basement)) 78%); }
+.il .il-b1::before { content: none; }
+.il .il-b1::after { inset: 0; width: auto; height: auto; border-radius: 0; box-shadow: none; pointer-events: none;
+  background: radial-gradient(ellipse 88% 100% at 22% 14%, transparent 38%, var(--k4) 72%, var(--k9)); }
+.il-pool { background: radial-gradient(ellipse 60% 76% at 22% 16%, color-mix(in srgb,var(--lamp) 62%, transparent), color-mix(in srgb,var(--lamp-deep) 20%, transparent) 48%, transparent 76%); }
+.il-lamp { left: -78px; top: -88px; width: 290px; height: 290px; }
+.il-mug { right: 7%; top: 8%; width: 150px; height: 141px; }
+.il-pen { left: 5%; bottom: 12%; width: 230px; height: 44px; transform: rotate(-24deg); }
+.il .il-memo { box-shadow: 0 1px 0 var(--paper-shade), 5px 8px 10px var(--ui-sh2), 30px 46px 70px var(--k7); }
+.il .il-memo::before { background: linear-gradient(150deg, color-mix(in srgb,var(--lamp) 24%, transparent), transparent 42%, color-mix(in srgb,var(--paper-shade) 55%, transparent) 82%, color-mix(in srgb,var(--board) 26%, transparent)); }
+
+/* beat 2: the basement behind the monitor; a brushed bezel, the screen's glow on the wall and the desk */
+.il .il-b2 { background: var(--night-900); }
+.il .il-desk::before { box-shadow: 0 -16px 24px -8px var(--k7); background:
+  linear-gradient(color-mix(in srgb,var(--lamp) 62%, var(--wood)) 0 2px, transparent 2px),
+  var(--il-sheen, none),
+  radial-gradient(ellipse 30% 110% at 26% 0, var(--l5), transparent 72%),
+  linear-gradient(transparent 20px, var(--k4) 110px, var(--k9) 250px),
+  var(--fx-wood) 0 0 / 680px 170px,
+  linear-gradient(color-mix(in srgb,var(--wood) 84%, var(--lamp-deep)), color-mix(in srgb,var(--wood-dark) 84%, var(--basement)) 60%); }
+.il-only-mon .il-desk { --il-sheen: radial-gradient(ellipse 24% 80% at 50% 0, color-mix(in srgb,var(--snow-shade) 42%, transparent), color-mix(in srgb,var(--good) 14%, transparent) 55%, transparent 76%); }
+.il-mon { position: relative; }
+.il-mon::before { content: ""; position: absolute; z-index: -1; inset: -30% -26% -6%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb,var(--good) 36%, transparent), color-mix(in srgb,var(--night-600) 34%, transparent) 58%, transparent); }
+.il .il-scr { --bz: linear-gradient(150deg, color-mix(in srgb,var(--board) 78%, var(--snow)), var(--board-dark) 42%, color-mix(in srgb,var(--board-dark) 62%, var(--night-900))); border-color: transparent;
+  background:
+    linear-gradient(118deg, color-mix(in srgb,var(--snow) 5%, transparent) 0 24%, transparent 24.4%) padding-box,
+    radial-gradient(ellipse at 30% 20%, color-mix(in srgb,var(--night-600) 70%, var(--night-900)), var(--night-900) 80%) padding-box,
+    linear-gradient(150deg, color-mix(in srgb,var(--board) 60%, transparent), var(--k4)) border-box, var(--fx-brush) border-box, var(--bz) border-box;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--snow) 8%, transparent), inset 0 0 30px color-mix(in srgb,var(--good) 16%, transparent), 0 0 0 2px color-mix(in srgb,var(--board-dark) 70%, var(--night-900)), 14px 20px 30px var(--ui-sh2); }
+.il .il-neck { background: var(--fx-brush), linear-gradient(90deg, var(--board), var(--board-dark) 62%, color-mix(in srgb,var(--board-dark) 60%, var(--night-900))); }
+.il-note { position: absolute; right: -20px; top: -18px; width: 44px; height: 42px; border-radius: 1px 1px 3px; transform: rotate(7deg); box-shadow: 2px 4px 5px var(--ui-sh2);
+  background: repeating-linear-gradient(transparent 0 9px, color-mix(in srgb,var(--ink-soft) 55%, transparent) 9px 11px) 7px 9px / 28px 22px no-repeat, linear-gradient(160deg, color-mix(in srgb,var(--gold) 72%, var(--board)), color-mix(in srgb,var(--gold-dark) 70%, var(--board-dark))); }
+.il-kit { left: 50%; top: calc(100% - 46px); width: 900px; height: 130px; margin-left: -450px; }
+.il-only-board .il-kit, .il-only-board .il-wn { display: none; }
+.il .il-board { box-shadow: inset 0 2px 6px var(--ui-sh), 0 2px 0 var(--board-dark), 16px 24px 34px var(--k7); }
+
+/* beat 3: the edges of the floor fall away from the lamps */
+.il .il-b3::after { background: radial-gradient(ellipse 80% 78% at 50% 44%, transparent 52%, var(--k7)); }
+
+@media (max-width: 600px) {
+  .il-lamp { left: -96px; top: -104px; width: 230px; height: 230px; }
+  .il-mug { right: -30px; top: 3%; width: 112px; height: 105px; }
+  .il-pen { left: -30px; bottom: 6%; width: 180px; }
+  /* the monitor stands on his desk here too, not at the top of an empty wall */
+  .il-b2.il-only-mon { place-items: center; }
+  .il-only-mon .il-desk { height: auto; transform: translateY(9vh); }
+  .il-only-mon .il-desk::before, .il-only-mon .il-neck { display: block; }
+  .il-kit { top: calc(100% - 30px); width: 580px; height: 84px; margin-left: -290px; }
+  .il-note { right: -8px; top: -14px; width: 34px; height: 32px; }
+}
+
 /* ---------- epilogue ---------- */
 .ep { background: var(--night-900); transition: opacity 450ms var(--ease-in); }
 .ep-end { opacity: 0; }
 .ep-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .ep-sc { padding: 0; overflow: hidden; }
 .ep-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.ep-sc::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 82% 80% at 50% 46%, transparent 58%, var(--k7)); }
+.ep-slug { z-index: 1; }
 .ep-tx { font-family: var(--font-ui); }
 .ep-mono { font-family: var(--font-mono); }
 .ep-num { font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
@@ -973,10 +1096,21 @@ body[data-phase="paused"] .reject-slot *, body[data-phase="paused"] .reject-slot
   .ep .il-cap { font-size: 1.0625rem; }
 }
 
+/* Framing: the whole picture always fits its box. When the box is wider than the art (16:9 wide, 9:16 narrow) the picture
+   keeps its shape in the middle and its side edges melt into the dark, instead of the top and bottom being cropped away. */
+.ep-sc { container-type: size; }
+.ep-svg { margin: auto; }
+.ep-svg.ep-wd { max-width: calc(100cqh * 1200 / 675); }
+.ep-svg.ep-nr { max-width: calc(100cqh * 450 / 800); }
+.ep-sc::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, var(--night-900), transparent 5%, transparent 95%, var(--night-900)) center / calc(100cqh * 1200 / 675) 100% no-repeat; }
+.ep-sc:has(.ep-nr)::before { background-size: calc(100cqh * 450 / 800) 100%; }
+
 </style>
 </head>
 <body>
 <div id="sprite-host" aria-hidden="true"></div>
+<div id="titleScene" aria-hidden="true"></div>
 <canvas id="snow" aria-hidden="true"></canvas>
 <div id="grain" aria-hidden="true"></div>
 
@@ -1798,6 +1932,210 @@ window.NP = window.NP || {};
 })(window.NP);
 
 })();
+/* ---- fx.js ---- */
+;(function(){
+/* fx.js: shared lighting, atmosphere and material textures for every scene (ids and classes prefixed fx-).
+   Textures are baked once at load on a small canvas and used as SVG pattern fills, so nothing here runs a live
+   filter (SPEC §9.3, §9.9). Light is additive (screen blend); shade is multiplied. Only opacity and transform animate. */
+window.NP = window.NP || {};
+(function (NP) {
+  'use strict';
+
+  function V(n) { return 'var(--' + n + ')'; }
+  function f(n) { return Math.round(n * 10) / 10; }
+  function A(o) { var s = ''; for (var k in o) if (o[k] != null) s += ' ' + k + '="' + o[k] + '"'; return s; }
+  function T(t, o, i) { return '<' + t + A(o || {}) + (i == null ? '/>' : '>' + i + '</' + t + '>'); }
+  function mg(a, b) { a = a || {}; if (b) for (var k in b) a[k] = b[k]; return a; }
+
+  /* ---------- seeded noise ---------- */
+  function rng(seed) { var s = seed || 1; return function () { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+  // value noise that tiles over a gx-by-gy lattice
+  function lattice(gx, gy, r) {
+    var g = [], i;
+    for (i = 0; i < gx * gy; i++) g.push(r());
+    return function (u, v) {
+      var x = u * gx, y = v * gy, x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
+      fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+      var a = g[(y0 % gy) * gx + (x0 % gx)], b = g[(y0 % gy) * gx + ((x0 + 1) % gx)],
+        c = g[((y0 + 1) % gy) * gx + (x0 % gx)], d = g[((y0 + 1) % gy) * gx + ((x0 + 1) % gx)];
+      return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+    };
+  }
+  var DARK = [14, 21, 48], LIGHT = [255, 226, 176];
+  // bake(w, h, fn): fn(u, v, x, y) returns a signed tone, negative = shade, positive = light, magnitude = alpha
+  function bake(w, h, fn) {
+    var c = document.createElement('canvas'), x, y, d, im, i, t, col;
+    c.width = w; c.height = h;
+    var ctx = c.getContext && c.getContext('2d');
+    if (!ctx) return '';
+    im = ctx.createImageData(w, h); d = im.data;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      t = fn(x / w, y / h, x, y); col = t < 0 ? DARK : LIGHT; i = (y * w + x) * 4;
+      d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = Math.max(0, Math.min(255, Math.abs(t) * 255));
+    }
+    ctx.putImageData(im, 0, 0);
+    try { return c.toDataURL('image/png'); } catch (e) { return ''; }
+  }
+
+  /* ---------- textures ---------- */
+  var TEX = {
+    // fine print grain: stippled shade and light
+    grain: [160, 160, 160, 160, function () {
+      var r = rng(31);
+      return function () { var v = r() - 0.5; return v * Math.abs(v) * 1.5; };
+    }],
+    // soft blotches for plaster, concrete and painted walls
+    mottle: [256, 256, 512, 512, function () {
+      var a = lattice(4, 4, rng(5)), b = lattice(9, 9, rng(9)), c = lattice(23, 23, rng(13)), r = rng(17);
+      return function (u, v) { return ((a(u, v) - 0.5) * 0.26 + (b(u, v) - 0.5) * 0.18 + (c(u, v) - 0.5) * 0.1) + (r() - 0.5) * 0.05; };
+    }],
+    // long wood grain, running left to right
+    wood: [512, 128, 512, 128, function () {
+      var a = lattice(3, 40, rng(3)), b = lattice(2, 13, rng(7)), w = lattice(5, 3, rng(11)), r = rng(19);
+      return function (u, v) {
+        var vv = (v + (w(u, v) - 0.5) * 0.045 + 1) % 1, t = (a(u, vv) - 0.5) * 0.34 + (b(u, vv) - 0.5) * 0.2;
+        return (t < -0.09 ? t * 1.5 : t) + (r() - 0.5) * 0.035;
+      };
+    }],
+    // brushed metal: finer and fainter than wood
+    brush: [256, 64, 256, 64, function () {
+      var a = lattice(2, 32, rng(23)), r = rng(29);
+      return function (u, v) { return (a(u, v) - 0.5) * 0.22 + (r() - 0.5) * 0.05; };
+    }],
+    // brickwork: four courses, a half-brick offset, every brick its own tone, mortar in the joints
+    brick: [288, 120, 144, 60, function () {
+      var r = rng(41), tone = [], i, m = lattice(6, 4, rng(43));
+      for (i = 0; i < 16; i++) tone.push((r() - 0.5) * 0.3);
+      return function (u, v, x, y) {
+        var row = Math.floor(y / 30), off = row % 2 ? 36 : 0, bx = (x + off) % 288, col = Math.floor(bx / 72), lx = bx % 72, ly = y % 30;
+        if (ly < 3 || lx < 3) return -0.34 + (r() - 0.5) * 0.06;                 // mortar
+        var t = tone[(row * 4 + col) % 16] + (m(u, v) - 0.5) * 0.14 + (r() - 0.5) * 0.07;
+        if (ly < 5.5) t += 0.1;                                                  // top edge catches the light
+        if (ly > 26.5 || lx > 68.5) t -= 0.1;
+        return t;
+      };
+    }],
+    // floorboards: plank joints across wood grain
+    planks: [512, 192, 512, 192, function () {
+      var a = lattice(3, 48, rng(51)), r = rng(53), tone = [], i;
+      for (i = 0; i < 8; i++) tone.push((r() - 0.5) * 0.2);
+      return function (u, v, x, y) {
+        var row = Math.floor(y / 48), ly = y % 48, lx = (x + row * 170) % 256;
+        if (ly < 2.5) return -0.3;
+        if (lx < 2) return -0.24;
+        return tone[(row * 2 + Math.floor(((x + row * 170) % 512) / 256)) % 8] + (a(u, v) - 0.5) * 0.24 + (ly < 5 ? 0.07 : 0) + (r() - 0.5) * 0.03;
+      };
+    }]
+  };
+
+  function gradient(id, radial, o, stops) {
+    var s = '';
+    stops.forEach(function (st) { s += T('stop', { offset: st[0], 'stop-color': st[1], 'stop-opacity': st[2] }); });
+    return T(radial ? 'radialGradient' : 'linearGradient', mg({ id: 'fx-' + id }, o), s);
+  }
+  var VERT = { x1: 0, y1: 0, x2: 0, y2: 1 };
+  var GRADS =
+    gradient('warm', 1, null, [[0, V('lamp'), 0.95], [0.3, V('lamp'), 0.5], [0.65, V('lamp-deep'), 0.16], [1, V('lamp-deep'), 0]]) +
+    gradient('cool', 1, null, [[0, V('snow'), 0.8], [0.4, V('snow-shade'), 0.32], [1, V('night-600'), 0]]) +
+    gradient('green', 1, null, [[0, '#9CF0C0', 0.85], [0.45, V('pole-green'), 0.3], [1, V('pole-green'), 0]]) +
+    gradient('red', 1, null, [[0, V('bad'), 0.8], [0.5, V('pole-red'), 0.25], [1, V('pole-red'), 0]]) +
+    gradient('hot', 1, null, [[0, V('paper'), 1], [0.35, V('lamp'), 0.9], [1, V('lamp'), 0]]) +
+    gradient('beam', 0, VERT, [[0, V('lamp'), 0.62], [0.5, V('lamp'), 0.2], [1, V('lamp-deep'), 0]]) +
+    gradient('beamc', 0, VERT, [[0, V('snow'), 0.42], [0.55, V('snow-shade'), 0.12], [1, V('snow-shade'), 0]]) +
+    gradient('dark', 1, null, [[0, V('night-900'), 0], [0.55, V('night-900'), 0.12], [1, V('night-900'), 0.72]]) +
+    gradient('darkv', 0, VERT, [[0, V('night-900'), 0.6], [0.4, V('night-900'), 0], [0.75, V('night-900'), 0], [1, V('night-900'), 0.55]]) +
+    gradient('fall', 0, VERT, [[0, V('night-900'), 0], [1, V('night-900'), 0.6]]) +
+    gradient('rise', 0, VERT, [[0, V('night-900'), 0.6], [1, V('night-900'), 0]]) +
+    gradient('cast', 1, null, [[0, V('night-900'), 0.62], [0.6, V('night-900'), 0.3], [1, V('night-900'), 0]]);
+
+  var CSS =
+    '.fx-add{mix-blend-mode:screen}.fx-mul{mix-blend-mode:multiply}.fx-soft{mix-blend-mode:soft-light}' +
+    '@keyframes fx-drift{0%{transform:translate(0,0);opacity:0}15%{opacity:var(--o,.6)}85%{opacity:var(--o,.6)}100%{transform:translate(var(--dx,10px),var(--dy,-40px));opacity:0}}' +
+    '@keyframes fx-flick{0%,100%{opacity:1}42%{opacity:.86}47%{opacity:.97}58%{opacity:.8}63%{opacity:1}}' +
+    '@keyframes fx-breathe{0%,100%{opacity:.72}50%{opacity:1}}' +
+    '.fx-mote{animation:fx-drift var(--t,9s) linear infinite;animation-delay:var(--d,0s);opacity:0}' +
+    '.fx-flick{animation:fx-flick 5.3s linear infinite}.fx-breathe{animation:fx-breathe 4.6s ease-in-out infinite}' +
+    '.reduced .fx-mote{animation:none;opacity:var(--o,.5)}.reduced .fx-flick,.reduced .fx-breathe{animation:none}';
+
+  var ready = false;
+  function ensure() {
+    if (ready || document.getElementById('fx-defs')) { ready = true; return; }
+    var pats = '';
+    Object.keys(TEX).forEach(function (k) {
+      var t = TEX[k], url = bake(t[0], t[1], t[4]());
+      if (url) document.documentElement.style.setProperty('--fx-' + k, 'url(' + url + ')');   // the same tiles for CSS backgrounds
+      pats += T('pattern', { id: 'fx-' + k, width: t[2], height: t[3], patternUnits: 'userSpaceOnUse' },
+        url ? T('image', { href: url, width: t[2], height: t[3], preserveAspectRatio: 'none' }) : '');
+      if (k === 'wood' || k === 'brush') pats += T('pattern', { id: 'fx-' + k + 'v', width: t[2], height: t[3], patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(90)' },
+        url ? T('image', { href: url, width: t[2], height: t[3], preserveAspectRatio: 'none' }) : '');
+    });
+    var d = document.createElement('div');
+    d.innerHTML = '<svg id="fx-defs" xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" ' +
+      'style="position:absolute;width:0;height:0;overflow:hidden"><style>' + CSS + '</style><defs>' + GRADS + pats + '</defs></svg>';
+    (document.body || document.documentElement).appendChild(d.firstChild);
+    ready = true;
+  }
+
+  /* ---------- markup builders (all return SVG strings in the caller's viewBox units) ---------- */
+  // tex('wood', x, y, w, h, opacity, { scale, rotate, clip }): a texture laid over a surface
+  function tex(name, x, y, w, h, op, o) {
+    o = o || {};
+    var at = { x: f(x), y: f(y), width: f(w), height: f(h), fill: 'url(#fx-' + name + ')', opacity: op == null ? 1 : op, 'pointer-events': 'none' };
+    if (o.rx) at.rx = o.rx;
+    if (o.clip) at['clip-path'] = 'url(#' + o.clip + ')';
+    if (o.cls) at['class'] = o.cls;
+    if (!o.scale && !o.vertical) return T('rect', at);
+    // scale the tile (not the surface), or stand the grain upright
+    var k = o.scale || 1;
+    var clip = at['clip-path'];
+    delete at.rx; delete at['clip-path'];
+    if (o.vertical) { at.x = 0; at.y = f(-w / k); at.width = f(h / k); at.height = f(w / k); }
+    else { at.x = 0; at.y = 0; at.width = f(w / k); at.height = f(h / k); }
+    var inner = T('g', { transform: 'translate(' + f(x) + ' ' + f(y) + ')' + (o.vertical ? ' rotate(90)' : '') + ' scale(' + k + ')' }, T('rect', at));
+    return clip ? T('g', { 'clip-path': clip }, inner) : inner;
+  }
+  // texPath('wood', d, opacity): a texture clipped to a path, no clipPath needed
+  function texPath(name, d, op, o) { return T('path', mg({ d: d, fill: 'url(#fx-' + name + ')', opacity: op == null ? 1 : op, 'pointer-events': 'none' }, o)); }
+  // pool(cx, cy, rx, ry, opacity, kind): a pool of light. kind: 'warm' (default) | 'cool' | 'green' | 'red' | 'hot'
+  function pool(cx, cy, rx, ry, op, kind, o) {
+    return T('ellipse', mg({ cx: f(cx), cy: f(cy), rx: f(rx), ry: f(ry), fill: 'url(#fx-' + (kind || 'warm') + ')', opacity: op == null ? 0.6 : op, 'class': 'fx-add', 'pointer-events': 'none' }, o));
+  }
+  // cone(x, y, w0, w1, h, opacity, { skew, cool }): a beam from a lamp at (x, y), w0 wide at the lamp and w1 wide h below it
+  function cone(x, y, w0, w1, h, op, o) {
+    o = o || {};
+    var sk = o.skew || 0;
+    return T('path', { d: 'M' + f(x - w0 / 2) + ' ' + f(y) + 'H' + f(x + w0 / 2) + 'L' + f(x + sk + w1 / 2) + ' ' + f(y + h) + 'H' + f(x + sk - w1 / 2) + 'Z',
+      fill: 'url(#fx-' + (o.cool ? 'beamc' : 'beam') + ')', opacity: op == null ? 0.5 : op, 'class': 'fx-add' + (o.cls ? ' ' + o.cls : ''), 'pointer-events': 'none' });
+  }
+  // bulb(x, y, r): the hot core of a lamp with its bloom
+  function bulb(x, y, r, op) {
+    return T('circle', { cx: f(x), cy: f(y), r: f(r * 3.4), fill: 'url(#fx-warm)', opacity: op == null ? 0.75 : op, 'class': 'fx-add' }) +
+      T('circle', { cx: f(x), cy: f(y), r: f(r), fill: 'url(#fx-hot)' });
+  }
+  // shade(x, y, w, h, opacity): darkens the edges of a room so the lit middle carries the eye
+  function shade(x, y, w, h, op, o) { return T('rect', mg({ x: f(x), y: f(y), width: f(w), height: f(h), fill: 'url(#fx-dark)', opacity: op == null ? 0.8 : op, 'class': 'fx-mul', 'pointer-events': 'none' }, o)); }
+  // fall(x, y, w, h, opacity, up): a straight falloff, dark at the bottom (or at the top when up is true)
+  function fall(x, y, w, h, op, up) { return T('rect', { x: f(x), y: f(y), width: f(w), height: f(h), fill: 'url(#fx-' + (up ? 'rise' : 'fall') + ')', opacity: op == null ? 0.6 : op, 'class': 'fx-mul', 'pointer-events': 'none' }); }
+  // cast(cx, cy, rx, ry, opacity, rotate): a soft cast shadow on a wall or floor
+  function cast(cx, cy, rx, ry, op, rot) {
+    return T('ellipse', { cx: f(cx), cy: f(cy), rx: f(rx), ry: f(ry), fill: 'url(#fx-cast)', opacity: op == null ? 0.6 : op, 'class': 'fx-mul', transform: rot ? 'rotate(' + rot + ' ' + f(cx) + ' ' + f(cy) + ')' : null, 'pointer-events': 'none' });
+  }
+  // motes(x, y, w, h, n, seed, { r, dx, dy, t }): dust drifting in a beam. Still, and fewer, with reduced motion.
+  function motes(x, y, w, h, n, seed, o) {
+    o = o || {};
+    var r = rng(seed || 3), s = '', i;
+    for (i = 0; i < n; i++) {
+      var rad = (o.r || 1.6) * (0.5 + r()), t = (o.t || 9) * (0.7 + r() * 0.8);
+      s += T('circle', { cx: f(x + r() * w), cy: f(y + r() * h), r: f(rad), fill: V('lamp'), 'class': 'fx-mote fx-add',
+        style: '--o:' + f(0.25 + r() * 0.5) + ';--dx:' + f((r() - 0.5) * (o.dx || 30)) + 'px;--dy:' + f(-(o.dy || 36) * (0.4 + r())) + 'px;--t:' + f(t) + 's;--d:' + f(-r() * t) + 's' });
+    }
+    return T('g', { 'class': 'fx-motes', 'pointer-events': 'none' }, s);
+  }
+
+  NP.fx = { ensure: ensure, tex: tex, texPath: texPath, pool: pool, cone: cone, bulb: bulb, shade: shade, fall: fall, cast: cast, motes: motes, rng: rng };
+})(window.NP);
+
+})();
 /* ---- ui-art.js ---- */
 ;(function(){
 window.NP = window.NP || {};
@@ -2006,6 +2344,82 @@ window.NP = window.NP || {};
     return '<svg class="ico ico-' + name + '" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">' + b + '</svg>';
   };
   art.symbols = Object.keys(ICONS);
+
+  // ---- Title backdrop: the workshop at night, under an aurora. Full-bleed behind the title screen (ids ui-ts-*).
+  // The middle is kept calm for the logo and buttons; the workshop and the pines sit out at the sides.
+  art.titleScene = function () {
+    var FX = NP.fx, W = 1600, H = 1000, s = '', seed = 77, i;
+    if (FX) FX.ensure();
+    function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    function f(n) { return Math.round(n * 10) / 10; }
+    function mix(a, b, p) { return 'color-mix(in srgb,var(--' + a + ') ' + p + '%,var(--' + b + '))'; }
+    function P(d, fill, x) { return '<path d="' + d + '" fill="' + fill + '"' + (x || '') + '/>'; }
+    function pool(cx, cy, rx, ry, op, kind) { return FX ? FX.pool(cx, cy, rx, ry, op, kind) : ''; }
+    function pine(x, y, h, dim) {
+      var w = h * 0.4, p = '<ellipse cx="' + f(x + w * 0.5) + '" cy="' + y + '" rx="' + f(w * 1.1) + '" ry="' + f(h * 0.045) + '" fill="url(#ui-ts-ao)"/>' +
+        '<rect x="' + f(x - h * 0.025) + '" y="' + f(y - h * 0.1) + '" width="' + f(h * 0.05) + '" height="' + f(h * 0.1) + '" fill="var(--wood-dark)"/>';
+      for (var k = 0; k < 3; k++) {
+        var ty = y - h * 0.06 - k * h * 0.27, tw = w * (1 - k * 0.24), top = ty - h * 0.42;
+        p += P('M' + f(x - tw) + ' ' + f(ty) + 'L' + f(x) + ' ' + f(top) + 'L' + f(x + tw) + ' ' + f(ty) + 'Z', 'url(#ui-ts-pine)') +
+          P('M' + f(x) + ' ' + f(top) + 'L' + f(x + tw) + ' ' + f(ty) + 'H' + f(x + tw * 0.2) + 'Z', 'var(--night-900)', ' opacity=".28"') +
+          P('M' + f(x - tw * 0.62) + ' ' + f(ty - h * 0.15) + 'L' + f(x) + ' ' + f(top) + 'L' + f(x + tw * 0.3) + ' ' + f(ty - h * 0.2) + 'L' + f(x - tw * 0.05) + ' ' + f(ty - h * 0.13) + 'L' + f(x - tw * 0.3) + ' ' + f(ty - h * 0.19) + 'Z', 'var(--snow)', ' opacity=".8"');
+      }
+      return '<g' + (dim ? ' opacity="' + dim + '"' : '') + '>' + p + '</g>';
+    }
+    var defs = '<defs>' +
+      '<linearGradient id="ui-ts-sky" x1="0" y1="0" x2="0" y2="1">' + sp('0', 'var(--night-900)') + sp('.5', mix('night-600', 'night-900', 62)) + sp('.8', 'var(--night-600)') + sp('1', mix('night-600', 'snow-shade', 72)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-aur" x1="0" y1="0" x2="0" y2="1">' + sp('0', '#8DF0C2', '0') + sp('.45', '#8DF0C2', '.5') + sp('.8', 'var(--pole-green)', '.2') + sp('1', 'var(--pole-green)', '0') + '</linearGradient>' +
+      '<linearGradient id="ui-ts-snow" x1="0" y1="0" x2="0" y2="1">' + sp('0', mix('snow-shade', 'snow', 70)) + sp('1', mix('night-600', 'snow-shade', 62)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-far" x1="0" y1="0" x2="0" y2="1">' + sp('0', mix('night-600', 'snow-shade', 70)) + sp('1', mix('night-600', 'night-900', 80)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-pine" x1=".1" y1="0" x2=".9" y2="1">' + sp('0', mix('pole-green', 'night-600', 62)) + sp('1', mix('pole-green-dark', 'night-900', 55)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-wall" x1=".1" y1="0" x2=".9" y2="1">' + sp('0', mix('wood', 'night-600', 48)) + sp('1', mix('wood-dark', 'night-900', 44)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-win" x1="0" y1="0" x2="0" y2="1">' + sp('0', 'var(--paper)') + sp('.4', 'var(--lamp)') + sp('1', 'var(--lamp-deep)') + '</linearGradient>' +
+      '<radialGradient id="ui-ts-ao">' + sp('0', 'var(--night-900)', '.5') + sp('1', 'var(--night-900)', '0') + '</radialGradient>' +
+      '<radialGradient id="ui-ts-vig" cx=".5" cy=".42" r=".75">' + sp('.5', 'var(--night-900)', '0') + sp('1', 'var(--night-900)', '.6') + '</radialGradient></defs>';
+    s += '<rect width="' + W + '" height="' + H + '" fill="url(#ui-ts-sky)"/>';
+    // stars, thinning towards the horizon
+    for (i = 0; i < 110; i++) { var sy = rnd() * rnd() * 620; s += '<circle cx="' + f(rnd() * W) + '" cy="' + f(sy) + '" r="' + f(0.7 + rnd() * 1.7) + '" fill="var(--snow)" opacity="' + f(0.25 + rnd() * 0.6) + '"/>'; }
+    // aurora: two soft curtains, breathing slowly
+    s += '<g class="fx-add"><path class="fx-breathe" d="M-40 250C240 120 520 300 800 190C1080 90 1360 250 1640 150V330C1360 420 1080 280 800 370C520 470 240 300 -40 430Z" fill="url(#ui-ts-aur)" opacity=".42"/>' +
+      '<path class="fx-breathe" style="animation-delay:-2.3s" d="M-40 120C300 40 560 170 860 90C1160 20 1400 120 1640 60V190C1400 250 1160 150 860 220C560 300 300 180 -40 250Z" fill="url(#ui-ts-aur)" opacity=".26"/></g>';
+    // moon with its halo
+    s += pool(1300, 170, 230, 230, 0.5, 'cool') + '<circle cx="1300" cy="170" r="44" fill="var(--snow)"/><circle cx="1284" cy="158" r="9" fill="var(--snow-shade)" opacity=".35"/><circle cx="1314" cy="188" r="6" fill="var(--snow-shade)" opacity=".3"/><circle cx="1310" cy="152" r="4" fill="var(--snow-shade)" opacity=".25"/>';
+    // far range with snow caps, then haze
+    s += P('M-20 700L130 560L250 640L420 500L560 620L700 540L860 650L1010 520L1150 610L1290 500L1440 620L1620 540V760H-20Z', 'url(#ui-ts-far)') +
+      P('M420 500L470 545L440 552L405 590L380 566L350 590L390 526Z', 'var(--snow)', ' opacity=".5"') + P('M1010 520L1060 566L1030 570L1000 604L972 578L945 598L980 548Z', 'var(--snow)', ' opacity=".5"') +
+      P('M1290 500L1344 548L1312 556L1286 592L1256 562L1230 586L1262 530Z', 'var(--snow)', ' opacity=".5"') + P('M130 560L172 600L146 606L120 634L98 612L80 628L104 586Z', 'var(--snow)', ' opacity=".45"') +
+      '<rect y="560" width="' + W + '" height="220" fill="' + mix('night-600', 'snow-shade', 80) + '" opacity=".3"/>';
+    // back hill, with a far stand of pines
+    s += P('M-20 760C240 690 520 720 800 742C1080 764 1340 700 1620 736V1000H-20Z', mix('snow-shade', 'night-600', 62));
+    [[560, 742, 70], [610, 746, 92], [660, 748, 64], [960, 752, 80], [1010, 750, 58], [760, 745, 52]].forEach(function (p) { s += pine(p[0], p[1], p[2], 0.55); });
+    // the workshop, lit from inside, on the left
+    var bx = 14, by = 836;
+    s += pool(bx + 150, by + 20, 330, 90, 0.5) + '<ellipse cx="' + (bx + 160) + '" cy="' + (by + 4) + '" rx="210" ry="16" fill="url(#ui-ts-ao)"/>';
+    s += '<rect x="' + (bx + 214) + '" y="' + (by - 250) + '" width="34" height="80" fill="' + mix('wood-dark', 'night-900', 60) + '"/><rect x="' + (bx + 208) + '" y="' + (by - 258) + '" width="46" height="12" rx="4" fill="var(--snow)"/>';
+    [[236, -292, 20, 0.34], [252, -334, 28, 0.24], [276, -384, 38, 0.15]].forEach(function (p) { s += '<circle cx="' + (bx + p[0]) + '" cy="' + (by + p[1]) + '" r="' + p[2] + '" fill="var(--snow-shade)" opacity="' + p[3] + '"/>'; });
+    s += '<rect x="' + bx + '" y="' + (by - 150) + '" width="300" height="150" fill="url(#ui-ts-wall)"/>' + (FX ? FX.tex('wood', bx, by - 150, 300, 150, 0.5) : '') +
+      '<rect x="' + (bx + 210) + '" y="' + (by - 150) + '" width="90" height="150" fill="var(--night-900)" opacity=".28"/>';
+    s += P('M' + (bx - 30) + ' ' + (by - 140) + 'L' + (bx + 150) + ' ' + (by - 256) + 'L' + (bx + 330) + ' ' + (by - 140) + 'L' + (bx + 318) + ' ' + (by - 124) + 'L' + (bx + 150) + ' ' + (by - 232) + 'L' + (bx - 18) + ' ' + (by - 124) + 'Z', 'var(--snow)') +
+      P('M' + (bx + 150) + ' ' + (by - 256) + 'L' + (bx + 330) + ' ' + (by - 140) + 'L' + (bx + 318) + ' ' + (by - 124) + 'L' + (bx + 150) + ' ' + (by - 232) + 'Z', 'var(--snow-shade)', ' opacity=".7"') +
+      P('M' + (bx - 2) + ' ' + (by - 134) + 'L' + (bx + 150) + ' ' + (by - 232) + 'L' + (bx + 302) + ' ' + (by - 134) + 'Z', 'url(#ui-ts-wall)') +
+      '<circle cx="' + (bx + 150) + '" cy="' + (by - 176) + '" r="17" fill="url(#ui-ts-win)"/><rect x="' + (bx + 148.5) + '" y="' + (by - 193) + '" width="3" height="34" fill="var(--wood-dark)"/><rect x="' + (bx + 133) + '" y="' + (by - 177.5) + '" width="34" height="3" fill="var(--wood-dark)"/>';
+    [[34, 0], [108, 0], [232, 0]].forEach(function (w) {
+      var wx = bx + w[0], wy = by - 112;
+      s += '<rect x="' + (wx - 5) + '" y="' + (wy - 5) + '" width="54" height="64" rx="3" fill="var(--wood-dark)"/><rect x="' + wx + '" y="' + wy + '" width="44" height="54" fill="url(#ui-ts-win)"/>' +
+        '<rect x="' + (wx + 20.5) + '" y="' + wy + '" width="3" height="54" fill="var(--wood-dark)"/><rect x="' + wx + '" y="' + (wy + 24) + '" width="44" height="3" fill="var(--wood-dark)"/>' +
+        '<rect x="' + (wx - 8) + '" y="' + (wy + 56) + '" width="60" height="7" rx="3.5" fill="var(--snow)"/>' + pool(wx + 22, wy + 27, 70, 76, 0.55);
+    });
+    s += '<rect x="' + (bx + 168) + '" y="' + (by - 96) + '" width="48" height="96" rx="4" fill="var(--wood-dark)"/><rect x="' + (bx + 173) + '" y="' + (by - 91) + '" width="38" height="91" fill="' + mix('pole-red', 'night-900', 62) + '"/>' +
+      '<circle cx="' + (bx + 204) + '" cy="' + (by - 44) + '" r="3" fill="var(--gold)"/><circle cx="' + (bx + 192) + '" cy="' + (by - 72) + '" r="11" fill="none" stroke="' + mix('pole-green', 'lamp', 70) + '" stroke-width="5"/>';
+    // front snow, drifts and near pines
+    s += P('M-20 850C200 800 430 836 640 860C900 890 1180 820 1620 846V1000H-20Z', 'url(#ui-ts-snow)') +
+      P('M-20 850C200 800 430 836 640 860C520 862 300 838 -20 880Z', 'var(--snow)', ' opacity=".55"') + P('M1620 846C1400 826 1180 842 1000 870C1200 852 1420 848 1620 872Z', 'var(--snow)', ' opacity=".4"');
+    s += pool(bx + 190, by + 40, 280, 60, 0.42);
+    s += pine(1250, 872, 210) + pine(1392, 900, 330) + pine(1520, 880, 250) + pine(1150, 884, 130, 0.9) + pine(430, 884, 150, 0.9) + pine(1090, 868, 90, 0.8);
+    s += P('M-20 940C260 900 520 950 800 934C1080 918 1340 960 1620 926V1000H-20Z', mix('snow', 'snow-shade', 60)) + '<rect y="900" width="' + W + '" height="100" fill="' + mix('night-600', 'night-900', 60) + '" opacity=".25"/>';
+    s += '<rect width="' + W + '" height="' + H + '" fill="url(#ui-ts-vig)"/>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' + defs + s + '</svg>';
+  };
 })(window.NP);
 
 })();
@@ -2016,6 +2430,7 @@ window.NP = window.NP || {};
 window.NP = window.NP || {};
 (function (NP) {
   'use strict';
+  var FX = NP.fx;   // shared light and texture (fx.js loads first)
 
   /* ---------- tiny helpers ---------- */
   function reduced() { return document.documentElement.classList.contains('reduced'); }
@@ -2125,18 +2540,20 @@ window.NP = window.NP || {};
     '.reduced .sc-rig{transition:none}.reduced .sc-fade{transition:opacity 120ms}' +
     '.sc-txt{font-family:var(--font-ui);font-weight:700}' +
     '.sc-script{font-family:"Segoe Print","Bradley Hand","Noteworthy","Marker Felt","Chalkboard SE",var(--font-ui);font-weight:400}' +
-    '.sc-off{opacity:0}';
+    '.sc-off{opacity:0}' +
+    '@media (max-width:760px){.sc-ceil{transform:translateY(-70px)}}';
 
   function ensureDefs() {
+    FX.ensure();
     if (document.getElementById('sc-defs')) return;
     var d = document.createElement('div');
     d.innerHTML = '<svg id="sc-defs" xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" ' +
       'style="position:absolute;width:0;height:0;overflow:hidden"><style>' + CSS + '</style><defs>' + DEFS + '</defs></svg>';
     (document.body || document.documentElement).appendChild(d.firstChild);
   }
-  function mountSVG(el, vb, inner, cls) {
+  function mountSVG(el, vb, inner, cls, par) {
     ensureDefs();
-    el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="sc-svg ' + cls + '" viewBox="' + vb + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' + inner + '</svg>';
+    el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="sc-svg ' + cls + '" viewBox="' + vb + '" preserveAspectRatio="' + (par || 'xMidYMid meet') + '" aria-hidden="true" focusable="false">' + inner + '</svg>';
     return el.firstChild;
   }
   function measure(t, str) {
@@ -2161,12 +2578,31 @@ window.NP = window.NP || {};
     for (var bx = x + 70; bx < x + w; bx += 170) s += rect(bx, y - 2, 8, h + 4, 2, 'url(#sc-metald)');
     return s;
   }
-  function wallBase(w) {
-    return rect(0, 0, w, 300, 0, 'url(#sc-wall)') + rect(0, 0, w, 262, 0, 'url(#sc-brick)', { opacity: 0.32 }) +
-      pipeH(0, 8, w, 11) + pipeH(0, 24, w, 7);
+  // basement wall from y0 down to the floor: paint, brickwork with every brick its own tone, damp blotches,
+  // the ceiling's shadow, and two service pipes. k scales the bricks (the desk bay is drawn in larger units).
+  function wallBase(w, y0, k, noCeil) {
+    y0 = y0 || 0;
+    return rect(0, y0, w, 300 - y0, 0, 'url(#sc-wall)') + FX.tex('brick', 0, y0, w, 262 - y0, 0.5, { scale: k || 1 }) + FX.tex('mottle', 0, y0, w, 262 - y0, 0.55) + (noCeil ? '' : ceil(w, y0));
   }
-  function haze(w) { return rect(0, 0, w, 300, 0, M('night-600', 'basement', 50), { opacity: 0.3 }) + rect(0, 120, w, 142, 0, 'url(#sc-haze)'); }
-  function floor(w) { return rect(0, 262, w, 38, 0, 'url(#sc-floor)') + rect(0, 262, w, 2, 0, V('basement-light'), { opacity: 0.5 }); }
+  function ceil(w, y0) {
+    return rect(0, y0 - 80, w, 89, 0, M('basement', 'night-900', 35)) + rect(0, y0 + 9, w, 30, 0, 'url(#sc-aov)') +
+      pipeH(0, y0 + 17, w, 11) + rect(0, y0 + 28, w, 5, 0, V('night-900'), { opacity: 0.22 }) + pipeH(0, y0 + 35, w, 7);
+  }
+  function haze(w, y0) { y0 = y0 || 0; return rect(0, y0, w, 300 - y0, 0, M('night-600', 'basement', 50), { opacity: 0.16 }) + rect(0, 120, w, 142, 0, 'url(#sc-haze)', { opacity: 0.8 }); }
+  function floor(w) {
+    return rect(0, 262, w, 38, 0, 'url(#sc-floor)') + FX.tex('mottle', 0, 262, w, 38, 0.9) + rect(0, 262, w, 2, 0, V('basement-light'), { opacity: 0.6 }) +
+      rect(0, 264, w, 7, 0, 'url(#sc-aov)', { opacity: 0.5 });
+  }
+  // pendant work lamp: cord, enamel shade, hot bulb. Its beam is drawn by the caller, behind the actors.
+  function pendant(x, y, top, sc) {
+    sc = sc || 1;
+    return rect(x - 1, top, 2, y - top - 22 * sc, 0, M('board-dark', 'night-900', 60)) +
+      g({ transform: 'translate(' + x + ' ' + y + ') scale(' + sc + ')' },
+        rect(-5, -27, 10, 7, 2, 'url(#sc-metald)') +
+        lit('M-25 0C-25-13-15-21 0-21C15-21 25-13 25 0Z', 'url(#sc-green)', null, 1.3) + path('M6-20C17-17 25-11 25 0H13C13-8 10-15 6-20Z', V('night-900'), { opacity: 0.25 }) +
+        ell(0, 0, 25, 4.6, M('lamp', 'paper', 70)) + ell(0, 0.5, 17, 3, V('paper'))) +
+      FX.bulb(x, y + 2 * sc, 7 * sc, 0.8);
+  }
   function tick(s) { return line('M' + -9 * s + ' ' + 1 * s + 'L' + -3 * s + ' ' + 7 * s + 'L' + 9 * s + ' ' + -6 * s, V('ink'), 4.4 * s); }
   function cross(s) { return line('M' + -7 * s + ' ' + -7 * s + 'L' + 7 * s + ' ' + 7 * s + 'M' + 7 * s + ' ' + -7 * s + 'L' + -7 * s + ' ' + 7 * s, V('ink'), 4.4 * s); }
   function plate(x, y, w, h) { return lit(rr(x, y, w, h, 8), 'url(#sc-gold)', null, 1.4) + path(rr(x + 2.5, y + 2.5, w - 5, h - 5, 6), 'url(#sc-plate)'); }
@@ -2193,21 +2629,44 @@ window.NP = window.NP || {};
   }
 
   function beltMarkup() {
-    var s = wallBase(800);
-    // vertical pipe with valve, caged work lamp (key light, upper left)
-    s += rect(248, 0, 13, 224, 0, 'url(#sc-pipev)') + rect(246, 150, 17, 8, 2, 'url(#sc-metald)');
+    // The bay is drawn above the engine's 800x300 gift lane, so the hopper, the lamp and the gift's tag sit inside the picture:
+    // 100 units more on a wide screen, 170 on a phone (where the tag is taller). YT is the top of the art; the ceiling group
+    // sits at Y0 and CSS lifts it to YT on a phone.
+    var Y0 = -100, YT = -170;
+    var s = wallBase(800, YT, 1, true);
+    // vertical pipe with valve
+    s += rect(248, YT, 13, 224 - YT, 0, 'url(#sc-pipev)') + rect(246, 150, 17, 8, 2, 'url(#sc-metald)') + rect(246, Y0 + 46, 17, 8, 2, 'url(#sc-metald)');
     s += path('M254.5 94m-14 0a14 14 0 1 0 28 0a14 14 0 1 0-28 0Zm5 0a9 9 0 1 1 18 0a9 9 0 1 1-18 0Z', 'url(#sc-pipe)', { 'fill-rule': 'evenodd' }) +
       rect(253, 80, 3, 28, 1, V('board-dark')) + rect(240.5, 92.5, 28, 3, 1, V('board-dark'));
-    s += haze(800);
-    s += ell(520, 96, 360, 210, 'url(#sc-glow)', { opacity: 0.3 }) + ell(330, 34, 170, 120, 'url(#sc-glow)', { opacity: 0.2 });
-    s += rect(329, 0, 2, 30, 0, V('board-dark')) + circ(330, 40, 10, V('lamp')) + circ(330, 40, 22, 'url(#sc-glow)', { opacity: 0.8 }) +
-      line('M321 33Q330 26 339 33M320 40H340M321 47Q330 54 339 47M330 30V50', V('board-dark'), 1.6) + rect(323, 26, 14, 6, 2, 'url(#sc-metald)');
-    s += floor(800);
+    // the board's slide, taped up down here as a poster (kept dim: it is set dressing)
+    s += g({ transform: 'rotate(-2.5 196 -22)', opacity: 0.9 },
+      rect(162, -46, 74, 58, 2, V('night-900'), { opacity: 0.35 }) +
+      rect(160, -49, 74, 58, 2, M('paper', 'basement', 46)) + rect(160, -49, 74, 58, 2, 'url(#sc-shadel)', { opacity: 0.5 }) +
+      txt(168, -8, 30, 'AI', { fill: M('night-600', 'basement', 60), style: 'font-weight:900' }) +
+      line('M204 -3C219 -3 225 -17 226 -29', M('gold-dark', 'basement', 70), 3) +
+      path('M226 -42l6 12h-12z', M('pole-red', 'basement', 62)) +
+      rect(186, -53, 20, 7, 1, M('paper', 'gold', 60), { opacity: 0.55, transform: 'rotate(4 196 -50)' }));
+    // air grille and wall clock (five to midnight) on the right, cable run from the AI's cabinet
+    s += path(rr(626, -56, 84, 34, 4), 'url(#sc-metald)') + rect(631, -51, 74, 24, 2, V('night-900'), { opacity: 0.55 });
+    for (var gi = 0; gi < 5; gi++) s += rect(633, -48.5 + gi * 4.6, 70, 1.6, 0.8, V('board'), { opacity: 0.55 });
+    s += circ(752, -30, 21.5, V('night-900'), { opacity: 0.35 }) + lit(cd(751, -32, 20), 'url(#sc-metald)', null, 1.2) + circ(751, -32, 16.5, M('paper', 'basement', 52)) +
+      line('M751 -32L745.4 -41.8M751 -32L750.4 -40', V('ink'), 2) + circ(751, -32, 1.8, V('pole-red'));
+    s += line('M676 54C676 16 690 4 690 -22', V('night-900'), 4, { opacity: 0.55 }) + line('M684 54C690 20 700 6 700 -22', V('night-900'), 3, { opacity: 0.4 });
+    // duct from the ceiling into the hopper
+    s += rect(488, YT, 64, 20 - YT, 0, 'url(#sc-pipev)') + rect(497, YT, 5, 20 - YT, 0, V('snow'), { opacity: 0.13 }) +
+      rect(481, Y0 + 46, 78, 9, 3, 'url(#sc-metald)') + rect(481, -30, 78, 9, 3, 'url(#sc-metald)');
+    s += haze(800, YT);
+    // key light: a pendant up and to the left of the hopper. Its beam falls across the belt; dust hangs in it.
+    s += FX.pool(420, 96, 400, 230, 0.34) + FX.cone(330, -6, 46, 440, 268, 0.4, { skew: 46 }) + FX.pool(600, 20, 150, 100, 0.28);
+    s += FX.motes(250, 6, 280, 180, 12, 5, { r: 1.3 });
+    s += pendant(330, -8, YT, 1);
+    s += g({ 'class': 'sc-ceil' }, ceil(800, Y0));
+    s += floor(800) + FX.pool(396, 282, 250, 20, 0.34);
 
     // ---- packing chute (x 0..96) ----
     s += ao(50, 297, 66, 6, 0.55);
     s += lit(rr(-4, 104, 104, 200, 12), 'url(#sc-wood)');
-    s += rect(-4, 104, 104, 200, 0, 'url(#sc-shadel)', { opacity: 0.6 });
+    s += FX.texPath('woodv', rr(-4, 104, 104, 200, 12), 0.7) + rect(-4, 104, 104, 200, 0, 'url(#sc-shadel)', { opacity: 0.6 });
     s += path(rr(12, 122, 76, 116, 9), 'url(#sc-hole)');
     s += path('M12 132Q12 122 22 122H30V238H12Z', V('wood-dark'), { opacity: 0.55 });
     for (var i = 0; i < 6; i++) s += rect(15 + i * 12.4, 123, 10.6, 52 - (i % 2) * 6, 2, M('board-dark', 'night-900', 60), { opacity: 0.75 });
@@ -2216,7 +2675,7 @@ window.NP = window.NP || {};
     s += rect(-4, 238, 104, 3, 0, V('lamp'), { opacity: 0.25 });
     s += g({ 'class': 'sc-chglow sc-off' }, ell(50, 180, 66, 96, 'url(#sc-rgood)', { 'class': 'sc-chg-good' }) + ell(50, 180, 66, 96, 'url(#sc-rbad)', { 'class': 'sc-chg-bad' }));
     // sign
-    s += rect(30, 0, 3, 54, 0, V('board-dark')) + rect(128, 0, 3, 54, 0, V('board-dark'));
+    s += rect(30, YT, 3, 54 - YT, 0, V('board-dark')) + rect(128, YT, 3, 54 - YT, 0, V('board-dark'));
     s += plateQuiet(4, 50, 152, 48);
     s += txt(17, 84, 28, 'PACKING', { fill: SIGN_INK, 'letter-spacing': 1, style: 'font-weight:800' });
     // indicator light on the chute's lower panel, clear of the gift lane and the bubble
@@ -2229,7 +2688,7 @@ window.NP = window.NP || {};
     // ---- belt ----
     s += ao(450, 288, 390, 12, 0.6);
     [150, 330, 470, 610, 760].forEach(function (x) { s += rect(x, 256, 14, 40, 2, 'url(#sc-metald)') + rect(x - 4, 292, 22, 6, 2, V('board-dark')); });
-    s += lit(rr(92, 220, 712, 40, 6), 'url(#sc-metal)', null, 1.2);
+    s += lit(rr(92, 220, 712, 40, 6), 'url(#sc-metal)', null, 1.2) + FX.texPath('brush', rr(92, 220, 712, 40, 6), 0.8);
     s += rect(92, 220, 712, 4, 0, 'url(#sc-gold)') + rect(92, 224, 712, 8, 0, 'url(#sc-aov)') + rect(92, 254, 712, 6, 0, V('night-900'), { opacity: 0.3 });
     var rolls = '';
     for (var rx = 128; rx < 800; rx += 66) {
@@ -2250,14 +2709,15 @@ window.NP = window.NP || {};
     }
     s += g({ 'clip-path': 'url(#sc-beltclip)' }, g({ 'class': 'sc-treads' }, tr));
     s += rect(100, 196, 700, 2.5, 0, V('night-900'), { opacity: 0.4 }) + rect(100, 212.5, 700, 1.5, 0, V('snow'), { opacity: 0.18 });
-    s += ell(480, 205, 300, 12, 'url(#sc-glow)', { opacity: 0.22 });
+    s += FX.pool(450, 205, 250, 13, 0.4);
     s += circ(103, 209, 13.5, 'url(#sc-rubber)') + circ(103, 209, 6, 'url(#sc-metal)') + circ(101, 207, 2, V('snow'), { opacity: 0.4 });
     s += ao(520, 206, 70, 6, 0.35);
 
     // ---- AI hopper (mouth x=520, y≈118) ----
     var h = '';
     h += rect(492, -6, 56, 16, 3, 'url(#sc-pipev)');
-    h += lit(rr(416, -24, 208, 116, 22), 'url(#sc-metal)', null, 2.2);
+    h += lit(rr(416, -24, 208, 116, 22), 'url(#sc-metal)', null, 2.2) + FX.texPath('brush', rr(416, -24, 208, 116, 22), 0.8) +
+      path('M560 -24H602A22 22 0 0 1 624 -2V70A22 22 0 0 1 602 92H560Z', V('night-900'), { opacity: 0.16 });
     h += rect(416, 54, 208, 3, 0, V('board-dark'), { opacity: 0.5 }) + rect(416, 57, 208, 2, 0, V('snow'), { opacity: 0.15 });
     for (var k = 0; k < 8; k++) h += circ(432 + k * 25.5, 66, 2.6, V('board-dark')) + circ(431.4 + k * 25.5, 65.3, 1, V('snow'), { opacity: 0.5 });
     h += lit(rr(482, 10, 76, 38, 8), 'url(#sc-gold)', null, 1.2) + txt(520, 40, 28, 'AI', { 'text-anchor': 'middle', style: 'font-weight:900', 'letter-spacing': 2 });
@@ -2273,12 +2733,13 @@ window.NP = window.NP || {};
     h += ell(520, 117, 50, 8, M('board-dark', 'snow', 80)) + ell(520, 117.5, 45, 6, V('night-900'));
     // brain cabinet with the smug screen face
     h += line('M600 40C620 40 630 46 640 56', V('night-900'), 5, { opacity: 0.6 });
-    h += lit(rr(604, 52, 112, 124, 18), 'url(#sc-metal)', null, 2);
+    h += lit(rr(604, 52, 112, 124, 18), 'url(#sc-metal)', null, 2) + FX.texPath('brushv', rr(604, 52, 112, 124, 18), 0.8) +
+      path('M690 52H698A18 18 0 0 1 716 70V158A18 18 0 0 1 698 176H690Z', V('night-900'), { opacity: 0.18 });
     h += rect(612, 166, 96, 4, 2, V('night-900'), { opacity: 0.35 });
     h += circ(698, 66, 5, V('lamp')) + circ(698, 66, 12, 'url(#sc-glow)', { opacity: 0.6 });
     h += circ(620, 66, 2.5, V('board-dark')) + circ(634, 66, 2.5, V('board-dark'));
     h += path(rr(620, 106, 80, 58, 11), 'url(#sc-screen)');
-    h += ell(660, 135, 40, 30, 'url(#sc-glow)', { opacity: 0.22 });
+    h += FX.pool(660, 135, 62, 48, 0.42, null, { 'class': 'fx-add fx-breathe' });
     h += g({ 'class': 'sc-face sc-face-smug sc-fade' },
       path('M638 129A8 8 0 0 0 654 129Z', V('lamp')) + path('M666 129A8 8 0 0 0 682 129Z', V('lamp')) +
       line('M637 126L655 128M665 128L683 125', V('lamp'), 2.4) + line('M647 147Q662 153 676 143', V('lamp'), 3.4));
@@ -2288,6 +2749,8 @@ window.NP = window.NP || {};
       circ(645, 135, 4.5, V('lamp'), { 'class': 'sc-dot' }) + circ(660, 135, 4.5, V('lamp'), { 'class': 'sc-dot' }) + circ(675, 135, 4.5, V('lamp'), { 'class': 'sc-dot' }));
     h += path('M626 112Q626 109 630 109H662L640 140H626Z', V('snow'), { opacity: 0.07 });
     s += rig('sc-hopper', 520, 60, h);
+    // the room falls away into shadow above and below the lit lane
+    s += g({ 'class': 'sc-ceil' }, FX.fall(0, Y0, 800, 150, 0.7, true)) + FX.fall(0, 244, 800, 56, 0.3);
 
     // ---- barrier (hidden) ----
     var b = '';
@@ -2312,7 +2775,7 @@ window.NP = window.NP || {};
 
   NP.scene = NP.scene || {};
   NP.scene.mountBelt = function (el) {
-    var svg = mountSVG(el, '0 0 800 300', beltMarkup(), 'sc-belt');
+    var svg = mountSVG(el, '0 -170 800 470', beltMarkup(), 'sc-belt', 'xMidYMax slice');
     var treads = q(svg, '.sc-treads'), rolls = qa(svg, '.sc-roll').map(function (n) { return { n: n, c: +n.getAttribute('data-c') }; });
     var hop = q(svg, '.sc-hopper'), gear = q(svg, '.sc-gear'), bub = q(svg, '.sc-bubble'), bshape = q(svg, '.sc-bshape'), btxt = q(svg, '.sc-btxt');
     var lamp = q(svg, '.sc-lamp'), chg = q(svg, '.sc-chglow'), bar = q(svg, '.sc-barrier');
@@ -2557,28 +3020,30 @@ window.NP = window.NP || {};
   var FC_T = 'translate(252 100) scale(1.16) translate(-262 -104)';
   var LID = { x: 296, y: 146, w: 100, h: 69 };   // laptop lid (back towards us): the newest sticky goes here
   function deskMarkup() {
-    var s = wallBase(400);
-    // high basement window (cool exterior light), left of the lamp
-    s += path(rr(112, 22, 66, 50, 4), 'url(#sc-metald)') + path(rr(117, 26, 56, 42, 2), 'url(#sc-sky)') +
-      path('M117 68V60C122 56 128 58 133 55C140 52 148 57 156 54C162 52 168 56 173 54V68Z', V('snow-shade')) + rect(143.5, 26, 3, 42, 0, 'url(#sc-metald)') +
-      circ(127, 36, 1.3, V('snow')) + circ(160, 42, 1, V('snow')) + circ(136, 31, 1, V('snow'));
-    s += path('M117 70H173L128 262H0Z', V('snow-shade'), { opacity: 0.05 });
+    var s = wallBase(400, -9, 0.75);
+    // high basement window: moonlight outside, snow on the sill, a cool shaft down onto the rejects
+    s += g({ transform: 'translate(-10 0)' }, path(rr(109, 19, 72, 56, 5), V('night-900'), { opacity: 0.4 }) + lit(rr(112, 22, 66, 50, 4), 'url(#sc-metald)', null, 1.2) + path(rr(117, 26, 56, 42, 2), 'url(#sc-sky)') +
+      circ(160, 38, 5.5, V('snow'), { opacity: 0.9 }) + circ(162.5, 36.5, 5, M('night-600', 'night-900', 60)) +
+      path('M117 68V60C122 56 128 58 133 55C140 52 148 57 156 54C162 52 168 56 173 54V68Z', V('snow-shade')) + path('M117 68V62C124 59 130 61 136 59C144 56 150 60 158 58C164 57 169 59 173 58V68Z', V('snow')) +
+      rect(143.5, 26, 3, 42, 0, 'url(#sc-metald)') + rect(117, 45, 56, 2.4, 0, 'url(#sc-metald)') +
+      circ(127, 36, 1.3, V('snow')) + circ(136, 31, 1, V('snow')) + circ(150, 33, 0.9, V('snow')) + circ(124, 52, 1, V('snow'), { opacity: 0.7 }) +
+      path('M109 75H181L183 80H107Z', M('board', 'snow', 70)) + rect(107, 80, 76, 3, 0, V('night-900'), { opacity: 0.4 }));
     s += haze(400);
-    // key light: pendant lamp up and to the left of him; its pool falls down and to the right
-    s += ell(236, 138, 196, 166, 'url(#sc-glow)', { opacity: 0.46 });
-    s += path('M186 26L210 26L398 212L150 212Z', 'url(#sc-cone)', { opacity: 0.42 }) + path('M190 26L206 26L336 212L182 212Z', 'url(#sc-cone)', { opacity: 0.6 });
-    s += rect(197, 0, 2, 11, 0, V('board-dark')) + lit('M182 26C182 16 189 10 198 10C207 10 214 16 214 26Z', 'url(#sc-green)', null, 1.2) +
-      ell(198, 26, 13, 3.4, V('lamp')) + circ(198, 28, 22, 'url(#sc-glow)', { opacity: 0.7 });
+    s += FX.pool(135, 47, 62, 50, 0.5, 'cool') + FX.cone(135, 74, 60, 170, 190, 0.5, { skew: -58, cool: true }) + FX.pool(74, 276, 110, 22, 0.3, 'cool');
+    // key light: pendant lamp up and to the left of him. Its beam falls down and to the right, and he throws a shadow on the wall.
+    s += FX.pool(244, 132, 200, 170, 0.42) + FX.cone(193, 30, 30, 260, 184, 0.5, { skew: 66 }) + FX.motes(190, 50, 150, 130, 8, 9, { r: 1.2 });
+    s += FX.cast(334, 150, 58, 84, 0.5, 12);
+    s += pendant(193, 27, 0, 0.7);
     // REJECTS paper sign (background: kept soft)
-    s += g({ transform: 'translate(-22 -46) rotate(-3 82 98)', opacity: 0.86 }, lit(rr(36, 84, 94, 30, 2), 'url(#sc-paper)', null, 1.2) +
+    s += g({ transform: 'translate(-30 -44) rotate(-3 82 98)', opacity: 0.86 }, lit(rr(36, 84, 94, 30, 2), 'url(#sc-paper)', null, 1.2) +
       rect(74, 79, 16, 9, 1, V('paper-shade'), { opacity: 0.85, transform: 'rotate(8 82 83)' }) +
       txt(83, 106, 17, 'REJECTS', { 'text-anchor': 'middle', 'class': 'sc-txt sc-script', fill: V('ink-soft'), style: 'font-weight:700', 'letter-spacing': 1 }));
     s += floor(400);
     s += ao(100, 293, 40, 9, 0, { 'class': 'sc-pileao' });
     // desk top, then him (chair included), then the desk front
-    s += rect(178, 212, 222, 16, 0, 'url(#sc-desktop)') + rect(178, 212, 222, 4, 0, V('night-900'), { opacity: 0.18 });
+    s += rect(178, 212, 222, 16, 0, 'url(#sc-desktop)') + FX.tex('wood', 178, 212, 222, 16, 0.6) + rect(178, 212, 222, 4, 0, V('night-900'), { opacity: 0.18 }) + FX.pool(270, 219, 120, 9, 0.5);
     s += g({ transform: FC_T }, lit(rr(206, 112, 112, 100, 26), 'url(#sc-metald)', null, 1.4) + rect(218, 124, 88, 4, 2, V('snow'), { opacity: 0.08 }) + fcMarkup());
-    s += rect(178, 228, 222, 2, 0, V('lamp'), { opacity: 0.45 }) + rect(178, 230, 222, 70, 0, 'url(#sc-woodd)') + rect(178, 230, 222, 10, 0, 'url(#sc-aov)') +
+    s += rect(178, 228, 222, 2, 0, V('lamp'), { opacity: 0.45 }) + rect(178, 230, 222, 70, 0, 'url(#sc-woodd)') + FX.tex('wood', 178, 230, 222, 70, 0.75, { scale: 0.7 }) + rect(178, 230, 222, 10, 0, 'url(#sc-aov)') +
       rect(178, 212, 2, 88, 0, V('lamp'), { opacity: 0.3 });
     s += path(rr(206, 246, 84, 44, 5), V('night-900'), { opacity: 0.16 }) + rect(208, 289, 80, 1.5, 0, V('lamp'), { opacity: 0.16 }) + rect(238, 260, 24, 4, 2, V('gold-dark'));
     s += path(rr(304, 246, 84, 44, 5), V('night-900'), { opacity: 0.16 }) + rect(306, 289, 80, 1.5, 0, V('lamp'), { opacity: 0.16 }) + rect(334, 260, 24, 4, 2, V('gold-dark'));
@@ -2589,6 +3054,7 @@ window.NP = window.NP || {};
     s += lit(rr(L.x, L.y, L.w, L.h, 7), 'url(#sc-metal)', null, 1.6) + rect(L.x + 2, L.y + L.h - 6, L.w - 4, 5, 0, V('board-dark'), { opacity: 0.6 }) +
       path('M' + (L.x + 8) + ' ' + (L.y + 4) + 'H' + (L.x + 44) + 'L' + (L.x + 24) + ' ' + (L.y + 46) + 'H' + (L.x + 8) + 'Z', V('snow'), { opacity: 0.06 });
     s += ell(L.x + 50, L.y - 2, 58, 10, 'url(#sc-glowc)', { 'class': 'sc-sglow2', opacity: 0.3 });
+    s += FX.fall(0, 232, 400, 68, 0.4) + FX.fall(0, 0, 400, 70, 0.45, true);
     s += mugsMarkup();
     // warm the sticky-note faces (script regular + UI bold) at mount so the first note measures true
     s += T('text', { x: 2, y: 298, 'class': 'sc-script', 'font-size': 4, 'fill-opacity': 0 }, 'why ?') + T('text', { x: 2, y: 298, 'class': 'sc-txt', 'font-size': 4, 'fill-opacity': 0 }, 'why ?');
@@ -2868,11 +3334,37 @@ window.NP = window.NP || {};
   function mx(a, b, p) { return 'color-mix(in srgb,var(--' + a + ') ' + p + '%,var(--' + b + '))'; }
   function lg(id, x2, a, b) { return '<linearGradient id="ui-' + id + '" x1="0" y1="0" x2="' + x2 + '" y2="1">' + sp('0', a) + sp('1', b) + '</linearGradient>'; }
   function tx(x, y, s, t, c, ex) { return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="' + s + '" font-weight="800"' + st('fill:var(--' + c + ');font-family:var(--font-ui)') + (ex || '') + '>' + t + '</text>'; }
+  // the shared light and texture layer (fx.js). The promo film builds this file without it, so every call is guarded
+  function fx(n) { var X = NP.fx; return X && X[n] ? X[n].apply(X, [].slice.call(arguments, 1)) : ''; }
+  // soft contact shadow: a radial fade, no live blur
+  function sh(x, y, rx, ry, o) { return El(x, y, rx, ry, 'url(#ui-fsh)', ' opacity="' + (o || 0.8) + '"'); }
+  function prop(cls, vb, inner) { return '<svg class="il-p ' + cls + '" viewBox="0 0 ' + vb + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + inner + '</svg>'; }
+  // a night window: frame, moonlit glass, snow on the sill
+  function wnd(x, y, w, h, moon) {
+    var fr = mx('board-dark', 'night-900', 50), mxx = x + w * 0.72, my = y + h * 0.3;
+    return Rc(x - 7, y - 7, w + 14, h + 17, 8, fr) + Rc(x - 7, y - 7, w + 14, 2.5, 1, 'snow-shade', '.4') + Rc(x, y, w, h, 4, 'url(#ui-fwn)') +
+      (moon ? Ci(mxx, my, 11, 'snow') + Ci(mxx + 5, my - 3, 10, mx('night-600', 'night-900', 60)) : '') +
+      Pa('M' + x + ' ' + (y + h) + 'v-14q' + w / 4 + ' -10 ' + w / 2 + ' -3t' + w / 2 + ' -5v22Z', 'snow-shade', '.8') + Rc(x + w / 2 - 2.5, y, 5, h, 0, fr) + Rc(x, y + h * 0.48, w, 5, 0, fr);
+  }
   function sp(o, c, a) { return '<stop offset="' + o + '"' + st('stop-color:' + c) + (a ? ' stop-opacity="' + a + '"' : '') + '/>'; }
 
   // Beat 1: the board memo
   function memo(m) {
-    return '<section class="il-beat il-b1" aria-hidden="true"><div class="il-memo">' +
+    // the desk top from above: the lamp in the corner, a mug, a pencil. Shadows fall away from the lamp
+    var set =
+      prop('il-lamp', '260 260', '<circle cx="124" cy="124" r="132" fill="url(#fx-hot)" opacity=".5" class="fx-add"/>' + El(130, 134, 104, 100, 'url(#fx-cast)') +
+        Ln('M-6 -6L74 74', 'gold-dark', 17) + Ln('M-8 -11L70 67', 'gold', 5) + Ci(110, 110, 92, 'pole-green-dark') + Ci(106, 106, 87, 'pole-green') +
+        Pa('M30 96A80 80 0 0 1 100 28A92 92 0 0 0 30 96Z', 'lamp', '.38') + Pa('M186 130A82 82 0 0 1 128 188A96 96 0 0 0 186 130Z', 'night-900', '.3') +
+        Ci(110, 110, 17, 'gold-dark') + Ci(107, 107, 12, 'gold') + Ci(104, 104, 4.5, 'lamp')) +
+      prop('il-mug', '170 160', '<circle cx="42" cy="100" r="46" fill="none" stroke-width="4.5" stroke-dasharray="80 26 130 44" opacity=".15"' + K('night-900') + '/>' +
+        El(92, 94, 68, 62, 'url(#fx-cast)') + Ln('M116 60c32-5 32 32 3 28', 'paper-shade', 13) + Ln('M116 57c28-4 28 22 6 24', 'paper', 4.5) +
+        Ci(72, 70, 52, mx('paper-shade', 'board', 80)) + Ci(70, 68, 50, 'paper') + Ci(72, 70, 43, mx('paper-shade', 'wood-dark', 78)) + Ci(74, 73, 38, mx('wood-dark', 'ink', 58)) +
+        Pa('M46 64A30 30 0 0 1 74 40A38 38 0 0 0 46 64Z', 'lamp', '.5')) +
+      prop('il-pen', '230 44', Rc(12, 19, 208, 18, 9, 'url(#fx-rise)', '.95') + Rc(6, 8, 18, 14, 5, 'hue-pink') + Rc(22, 8, 14, 14, 0, 'gold-dark') + Rc(22, 8, 14, 4.5, 0, 'gold') +
+        Rc(36, 8, 150, 14, 0, 'pole-red') + Rc(36, 8, 150, 4.5, 0, mx('pole-red', 'lamp', 68)) + Rc(36, 17.5, 150, 4.5, 0, 'pole-red-dark') +
+        Pa('M186 8L216 15L186 22Z', 'paper-shade') + Pa('M186 8L216 15H186Z', 'paper', '.75') + Pa('M206 12.7L216 15L206 17.3Z', 'ink')) +
+      '<i class="il-pool fx-add"></i>';
+    return '<section class="il-beat il-b1" aria-hidden="true">' + set + '<div class="il-memo">' +
       '<div class="il-lh"><span class="il-seal" aria-hidden="true">NP</span><span>NORTH POLE LTD · BOARD OFFICE</span></div>' +
       '<div class="il-meta"><span><b>To</b> ' + esc(m.to || 'All workshop staff') + '</span><span><b>From</b> The Board</span></div>' +
       '<h2 class="il-mt">' + esc(m.title) + '</h2><p class="il-mb">' + esc(m.body) + '</p>' +
@@ -2903,13 +3395,50 @@ window.NP = window.NP || {};
         '<div class="il-tkh">' + (ret ? ico('sack') + 'CUSTOMER RETURN' : 'CAUGHT IN QA') + '</div>' +
         '<p><b>' + esc(it.id || 'BUG') + ':</b> ' + esc(body) + '<i class="il-st">' + esc(stat) + '</i></p></div>';
     }).join('');
-    return '<section class="il-beat il-b2 ' + (d._part || '') + '" aria-hidden="true"><div class="il-desk">' +
-      '<div class="il-mon"><div class="il-scr">' + scr + '<span class="il-cur"></span></div><div class="il-neck"></div></div>' +
+    return '<section class="il-beat il-b2 ' + (d._part || '') + '" aria-hidden="true">' + den(d._n) + '<div class="il-desk">' +
+      '<div class="il-mon"><div class="il-scr">' + scr + '<span class="il-cur"></span></div><i class="il-note"></i><div class="il-neck"></div></div>' + kit() +
       '<div class="il-board' + size + '"><div class="il-bh"><span class="il-bt">Issues</span>' +
       '<span class="il-cnt il-cq"><i>Caught in </i>QA <b>' + nq + '</b></span>' +
       '<span class="il-cnt il-cr">' + ico('sack') + '<i>Customer </i>return <b>' + nr + '</b></span></div>' +
       '<div class="il-tix">' + (tix || '<p class="il-none">No tickets. Suspiciously quiet.</p>') + '</div></div>' +
       '</div></section>';
+  }
+
+  // The basement behind Father Christmas's desk: the brick, pipes, window and pendant of the desk bay in play. n: portrait framing
+  function den(n) {
+    var W = n ? 400 : 1280, H = n ? 700 : 640, lx = n ? 70 : 232, wx = n ? 262 : 1004, wy = n ? 96 : 92, ww = n ? 104 : 150, wh = n ? 76 : 108, s, i;
+    var pipe = function (y, h) {
+      var p = Rc(0, y, W, h, 0, mx('board', 'night-900', 40)) + Rc(0, y + 1, W, h * 0.3, 0, 'snow', '.13') + Rc(0, y + h * 0.66, W, h * 0.34, 0, 'night-900', '.35');
+      for (i = 90; i < W; i += 230) p += Rc(i, y - 2, 9, h + 4, 2, mx('board-dark', 'night-900', 55));
+      return p;
+    };
+    s = Rc(0, 0, W, H, 0, 'url(#ui-dw)') + fx('tex', 'brick', 0, 0, W, H, 0.5, { scale: n ? 0.66 : 0.9 }) + fx('tex', 'mottle', 0, 0, W, H, 0.55) +
+      Rc(0, 0, W, 16, 0, mx('basement', 'night-900', 30)) + Rc(0, 16, W, 44, 0, 'url(#fx-rise)') + pipe(24, 13) + pipe(45, 7);
+    // high window: moonlight, snow on the sill, a cool shaft down the wall
+    s += '<g class="il-wn">' + wnd(wx, wy, ww, wh, 1) + fx('pool', wx + ww / 2, wy + wh / 2, ww * 1.1, wh * 1.2, 0.5, 'cool') +
+      fx('cone', wx + ww / 2, wy + wh + 10, ww, ww * 2.6, H - wy - wh, 0.42, { skew: n ? -150 : -230, cool: true }) + '</g>';
+    // his wall of notes, lost in the shadows
+    for (i = 0; i < (n ? 4 : 7); i++) {
+      var nx = (n ? 30 : 120) + (i * 67) % (n ? 120 : 250), ny = (n ? 236 : 210) + (i * 43) % (n ? 70 : 150);
+      s += Rc(nx, ny, 30, 28, 1.5, mx(i % 3 ? 'gold' : 'paper-shade', 'basement', 46), 0, ' transform="rotate(' + ((i * 37) % 17 - 8) + ' ' + nx + ' ' + ny + ')"') + Rc(nx + 5, ny + 10, 16, 2, 1, 'night-900', '.3');
+    }
+    // the pendant, up and to the left: its beam falls across the desk. (The board beat hides il-wn: the board hangs where the lamp and window are)
+    s += fx('shade', 0, 0, W, H, 0.85) + Rc(0, H * 0.55, W, H * 0.45, 0, 'url(#fx-fall)', '.6') + fx('pool', lx + (n ? 90 : 150), 290, n ? 220 : 360, 270, 0.42) +
+      '<g class="il-wn">' + fx('cone', lx, 84, 46, n ? 520 : 700, H - 84, 0.46, { skew: n ? 120 : 190 }) + fx('motes', lx - 10, 120, n ? 190 : 300, 280, n ? 6 : 9, 4, { r: 1.5 }) +
+      fx('cast', W / 2 + (n ? 50 : 150), H * 0.52, n ? 170 : 330, n ? 120 : 190, 0.55) +
+      Rc(lx - 1, 0, 2, 50, 0, 'night-900') + '<g transform="translate(' + lx + ' -34) scale(1.9)">' + lampG(0, 1, true) + '</g>' + fx('bulb', lx, 86, 8, 0.85) + '</g>';
+    return '<svg class="il-set" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>' +
+      lg('dw', '.6', 'var(--basement-light)', mx('basement', 'night-900', 60)) + lg('fwn', '0', 'var(--night-900)', 'var(--night-600)') + '</defs>' + s + '</svg>';
+  }
+  // On his desk: the day's tickets, the keyboard, his glasses, a mug. The desk's back edge is at y = 36
+  function kit() {
+    return prop('il-kit', '900 130',
+      Pa('M92 62H214L230 88H74Z', mx('paper-shade', 'wood', 62)) + Pa('M104 54H226L240 78H88Z', mx('paper', 'wood', 74)) + Pa('M104 54H226L229 59H101Z', mx('pole-red', 'wood', 60)) + Pa('M118 50H238L250 72H104Z', 'paper-shade') + Pa('M118 50H238L241 55H115Z', mx('board', 'paper-shade', 70)) +
+      El(450, 104, 190, 13, 'url(#fx-cast)') + Pa('M318 62H582L604 96H296Z', mx('board-dark', 'night-900', 62)) + Rc(296, 96, 308, 8, 3, mx('board-dark', 'night-900', 30)) + Rc(318, 62, 264, 2, 1, 'snow-shade', '.55') +
+      '<path d="M326 71H576M320 80H582M313 89H589" fill="none" stroke-width="5" stroke-dasharray="15 4" opacity=".5"' + K('board') + '/>' +
+      El(660, 86, 30, 7, 'url(#fx-cast)') + '<path d="M634 80a10 7 0 1 0 20 0a10 7 0 1 0-20 0M660 80a10 7 0 1 0 20 0a10 7 0 1 0-20 0M654 79q3-3 6 0" fill="none" stroke-width="2.6"' + K('gold-dark') + '/>' +
+      El(770, 74, 42, 9, 'url(#fx-cast)') + Ln('M768 28C790 28 790 54 768 52', 'pole-green-dark', 7) + Rc(724, 14, 44, 54, 8, 'pole-green') + Rc(724, 14, 15, 54, 7, 'snow', '.14') + Rc(755, 14, 13, 54, 7, 'night-900', '.22') +
+      El(746, 15, 22, 5.5, mx('pole-green', 'snow', 68)) + El(746, 15.6, 18, 3.8, 'wood-dark'));
   }
 
   // Beat 3: the workshop floor (SVG). Elves: 2 heads tall, round heads, pointed green hood, dot eyes (SPEC §9.4)
@@ -2932,7 +3461,8 @@ window.NP = window.NP || {};
     var dark = s === 2 && !b;                   // only a bench nobody takes over goes dark
     var out = dark ? '<g class="il-out"' + st('--od:' + od.toFixed(2) + 's') + '>' : '';
     if (b && s !== 1) s = 1.5;                  // lit, but no elf stays here
-    var glow = El(0, (ly + 362) / 2, (w * 0.62).toFixed(1), (238 - ly) / 2 + 20, 'url(#ui-fg)', st('mix-blend-mode:screen'));
+    var glow = El(0, (ly + 362) / 2, (w * 0.62).toFixed(1), (238 - ly) / 2 + 20, 'url(#ui-fg)', st('mix-blend-mode:screen')) +
+      (lamp ? fx('cone', 0, ly + 62, 20 * k, w * 1.05, 244 - ly, 0.4) : '') + El(0, 304, (w * 0.66).toFixed(1), 20, 'url(#fx-warm)', ' opacity=".34"');
     var top = function (o) { return Rc(-44, 210, 88, 3.5, 1.75, 'lamp', o); };
     var lit = s === 1 || s === 1.5, man = s === 1 ? elf(false, d, hue) : '';
     // a contractor stands behind the robot, so its toy and hammer stay in view, and reaches over it with the spanner
@@ -2942,10 +3472,16 @@ window.NP = window.NP || {};
     return '<g transform="translate(' + cx.toFixed(1) + ' 0)">' + (lit ? glow : dark ? out + glow + '</g>' : '') +
       (lamp ? '<path d="M0 ' + (ly - 400) + 'V' + (ly + 44) + '" stroke-width="2"' + K('night-900') + ' opacity=".6"/>' + lampG(ly, k, lit) + (dark ? out + lampG(ly, k, true) + '</g>' : '') : '') +
       // contact shadow + bench
-      El(0, 300, (46 * k).toFixed(1), 7, 'night-900', ' opacity=".4" filter="url(#ui-fb)"') +
+      sh(0, 301, (58 * k).toFixed(1), 11, 0.85) +
       '<g transform="scale(' + k.toFixed(2) + ')" transform-origin="0 300">' + man + bot + reach +
-      Rc(-38, 226, 7, 72, 2, 'wood-dark') + Rc(31, 226, 7, 72, 2, 'wood-dark') + Rc(-44, 210, 88, 20, 4, 'url(#ui-fw)') +
+      Rc(-38, 226, 7, 72, 2, 'wood-dark') + Rc(31, 226, 7, 72, 2, 'wood-dark') + Rc(-44, 210, 88, 20, 4, 'url(#ui-fw)') + fx('tex', 'wood', -44, 210, 88, 20, 0.7, { scale: 0.45 }) +
       top(lit ? '.7' : '.15') + (dark ? out + top('.55') + '</g>' : '') + Rc(-40, 230, 80, 8, 2, 'wood-dark') + '</g></g>';
+  }
+  function boards(y, end) {
+    for (var o = '', bh = 13, sx = 0.7; y < end; y += bh * 4, bh *= 1.3, sx *= 1.16) {
+      o += '<g transform="translate(-900 ' + y.toFixed(1) + ') scale(' + sx.toFixed(2) + ' ' + (bh / 48).toFixed(3) + ')"><rect width="' + Math.ceil(2600 / sx) + '" height="192" fill="url(#fx-planks)" opacity=".46"/></g>';
+    }
+    return o;
   }
   function mv(a, b, c) { return st('--wd:' + a.toFixed(2) + 's;--du:' + b.toFixed(2) + 's;--dx:' + c.toFixed(0) + 'px'); }
   function ci(v, a, b) { return Math.max(a, Math.min(b, Math.round(+v || 0))); }
@@ -3007,13 +3543,22 @@ window.NP = window.NP || {};
       lg('fsc', '.5', mx('pole-red', 'lamp', 80), 'var(--pole-red-dark)') +
       lg('fm', '.4', mx('board', 'snow', 70), 'var(--board-dark)') +
       '<radialGradient id="ui-fg">' + sp('0', 'var(--lamp)', '.42') + sp('.55', 'var(--lamp-deep)', '.14') + sp('1', 'var(--lamp-deep)', '0') + '</radialGradient>' +
-      '<filter id="ui-fb" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="3"/></filter></defs>' +
+      '<radialGradient id="ui-fsh">' + sp('0', 'var(--night-900)', '.75') + sp('.55', 'var(--night-900)', '.36') + sp('1', 'var(--night-900)', '0') + '</radialGradient>' +
+      lg('fwn', '0', 'var(--night-900)', 'var(--night-600)') + '</defs>' +
       '<g class="il-cam"' + st('transform-origin:' + W / 2 + 'px ' + Math.round(H * 0.6) + 'px') + '><rect x="-900" y="-600" width="2600" height="' + (floorY + 600) + '" fill="url(#ui-fwall)"/>' +
+      fx('tex', 'brick', -900, -600, 2600, floorY + 600, 0.42, { scale: narrow ? 0.6 : 0.5 }) + fx('tex', 'mottle', -900, -600, 2600, floorY + 600, 0.5) +
+      // tall night windows: moonlit glass, snow on the sill, a cool wash on the brick around them
       wins.map(function (x) {
-        return '<rect x="' + (x - 46) + '" y="' + wy + '" width="92" height="96" rx="8"' + F('night-600') + ' opacity=".5"/><path d="M' + x + ' ' + wy + 'v96M' + (x - 46) + ' ' + (wy + 48) + 'h92" stroke-width="5"' + K('basement') + ' opacity=".7"/>';
+        return El(x, wy + 50, 104, 100, 'url(#fx-cool)', ' opacity=".42"') + wnd(x - 46, wy, 92, 96);
       }).join('') +
+      // the lamps' wash on the wall, the skirting board, then the boards of the floor
+      fx('pool', W / 2, floorY - (narrow ? 90 : 60), W * 0.7, narrow ? 150 : 170, 0.3) + Rc(-900, floorY - 150, 2600, 150, 0, 'url(#fx-fall)', '.55') +
+      Rc(-900, floorY - 11, 2600, 11, 0, mx('wood-dark', 'night-900', 55)) + Rc(-900, floorY - 11, 2600, 1.6, 0, 'lamp-deep', '.3') +
       '<rect x="-900" y="' + floorY + '" width="2600" height="1400" fill="url(#ui-ffl)"/>' +
-      '<path d="M-900 ' + (floorY + 1) + 'H1700" stroke-width="2"' + K('lamp-deep') + ' opacity=".35"/>' +
+      boards(floorY, H + 260) +
+      '<path d="M-900 ' + (floorY + 1) + 'H1700" stroke-width="2"' + K('lamp-deep') + ' opacity=".35"/>' + Rc(-900, floorY + 2, 2600, 16, 0, 'url(#fx-rise)', '.7') +
+      Rc(-900, floorY + (narrow ? 120 : 70), 2600, H - floorY + 200, 0, 'url(#fx-fall)', '.75') +
+      fx('motes', W * 0.08, wy - 10, W * 0.84, 150, narrow ? 8 : 12, 7, { r: narrow ? 1.5 : 1.3 }) +
       out + walk.join('') + dr + '</g></svg></section>';
   }
 
@@ -3045,10 +3590,9 @@ window.NP = window.NP || {};
       (contractor ? '' : toy(-12, hue)) + head(0, 0, 'il-head') + '</g>';
   }
   // a laid-off elf, standing, facing right, carrying a cardboard box of desk things; feet at y = 0
-  // a laid-off elf, standing, facing right, carrying a cardboard box of desk things; feet at y = 0
   function walker(hue, tr, sty) {
     var leg = function (x, c) { return '<g class="' + c + '">' + Rc(x, -27, 9, 24, 4, 'pole-green-dark') + Pa('M' + (x - 1) + ' -5h10c5 0 8 2 8 5h-18Z', 'wood-dark') + '</g>'; };
-    return '<g transform="' + tr + '"><g class="il-walk"' + sty + '>' + El(3, 0, 28, 5, 'night-900', ' opacity=".45" filter="url(#ui-fb)"') +
+    return '<g transform="' + tr + '"><g class="il-walk"' + sty + '>' + sh(3, 0, 38, 7.5) +
       '<g class="il-bob">' + leg(-11, 'il-lg1') + leg(3, 'il-lg2') +
       Pa('M-19 -20C-20 -58-12 -82 0 -82S20 -58 19 -20Z', 'url(#ui-fh)') + Pa('M-19 -24C-20 -58-12 -80-2 -82C-10 -72-14 -50-13 -24Z', 'lamp', '.35') +
       '<g transform="translate(2 -256)">' + head(4, 3) + '</g>' +
@@ -3059,11 +3603,10 @@ window.NP = window.NP || {};
       Ci(-18, -46, 5.5, 'paper-shade') + Ci(34, -46, 5.5, 'paper-shade') + '</g></g></g>';
   }
   // reindeer, side view facing right, feet at y = 0. Leaving: walking out with a suitcase in its mouth
-  // reindeer, side view facing right, feet at y = 0. Leaving: walking out with a suitcase in its mouth
   function reindeer(go, tr, sty) {
     var leg = function (x, c, far) { return '<g class="' + c + '">' + Rc(x, -50, 8, 48, 4, far ? mx('wood-dark', 'night-900', 70) : 'wood-dark') + Rc(x - 0.5, -7, 9, 7, 2, 'night-900') + '</g>'; };
     var ant = 'M-4 -12C-8 -30-3 -42 7 -50M-6 -28C-15 -31-19 -38-20 -46M1 -40C9 -40 13 -45 15 -51';
-    return '<g transform="' + tr + '"><g class="' + (go ? 'il-walk' : 'il-stay') + '"' + sty + '>' + El(4, 0, 66, 6, 'night-900', ' opacity=".45" filter="url(#ui-fb)"') +
+    return '<g transform="' + tr + '"><g class="' + (go ? 'il-walk' : 'il-stay') + '"' + sty + '>' + sh(4, 0, 82, 9.5) +
       '<g class="il-bob">' + leg(-34, 'il-lg2', 1) + leg(34, 'il-lg1', 1) + El(-52, -70, 9, 7, 'snow') +
       Pa('M30 -84C36 -104 44 -116 56 -126L72 -114C64 -102 56 -88 52 -70Z', 'url(#ui-frd)') +
       Pa('M-50 -62C-52 -86-30 -94 0 -92C26 -94 52 -86 54 -64C56 -46 42 -40 0 -40C-36 -40-50 -44-50 -62Z', 'url(#ui-frd)') +
@@ -3078,7 +3621,6 @@ window.NP = window.NP || {};
       '</g></g></g>';
   }
   // drone swarm: hovering, a red light blinking; some carry a parcel
-  // drone swarm: hovering, a red light blinking; some carry a parcel
   function drone(x, y, s, d, gift) {
     var rot = function (cx) { return Rc(cx - 1.5, -11, 3, 7, 0, 'board-dark') + El(cx, -11, 14, 2.6, 'snow', ' class="il-rot" opacity=".4"'); };
     return '<g transform="translate(' + x.toFixed(1) + ' ' + y + ') scale(' + s + ')"><g class="il-hov"' + st('--d:-' + d + 's') + '>' +
@@ -3089,6 +3631,8 @@ window.NP = window.NP || {};
   NP.interlude = {
     play: function (el, data, opts) {
       var D = data || {}, m = D.memo || {}, f = D.floor || {}, iss = D.issues || [];
+      var cw = el.clientWidth || window.innerWidth, port = cw < 640 || cw < (el.clientHeight || window.innerHeight) * 0.8;
+      fx('ensure');
       var reduced = !!(opts && opts.reduced) || document.documentElement.classList.contains('reduced');
       var nr = iss.filter(function (x) { return x.kind === 'return'; }).length;
       var here = f.present == null ? f.benches : f.present;
@@ -3109,8 +3653,8 @@ window.NP = window.NP || {};
       ];
       var NB = 4;
       el.innerHTML = '<div class="il' + (reduced ? ' il-reduced' : '') + '">' +
-        '<div class="il-stage">' + memo(m) + screen(Object.assign({}, D, { _part: 'il-only-mon' })) +
-        screen(Object.assign({}, D, { _part: 'il-only-board' })) + floor(f, (el.clientWidth || window.innerWidth) < 640, reduced) + '</div>' +
+        '<div class="il-stage">' + memo(m) + screen(Object.assign({}, D, { _part: 'il-only-mon', _n: port })) +
+        screen(Object.assign({}, D, { _part: 'il-only-board', _n: port })) + floor(f, cw < 640, reduced) + '</div>' +
         '<div class="il-foot"><p class="il-cap" aria-hidden="true"></p><p class="sr-only il-sr" aria-live="polite"></p>' +
         '<div class="il-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' +
         '<button type="button" class="keycap keycap-pack il-next">Continue</button>' +
@@ -3202,6 +3746,11 @@ window.NP = window.NP || {};
   function lit(d, fl, o, k) { k = k || 2; return Pa(d, V('lamp'), { transform: 'translate(' + -k + ' ' + f(-k * 0.8) + ')', opacity: 0.8 }) + Pa(d, fl, o); }
   function ao(x, y, rx, ry, op) { return E(x, y, rx, ry, u('ao'), { opacity: op || 0.35 }); }
   function glow(x, y, rx, ry, op, cool) { return E(x, y, rx, ry, cool ? u('glowc') : u('glow'), { opacity: op }); }
+  // the shared light and texture layer (fx.js); without it the scenes still draw, just flatter
+  var FX = NP.fx || {}, nil = function () { return ''; }, pool = FX.pool || nil, cone = FX.cone || nil, tex = FX.tex || nil, txp = FX.texPath || nil,
+    cast = FX.cast || nil, shd = FX.shade || nil, fall = FX.fall || nil, motes = FX.motes || nil, bulb = FX.bulb || nil;
+  // a pool without the blend: for the big ambient glows over night sky and dark walls, where it looks the same and paints faster
+  function halo(cx, cy, rx, ry, op, kind, o) { return pool(cx, cy, rx, ry, op, kind, mg({ 'class': null }, o)); }
   var seed = 3;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
   function q(r, s) { return r.querySelector(s); }
@@ -3214,11 +3763,11 @@ window.NP = window.NP || {};
   function lg(id, a, b, o) { return T('linearGradient', mg({ id: 'in-' + id, x1: 0.1, y1: 0, x2: 0.9, y2: 1 }, o), T('stop', { offset: 0, 'stop-color': a }) + T('stop', { offset: 1, 'stop-color': b })); }
   function rg(id, c, a) { return T('radialGradient', { id: 'in-' + id }, T('stop', { offset: 0, 'stop-color': c, 'stop-opacity': a }) + T('stop', { offset: 1, 'stop-color': c, 'stop-opacity': 0 })); }
   var DEFS =
-    lg('suit', M('board', 'snow', 84), V('board-dark')) +
-    lg('head', M('board', 'snow', 70), M('board', 'board-dark', 62)) +
+    lg('suit', M('board', 'snow', 80), M('board-dark', 'night-900', 82)) +
+    lg('head', M('board', 'snow', 62), M('board-dark', 'board', 70)) +
     lg('night', V('night-900'), V('night-600'), VERT) +
-    lg('room', M('night-600', 'board-dark', 58), M('night-900', 'board-dark', 72), VERT) +
-    lg('carpet', M('board-dark', 'night-900', 62), V('night-900'), VERT) +
+    lg('room', M('night-600', 'night-900', 62), M('night-900', 'board-dark', 80), VERT) +
+    lg('carpet', M('pole-red-dark', 'night-900', 36), M('night-900', 'pole-red-dark', 88), VERT) +
     lg('tbl', M('wood-dark', 'lamp', 74), M('wood-dark', 'night-900', 52)) +
     lg('tblf', M('wood-dark', 'night-900', 62), V('night-900'), VERT) +
     lg('glass', M('night-600', 'board', 70), M('night-900', 'night-600', 55)) +
@@ -3234,9 +3783,11 @@ window.NP = window.NP || {};
     lg('pine', M('pole-green-dark', 'night-600', 60), M('night-900', 'pole-green-dark', 75)) +
     lg('boot', M('ink', 'board-dark', 55), V('ink')) +
     lg('bp', M('good', 'night-600', 42), M('night-600', 'night-900', 62)) +
-    rg('gg', V('pole-green'), 0.75) + rg('fl', V('lamp'), 1);
+    rg('gg', V('pole-green'), 0.75) + rg('fl', V('lamp'), 1) +
+    T('clipPath', { id: 'in-ctl' }, Pa('M140 598H1460L1520 668H80Z')) + T('clipPath', { id: 'in-ctp' }, Pa('M330 620H570L880 1400H20Z'));
   function ensureDefs(root) {
     if (NP.scene && NP.scene.fcArt) NP.scene.fcArt();   // makes sure the shared sc-* defs exist
+    if (FX.ensure) FX.ensure();
     if (NP.icons && NP.icons.sprite && !document.getElementById('g-giftbox')) {
       var s = document.createElement('div'); s.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; s.innerHTML = NP.icons.sprite; root.appendChild(s);
     }
@@ -3264,13 +3815,14 @@ window.NP = window.NP || {};
     var lo = o.tall ? 420 : 0, cx = o.cx || 0, ck = o.ck || 1;
     var body = 'M-62 ' + lo + 'V-116C-62-146-44-160 0-160C44-160 62-146 62-116V' + lo + 'Z';
     var b = lit(body, 'url(#in-suit)', null, 2.6) +
-      Pa('M26-157C48-153 62-142 62-116V' + lo + 'H36C42-50 40-118 26-157Z', V('night-900'), O(0.22)) +
+      Pa('M26-157C48-153 62-142 62-116V' + lo + 'H36C42-50 40-118 26-157Z', V('night-900'), O(0.3)) +
+      Pa('M-62-116C-62-144-46-158-16-160C-40-150-50-136-50-112V' + lo + 'H-62Z', V('lamp'), O(0.14)) + Pa('M56-136C60-130 62-124 62-116V' + lo + 'H58Z', V('snow-shade'), O(0.3)) +
       Pa('M-20-158L0-100L20-158Z', u('paper')) + Pa('M-6-153H6L9-114L0-101L-9-114Z', M('night-600', 'pole-red-dark', 70)) +
       Pa('M-34-154L-3-97L-20-160Z', M('board', 'snow', 70)) + Pa('M34-154L3-97L20-160Z', M('board-dark', 'night-900', 75)) +
       E(0, -157, 30, 6, V('night-900'), O(0.28));
     var h = lit(el(0, -198, 34, 40), 'url(#in-head)', null, 2.4) +
       E(-12, -216, 11, 6.5, V('snow'), { opacity: 0.32, transform: 'rotate(-32 -12 -216)' }) +
-      E(4, -168, 22, 5, V('snow-shade'), O(0.14));
+      Pa('M18-232C38-218 40-180 18-164C30-180 31-216 18-232Z', V('snow-shade'), O(0.42)) + E(4, -168, 22, 5, V('snow-shade'), O(0.14));
     var back = at(x, y, s, G({ 'class': 'in-mb' }, b + G({ 'class': 'in-mh', 'data-dir': o.dir || 1 }, h)));
     var hand = function (hx, hy, rx, ry) { return E(hx, hy, rx, ry, 'url(#in-head)') + E(hx - rx * 0.3, hy - ry * 0.35, rx * 0.4, ry * 0.25, V('snow'), O(0.25)); };
     var sleeve = 'M-60-128C-66-98-48-76-22-80L-18-98C-34-100-42-112-42-130Z';
@@ -3357,25 +3909,33 @@ window.NP = window.NP || {};
     });
   }
   function stars(W, y0, y1, n) { var s = ''; for (var i = 0; i < n; i++) s += C(rnd() * W, y0 + rnd() * (y1 - y0), 0.8 + rnd() * 2, V('snow'), { opacity: f(0.25 + rnd() * 0.6) }); return s; }
-  function pendant(x, y, op) {
-    return glow(x, y + 60, 300, 230, op || 0.32) + R(x - 1.5, -10, 3, y + 10, 0, V('board-dark')) +
-      lit('M' + (x - 46) + ' ' + (y + 30) + 'C' + (x - 40) + ' ' + y + ' ' + (x + 40) + ' ' + y + ' ' + (x + 46) + ' ' + (y + 30) + 'Z', u('gold'), null, 1.4) +
-      E(x, y + 30, 40, 7, V('lamp')) + glow(x, y + 34, 70, 30, 0.8);
+  // pendant lamp: its beam (h tall, w wide at the foot), the halo on the wall behind, the brass shade and the hot bulb
+  function pendant(x, y, op, h, w, sk, g) {
+    return (h ? cone(x, y + 30, 84, w, h, op || 0.4, { skew: sk }) : '') + halo(x, y + 50, 250, 190, 0.4) + R(x - 1.5, -10, 3, y + 10, 0, V('board-dark')) +
+      lit('M' + (x - 46) + ' ' + (y + 30) + 'C' + (x - 40) + ' ' + y + ' ' + (x + 40) + ' ' + y + ' ' + (x + 46) + ' ' + (y + 30) + 'Z', u(g ? 'green' : 'gold'), null, 1.4) +
+      Pa('M' + (x + 12) + ' ' + (y + 8) + 'C' + (x + 34) + ' ' + (y + 12) + ' ' + (x + 44) + ' ' + (y + 20) + ' ' + (x + 46) + ' ' + (y + 30) + 'H' + (x + 22) + 'Z', V('night-900'), O(0.25)) +
+      E(x, y + 30, 40, 7, V('lamp')) + bulb(x, y + 32, 10, 0.8);
   }
   function cityWin(x, y, w, h) {
-    var s = Pa(rr(x, y, w, h, 6), M('board-dark', 'night-900', 60)) + R(x + 8, y + 8, w - 16, h - 16, 3, 'url(#in-night)');
-    seed = 41;
-    for (var i = 0; i < 4; i++) {
+    var fr = M('board-dark', 'night-900', 60), s = lit(rr(x, y, w, h, 6), fr, null, 1.6) + R(x + 8, y + 8, w - 16, h - 16, 3, 'url(#in-night)'), i;
+    seed = 41 + x;
+    // far skyline in haze, then the near blocks
+    for (i = 0; i < 3; i++) s += R(x + 8 + (w - 16) * i / 3, y + h * (0.42 + rnd() * 0.2), (w - 16) / 3, h * 0.6, 0, M('night-600', 'snow-shade', 90), O(0.55));
+    s += R(x + 8, y + h * 0.4, w - 16, h * 0.6 - 8, 0, u('haze'), O(0.6));
+    for (i = 0; i < 4; i++) {
       var bw = w * (0.18 + rnd() * 0.2), bx = x + 8 + rnd() * (w - 16 - bw), bh = h * (0.25 + rnd() * 0.35);
       s += R(bx, y + h - 8 - bh, bw, bh, 0, 'url(#in-glassd)');
       for (var j = 0; j < 5; j++) s += R(bx + 6 + rnd() * (bw - 16), y + h - 8 - bh + 10 + rnd() * (bh - 26), 6, 9, 1, V('lamp'), O(0.55));
     }
-    return s + R(x + 8, y + 8, w - 16, h - 16, 3, V('night-600'), O(0.25)) + Pa('M' + (x + 20) + ' ' + (y + 8) + 'h' + w * 0.3 + 'L' + (x + 8) + ' ' + (y + h * 0.6) + 'V' + (y + 30) + 'Z', V('snow'), O(0.06));
+    return s + R(x + 8, y + 8, w - 16, h - 16, 3, V('night-600'), O(0.16)) + Pa('M' + (x + 20) + ' ' + (y + 8) + 'h' + w * 0.3 + 'L' + (x + 8) + ' ' + (y + h * 0.6) + 'V' + (y + 30) + 'Z', V('snow'), O(0.07)) +
+      R(x + 8, y + h * 0.34, w - 16, 7, 0, fr) + R(x + 8, y + h * 0.34 + 7, w - 16, 3, 0, V('night-900'), O(0.3)) + halo(x + w / 2, y + h * 0.82, w * 0.7, h * 0.3, 0.2, 'cool') +
+      R(x - 8, y + h - 5, w + 16, 12, 3, M('board', 'night-900', 55)) + R(x - 8, y + h - 5, w + 16, 2.5, 1, V('snow-shade'), O(0.4));
   }
   function slide(x, y, w, h) {
     var cx = x + w * 0.66, by = y + h * 0.8;
-    return ao(x + w / 2, y + h + 10, w * 0.5, 10, 0.35) + lit(rr(x, y, w, h, 10), M('board-dark', 'night-900', 60), null, 1.6) +
-      Pa(rr(x + 12, y + 12, w - 24, h - 24, 5), 'url(#in-lbox)') + R(x + 12, y + 12, w - 24, h - 24, 5, V('night-600'), O(0.22)) + glow(x + w / 2, y + h / 2, w * 0.6, h * 0.6, 0.18, 1) +
+    return halo(x + w / 2, y + h / 2, w * 0.86, h * 1.05, 0.5, 'cool') + ao(x + w / 2, y + h + 10, w * 0.5, 10, 0.35) + lit(rr(x, y, w, h, 10), M('board-dark', 'night-900', 60), null, 1.6) +
+      Pa(rr(x + 12, y + 12, w - 24, h - 24, 5), 'url(#in-lbox)') + R(x + 12, y + 12, w - 24, h - 24, 5, V('night-600'), O(0.08)) + glow(x + w * 0.45, y + h * 0.42, w * 0.5, h * 0.55, 0.5, 1) +
+      R(x + 12, y + 12, w - 24, h - 24, 5, u('shadel'), O(0.3)) +
       Tx(x + w * 0.07, y + h * 0.72, h * 0.5, 'AI', { fill: V('night-600'), style: 'font-weight:900;letter-spacing:-.02em' }) +
       Ln('M' + f(x + w * 0.42) + ' ' + f(by) + 'C' + f(cx) + ' ' + f(by + 4) + ' ' + f(x + w * 0.8) + ' ' + f(by - 10) + ' ' + f(x + w * 0.88) + ' ' + f(y + h * 0.3), V('gold-dark'), h * 0.035) +
       // drawn rocket riding the curve
@@ -3389,35 +3949,49 @@ window.NP = window.NP || {};
   var NAMES = ['CHAIR', 'MEMBER 2', 'MEMBER 3', 'MEMBER 4', 'MEMBER 5'];
   function boardroom(c, o) {
     o = o || {};
-    var s = '', P = c.P, m;
+    var s = '', P = c.P, m, i, W0 = P ? 0 : -300, W1 = P ? 900 : 2200, wall = P ? 680 : 720;
+    // back wall: painted plaster in tall panels, deep in the corners
+    s += R(W0, 0, W1, wall, 0, 'url(#in-room)') + tex('mottle', W0, 0, W1, wall, 0.6);
+    for (i = W0 + 24; i < W0 + W1; i += 236) s += R(i, 0, 5, wall - 160, 0, V('night-900'), O(0.22)) + R(i + 5, 0, 2, wall - 160, 0, V('snow-shade'), O(0.07));
+    s += R(W0, wall - 160, W1, 8, 0, V('night-900'), O(0.3)) + R(W0, wall - 152, W1, 2, 0, V('snow-shade'), O(0.08)) + R(W0, wall - 150, W1, 150, 0, V('night-900'), O(0.2));
     if (!P) {
-      s += R(-300, 0, 2200, 720, 0, 'url(#in-room)') + glow(240, 60, 700, 420, 0.22) + cityWin(960, 90, 196, 470) + cityWin(1172, 90, 196, 470) + cityWin(1384, 90, 196, 470);
-      s += R(-300, 560, 2200, 8, 0, V('night-900'), O(0.2)) + R(-300, 690, 2200, 14, 0, M('board-dark', 'night-900', 70));
+      s += cityWin(960, 90, 196, 470) + cityWin(1172, 90, 196, 470) + cityWin(1384, 90, 196, 470) + halo(1270, 320, 560, 460, 0.16, 'cool');
+      s += R(-300, 690, 2200, 14, 0, M('board-dark', 'night-900', 70));
       if (!o.noSlide) s += slide(330, 96, 570, 330);
-      s += pendant(1250, 150);
-      s += R(-300, 0, 2200, 720, 0, V('night-600'), O(0.1));
-      s += R(-300, 700, 2200, 600, 0, 'url(#in-carpet)') + R(-300, 700, 2200, 3, 0, V('lamp'), O(0.12));
+      s += cast(152, 352, 130, 120, 0.45) + lit(rr(54, 232, 172, 204, 6), M('gold-dark', 'night-900', 72), null, 1.6) + R(66, 244, 148, 180, 3, M('board-dark', 'night-900', 40)) +
+        E(140, 316, 29, 34, M('board', 'night-900', 42)) + Pa('M86 424C86 372 108 356 140 356S194 372 194 424Z', M('board', 'night-900', 32)) + R(66, 244, 148, 180, 3, u('shadel'), O(0.45));
+      s += pendant(170, 150, 0.32, 440, 520, 40) + pendant(1250, 150, 0.34, 440, 520, -20);
+      // carpet, with moonlight from the windows laid across it
+      s += R(-300, 700, 2200, 900, 0, 'url(#in-carpet)') + tex('grain', -300, 700, 2200, 900, 0.55, { scale: 1.5 }) + R(-300, 700, 2200, 3, 0, V('lamp'), O(0.12));
+      [1058, 1270, 1482].forEach(function (x) { s += cone(x, 706, 150, 250, 250, 0.3, { skew: -190, cool: true }); });
+      s += shd(-400, -260, 2400, 1700, 0.85, { 'class': null });
       m = members([[300, 614, 1, NAMES[0]], [470, 614, 1, NAMES[1]], [640, 614, 1, NAMES[2]], [810, 614, 1, NAMES[3]], [980, 614, 1, NAMES[4]]].map(function (a) { a.push({ dir: 1 }); return a; }));
       s += m.b;
       s += o.fc ? fc(1250, 622, 1.38, { chair: true }) : at(1250, 622, 1.38, G({ transform: 'translate(-262 -201)' }, lit(rr(206, 112, 112, 100, 26), u('metald'), null, 1.4)));
-      s += ao(800, 744, 800, 30, 0.7);
+      s += ao(800, 744, 800, 30, 0.8);
       [150, 1420].forEach(function (lx) { s += R(lx, 720, 34, 100, 6, 'url(#in-tblf)') + ao(lx + 17, 822, 40, 6, 0.6); });
-      s += Pa('M140 598H1460L1520 668H80Z', 'url(#in-tbl)') + E(420, 626, 170, 12, V('lamp'), O(0.16)) + E(800, 626, 170, 12, V('lamp'), O(0.16)) + E(1180, 626, 170, 12, V('lamp'), O(0.16)) +
-        R(80, 668, 1440, 62, 0, 'url(#in-tblf)') + R(80, 667, 1440, 3, 0, V('lamp'), O(0.4)) + Pa('M140 598H1460L1462 601H138Z', V('lamp'), O(0.3));
+      // the table: polished wood that takes the lamps, the slide and the windows
+      s += Pa('M140 598H1460L1520 668H80Z', 'url(#in-tbl)') + tex('wood', 80, 598, 1440, 70, 0.7, { scale: 1.7, clip: 'in-ctl' }) +
+        (o.noSlide ? '' : Pa('M338 598H892L912 668H322Z', V('snow'), O(0.06))) + Pa('M966 598H1150L1130 668H930ZM1178 598H1362L1352 668H1152Z', V('snow-shade'), O(0.06)) +
+        pool(240, 632, 330, 40, 0.75) + pool(1240, 632, 330, 40, 0.75) + pool(740, 634, 420, 30, 0.22);
+      [300, 470, 640, 810, 980].forEach(function (x) { s += cast(x + 16, 616, 84, 13, 0.55); });
+      s += R(80, 668, 1440, 62, 0, 'url(#in-tblf)') + tex('wood', 80, 668, 1440, 62, 0.5, { scale: 1.7 }) + R(80, 667, 1440, 3, 0, V('lamp'), O(0.45)) + Pa('M140 598H1460L1462 601H138Z', V('lamp'), O(0.3));
       s += m.f;
     } else {
-      s += R(0, 0, 900, 680, 0, 'url(#in-room)') + cityWin(30, 110, 150, 470) + cityWin(720, 110, 150, 470);
+      s += cityWin(30, 110, 150, 470) + cityWin(720, 110, 150, 470) + halo(105, 330, 250, 380, 0.22, 'cool') + halo(795, 330, 250, 380, 0.22, 'cool');
       if (!o.noSlide) s += slide(205, 70, 490, 300);
-      s += pendant(260, 440, 0.3) + pendant(640, 440, 0.3);
-      s += R(0, 0, 900, 680, 0, V('night-600'), O(0.1)) + R(0, 660, 900, 1140, 0, 'url(#in-carpet)');
+      s += R(0, 660, 900, 1400, 0, 'url(#in-carpet)') + tex('grain', 0, 660, 900, 1400, 0.55, { scale: 1.5 }) + shd(-80, -160, 1060, 2200, 0.85, { 'class': null });
+      s += pendant(260, 440, 0.34, 330, 420, 60) + pendant(640, 440, 0.34, 330, 420, -60);
       s += o.fc ? fc(450, 642, 1.25, { chair: true }) : at(450, 642, 1.25, G({ transform: 'translate(-262 -201)' }, lit(rr(206, 112, 112, 100, 26), u('metald'), null, 1.4)));
-      s += ao(450, 1420, 470, 40, 0.6) + Pa('M330 620H570L880 1400H20Z', 'url(#in-tbl)') + Pa('M330 620H570L572 624H328Z', V('lamp'), O(0.4)) +
-        E(450, 760, 60, 90, V('lamp'), O(0.1)) + E(450, 1100, 120, 170, V('lamp'), O(0.08)) +
-        R(20, 1400, 860, 70, 0, 'url(#in-tblf)') + R(20, 1399, 860, 3, 0, V('lamp'), O(0.4));
+      s += ao(450, 1420, 470, 40, 0.7) + Pa('M330 620H570L880 1400H20Z', 'url(#in-tbl)') + tex('wood', 20, 620, 860, 780, 0.7, { vertical: true, scale: 2.2, clip: 'in-ctp' }) +
+        Pa('M330 620H570L572 624H328Z', V('lamp'), O(0.4)) + (o.noSlide ? '' : Pa('M350 624H550L590 760H310Z', V('snow'), O(0.05))) +
+        pool(450, 830, 300, 190, 0.6) + pool(450, 1180, 420, 230, 0.3) +
+        R(20, 1400, 860, 70, 0, 'url(#in-tblf)') + tex('wood', 20, 1400, 860, 70, 0.5, { scale: 1.7 }) + R(20, 1399, 860, 3, 0, V('lamp'), O(0.4));
       // shot from the end of the table: far to near, alternating sides; the chair sits nearest
       var D = [[0.1, -1, 4], [0.28, 1, 3], [0.46, -1, 2], [0.62, 1, 1], [0.8, -1, 0]];
       var list = D.map(function (d) {
         var y = 620 + 780 * d[0], sc = 0.55 + 0.7 * d[0], ex = d[1] < 0 ? 330 - 310 * d[0] - 18 * sc : 570 + 310 * d[0] + 18 * sc;
+        s += cast(ex - d[1] * 50 * sc, y + 18, 96 * sc, 16 * sc, 0.5);
         return [ex, y + 10, f(sc), NAMES[d[2]], { dir: -d[1], cx: d[1] < 0 ? 96 : -96, ck: 1.35 }];
       });
       m = members(list);
@@ -3438,44 +4012,67 @@ window.NP = window.NP || {};
   /* =====================================================================
      SCENES (landscape viewBox 1600x1000, portrait 900x1800; captions sit over the bottom ~18%)
      ===================================================================== */
+  function rot(a, x, y) { return { transform: 'rotate(' + a + ' ' + f(x) + ' ' + f(y) + ')' }; }
+  // the aurora: two soft green ribbons low in the sky
+  function aurora(W, y) { return halo(W * 0.3, y, W * 0.56, 150, 0.5, 'green', rot(-9, W * 0.3, y)) + halo(W * 0.74, y - 110, W * 0.44, 110, 0.4, 'green', rot(7, W * 0.74, y - 110)); }
+  function pine(x, y, h) {
+    var w = h * 0.42, s = cast(x + w * 0.7, y + 4, w * 1.3, 14, 0.5) + ao(x, y, w * 0.8, 10, 0.5) + R(x - 8, y - 30, 16, 32, 3, V('wood-dark'));
+    for (var i = 0; i < 3; i++) { var ty = y - 20 - i * h * 0.28, tw = w * (1 - i * 0.24); s += lit('M' + (x - tw) + ' ' + ty + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw) + ' ' + ty + 'Z', 'url(#in-pine)', null, 2.4) + Pa('M' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw) + ' ' + ty + 'H' + (x + tw * 0.2) + 'Z', V('night-900'), O(0.34)) + Pa('M' + (x - tw * 0.5) + ' ' + (ty - h * 0.2) + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw * 0.16) + ' ' + (ty - h * 0.26) + 'L' + (x - tw * 0.1) + ' ' + (ty - h * 0.18) + 'Z', V('snow'), O(0.7)) + E(x - tw * 0.5, ty - 3, tw * 0.3, 5, V('snow'), O(0.5)); }
+    return s;
+  }
+
   // 1. Cold open: snowy night, the camera drops to the glass office block
   function s1(c) {
     var P = c.P, W = c.W, bx = P ? 450 : 800, bw = P ? 400 : 440, top = P ? 640 : 400, gy = P ? 1380 : 915, D = P ? 900 : 700;
     seed = 7;
+    var mx = P ? 170 : 1215, mY = P ? 330 : 200;
+    // sky: stars, a low aurora behind the ridge, the moon
     var l0 = R(-200, -1300, W + 400, 1300 + c.H, 0, 'url(#in-night)') + stars(W, -1250, top + 80, P ? 70 : 90) +
-      glow(W * 0.78, -540, 220, 220, 0.3, 1) + C(W * 0.78, -540, 44, V('snow')) + C(W * 0.78 + 14, -548, 38, M('snow', 'snow-shade', 30));
+      aurora(W, top - 40) +
+      halo(W * 0.5, top + 150, W * 0.8, 260, 0.3, 'cool') +
+      halo(mx, mY, 230, 230, 0.5, 'cool') + C(mx, mY, 44, V('snow')) + C(mx + 13, mY - 8, 39, M('night-600', 'night-900', 42));
     var my = gy - (P ? 330 : 300);
     var l1 = Pa('M-100 ' + (my + 150) + 'L' + W * 0.08 + ' ' + (my - 10) + 'L' + W * 0.17 + ' ' + (my + 80) + 'L' + W * 0.27 + ' ' + (my - 50) + 'L' + W * 0.38 + ' ' + (my + 90) + 'L' + W * 0.48 + ' ' + my + 'L' + W * 0.57 + ' ' + (my + 80) + 'L' + W * 0.68 + ' ' + (my - 40) + 'L' + W * 0.79 + ' ' + (my + 70) + 'L' + W * 0.89 + ' ' + (my - 20) + 'L' + (W + 100) + ' ' + (my + 110) + 'V' + (c.H + 200) + 'H-100Z', 'url(#in-ice)') +
-      R(-100, my - 60, W + 200, c.H, 0, V('night-600'), O(0.4));
+      Pa('M' + W * 0.27 + ' ' + (my - 50) + 'L' + W * 0.31 + ' ' + (my + 2) + 'L' + W * 0.255 + ' ' + (my - 8) + 'L' + W * 0.23 + ' ' + (my + 2) + 'ZM' + W * 0.68 + ' ' + (my - 40) + 'L' + W * 0.725 + ' ' + (my + 6) + 'L' + W * 0.675 + ' ' + (my - 4) + 'L' + W * 0.65 + ' ' + (my - 8) + 'Z', V('snow'), O(0.5)) +
+      R(-100, my - 60, W + 200, c.H, 0, V('night-600'), O(0.4)) + R(-100, my + 30, W + 200, 300, 0, u('haze'));
     var l2 = '';
     (P ? [[10, 180, 360], [120, 120, 250], [700, 130, 300], [800, 140, 420]] : [[60, 170, 300], [210, 130, 220], [330, 150, 380], [1150, 140, 340], [1290, 160, 250], [1440, 150, 400]]).forEach(function (b) {
       var y = gy - b[2];
       l2 += R(b[0], y, b[1], b[2] + 80, 0, 'url(#in-glassd)') + R(b[0], y - 6, b[1], 8, 3, V('snow-shade'), O(0.7));
-      for (var i = 0; i < 6; i++) l2 += R(b[0] + 12 + rnd() * (b[1] - 34), y + 20 + rnd() * (b[2] - 40), 12, 16, 2, V('lamp'), O(0.6));
+      l2 += R(b[0], y, 7, b[2], 0, V('snow-shade'), O(0.14)) + R(b[0] + b[1] * 0.7, y, b[1] * 0.3, b[2], 0, V('night-900'), O(0.3));
+      for (var i = 0; i < 7; i++) l2 += R(b[0] + 12 + rnd() * (b[1] - 34), y + 20 + rnd() * (b[2] - 40), 12, 16, 2, V(i % 3 ? 'lamp' : 'lamp-deep'), O(f(0.35 + rnd() * 0.4)));
     });
-    l2 += R(-100, gy - 460, W + 200, 600, 0, V('night-600'), O(0.28));
+    var tx = P ? 826 : 1515, ty = gy - (P ? 420 : 400);
+    l2 += R(tx - 2, ty - 50, 4, 50, 0, V('board-dark')) + G({ 'class': 'fx-breathe' }, halo(tx, ty - 52, 46, 46, 0.9, 'red') + C(tx, ty - 52, 4.5, V('bad')));
+    l2 += R(-100, gy - 460, W + 200, 600, 0, V('night-600'), O(0.24)) + R(-100, gy - 260, W + 200, 300, 0, u('haze')) + halo(bx, gy - 60, W * 0.6, 230, 0.2);
     var x0 = bx - bw / 2, win = '', cols = P ? 5 : 6, cw = (bw - 40) / cols;
     for (var r = 0; top + 50 + r * 64 < gy - 70; r++) for (var k = 0; k < cols; k++) {
-      var on = rnd() > 0.28;
-      win += R(x0 + 24 + k * cw, top + 44 + r * 64, cw - 16, 40, 3, on ? 'url(#in-win)' : V('night-600'), { opacity: on ? 0.95 : 0.7 });
+      var v = rnd(), on = v > 0.28, wx = x0 + 24 + k * cw, wy = top + 44 + r * 64;
+      win += R(wx, wy, cw - 16, 40, 3, on ? (v > 0.5 ? 'url(#in-win)' : M('lamp-deep', 'night-900', 76)) : V('night-600'), { opacity: on ? 0.98 : 0.7 }) +
+        (on ? '' : Pa('M' + f(wx) + ' ' + wy + 'h' + f(cw * 0.4) + 'l' + f(-cw * 0.3) + ' 40H' + f(wx) + 'Z', V('snow-shade'), O(0.12)));
+      if (!k) win += R(x0, wy + 46, bw, 5, 2, V('snow'), O(0.4)) + R(x0, wy + 51, bw, 4, 0, V('night-900'), O(0.2));
     }
     var sw = P ? 600 : 560, fs = P ? 58 : 60;
-    var l3 = glow(bx, top - 60, sw * 0.8, 200, 0.4) +
+    var l3 = halo(bx, top - 110, sw * 0.8, 230, 0.75) +
       Pa('M' + (x0 + bw) + ' ' + top + 'L' + (x0 + bw + 50) + ' ' + (top + 24) + 'V' + (gy + 40) + 'H' + (x0 + bw) + 'Z', 'url(#in-glassd)') +
       lit(rr(x0, top, bw, gy - top + 60, 6), 'url(#in-glass)', null, 2.4) + win +
       Pa('M' + (x0 + 30) + ' ' + top + 'h' + bw * 0.35 + 'L' + x0 + ' ' + (top + bw * 0.9) + 'V' + (top + 40) + 'Z', V('snow'), O(0.06)) +
-      R(bx - 50, gy - 92, 100, 96, 4, 'url(#in-win)') + R(bx - 2, gy - 92, 4, 96, 0, V('lamp-deep')) + glow(bx, gy - 20, 200, 60, 0.6) +
+      halo(bx, (top + gy) / 2 + 30, bw * 0.8, (gy - top) * 0.62, 0.3) +
+      R(bx - 50, gy - 92, 100, 96, 4, 'url(#in-win)') + R(bx - 2, gy - 92, 4, 96, 0, V('lamp-deep')) + lit(rr(bx - 76, gy - 112, 152, 16, 5), u('metald'), null, 1.4) + R(bx - 78, gy - 118, 156, 9, 4.5, u('fur')) +
+      halo(bx, gy - 40, 150, 90, 0.7) +
       R(x0 - 8, top - 12, bw + 16, 20, 10, u('fur')) +
       R(bx - sw * 0.33, top - 70, 8, 64, 0, V('board-dark')) + R(bx + sw * 0.33 - 8, top - 70, 8, 64, 0, V('board-dark')) +
       lit(rr(bx - sw / 2, top - 168, sw, 104, 14), u('gold'), null, 2) + Pa(rr(bx - sw / 2 + 9, top - 159, sw - 18, 86, 9), 'url(#in-lbox)') +
       Tm(bx, top - 95, fs, 'NORTH POLE LTD', { fill: V('pole-red'), style: 'font-weight:900;letter-spacing:.03em' }) +
-      R(bx - sw / 2 + 14, top - 172, sw - 28, 12, 6, u('fur'));
-    var gnd = ao(bx + 20, gy + 8, bw * 0.7, 18, 0.55) + Pa('M-100 ' + (gy + 10) + 'C' + W * 0.25 + ' ' + (gy - 20) + ' ' + W * 0.6 + ' ' + (gy + 4) + ' ' + (W + 100) + ' ' + (gy - 16) + 'V' + (c.H + 300) + 'H-100Z', u('fur')) + glow(bx, gy + 30, 240, 34, 0.5);
-    var pine = function (x, y, h) {
-      var w = h * 0.42, s = ao(x, y, w * 0.8, 10, 0.5) + R(x - 8, y - 30, 16, 32, 3, V('wood-dark'));
-      for (var i = 0; i < 3; i++) { var ty = y - 20 - i * h * 0.28, tw = w * (1 - i * 0.24); s += lit('M' + (x - tw) + ' ' + ty + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw) + ' ' + ty + 'Z', 'url(#in-pine)', null, 2.4) + Pa('M' + (x - tw * 0.5) + ' ' + (ty - h * 0.2) + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x - tw * 0.1) + ' ' + (ty - h * 0.18) + 'Z', V('snow'), O(0.55)); }
-      return s;
-    };
+      R(bx - sw / 2 + 14, top - 172, sw - 28, 12, 6, u('fur')) + halo(bx, top + 4, bw * 0.6, 50, 0.5);
+    // snow: blue in the night, warm where the doorway and the windows spill onto it
+    var gnd = ao(bx + 20, gy + 8, bw * 0.7, 18, 0.55) + Pa('M-100 ' + (gy + 10) + 'C' + W * 0.25 + ' ' + (gy - 20) + ' ' + W * 0.6 + ' ' + (gy + 4) + ' ' + (W + 100) + ' ' + (gy - 16) + 'V' + (c.H + 300) + 'H-100Z', u('fur')) +
+      R(-100, gy - 20, W + 200, c.H, 0, M('night-600', 'snow-shade', 60), O(0.5)) + R(-100, gy + 10, W + 200, c.H - gy + 200, 0, 'url(#fx-fall)', O(0.5)) +
+      Pa('M' + (bx - 50) + ' ' + (gy + 2) + 'h100L' + (bx + 190) + ' ' + (gy + 90) + 'H' + (bx - 190) + 'Z', V('lamp'), O(0.1)) + halo(bx, gy + 34, bw * 0.95, 64, 0.6) +
+      Pa('M-100 ' + (gy + 76) + 'C' + W * 0.2 + ' ' + (gy + 40) + ' ' + W * 0.45 + ' ' + (gy + 96) + ' ' + W * 0.7 + ' ' + (gy + 60) + 'S' + W + ' ' + (gy + 50) + ' ' + (W + 100) + ' ' + (gy + 70) + 'V' + (gy + 80) + 'H-100Z', V('snow'), O(0.16));
+    var sx = bx - bw / 2 - (P ? 96 : 150);
+    gnd += cone(sx + 30, gy - 196, 26, 230, 236, 0.5) + halo(sx + 30, gy + 40, 150, 26, 0.7) + ao(sx, gy + 38, 26, 5, 0.5) + lit(rr(sx - 5, gy - 214, 10, 254, 4), u('metald'), null, 1.4) +
+      R(sx - 5, gy - 218, 52, 8, 4, u('metald')) + R(sx - 8, gy - 224, 58, 6, 3, u('fur')) + lit(rr(sx + 16, gy - 210, 28, 14, 5), u('gold'), null, 1.2) + bulb(sx + 30, gy - 196, 7, 0.8);
     var l4 = P ? pine(40, gy + 70, 380) + pine(860, gy + 90, 300) : pine(140, gy + 80, 380) + pine(1480, gy + 70, 320) + pine(1350, gy + 90, 220);
     return {
       m: G({ 'class': 'in-cam' }, G({ 'class': 'in-l0' }, l0) + G({ 'class': 'in-l1' }, l1) + G({ 'class': 'in-l2' }, l2) + G({ 'class': 'in-l3' }, l3 + gnd) + G({ 'class': 'in-l4' }, l4)) + (c.red ? '' : snow(W, c.H, P ? 60 : 120)),
@@ -3512,16 +4109,17 @@ window.NP = window.NP || {};
   // 3. The edict: the scroll unrolls down the table, the stamp slams
   function s3(c) {
     var P = c.P, W = c.W, H = c.H, s = '', cx = W / 2, wy = P ? 400 : 360;
-    s += R(-200, 0, W + 400, wy + 20, 0, 'url(#in-room)') + pendant(P ? 450 : 800, 40, 0.3);
+    s += R(-200, 0, W + 400, wy + 20, 0, 'url(#in-room)') + tex('mottle', -200, 0, W + 400, wy + 20, 0.6) + pendant(cx, 40, 0.3, wy - 40, W * 0.8);
     var row = [];
     for (var i = 0; i < 5; i++) row.push([cx + (i - 2) * (P ? 132 : 150), wy + 14, P ? 0.56 : 0.7, null, { noRest: true }]);
     var m = members(row);
-    s += m.b + R(-200, 0, W + 400, wy + 20, 0, V('night-600'), O(0.32));
-    s += Pa('M-200 ' + wy + 'H' + (W + 200) + 'V' + (H + 200) + 'H-200Z', 'url(#in-tbl)') + R(0, wy, W, 6, 0, V('lamp'), O(0.3)) +
-      E(cx, wy + 70, W * 0.4, 40, V('lamp'), O(0.1)) + R(0, wy + 4, W, 30, 0, V('night-900'), O(0.2));
+    s += m.b + R(-200, 0, W + 400, wy + 20, 0, V('night-600'), O(0.2));
+    // the table from above: long grain, one pool of lamplight, dark towards the edges
+    s += Pa('M-200 ' + wy + 'H' + (W + 200) + 'V' + (H + 200) + 'H-200Z', 'url(#in-tbl)') + tex('wood', -200, wy, W + 400, H - wy + 200, 0.8, { scale: 1.7 }) + R(-200, wy, W + 400, 6, 0, V('lamp'), O(0.35)) +
+      R(-200, wy + 4, W + 400, 30, 0, V('night-900'), O(0.2)) + pool(cx, wy + (P ? 420 : 300), W * 0.62, P ? 620 : 440, 0.5) + shd(-300, -300, W + 600, H + 600, 0.9);
     // the scroll
     var pw = P ? 600 : 480, ph = P ? 660 : 480, x0 = cx - pw / 2, y0 = wy + 34, k = P ? 1.2 : 1;
-    var paper = Pa(rr(x0, y0, pw, ph, 4), u('paper')) + R(x0, y0, pw, ph, 0, u('shadel'), O(0.35)) +
+    var paper = Pa(rr(x0, y0, pw, ph, 4), u('paper')) + tex('mottle', x0, y0, pw, ph, 0.18) + R(x0, y0, pw, ph, 0, u('shadel'), O(0.35)) + fall(x0, y0 + ph * 0.4, pw, ph * 0.6, 0.2) +
       Tm(cx, y0 + 108 * k, 78 * k, 'EDICT', { style: 'font-weight:900;letter-spacing:.14em' }) +
       R(cx - 120 * k, y0 + 132 * k, 240 * k, 4, 2, V('pole-red'), O(0.8)) +
       Tm(cx, y0 + 196 * k, 40 * k, 'CHRISTMAS WILL BE', { style: 'font-weight:800;letter-spacing:.04em' }) +
@@ -3534,7 +4132,7 @@ window.NP = window.NP || {};
       C(-90, -10, 5, V('paper')) + C(60, 22, 4, V('paper')) + C(110, -20, 3, V('paper')) + R(-40, 30, 30, 4, 2, V('paper')))));
     var clip = 'in-cl' + c.i;
     s += T('clipPath', { id: clip }, R(x0 - 60, y0 - 4, pw + 120, ph + 60, 0, V('ink')));
-    s += ao(cx, y0 + ph + 12, pw * 0.6, 14, 0.4);
+    s += ao(cx, y0 + ph + 12, pw * 0.6, 14, 0.4) + cast(cx + 14, y0 + ph * 0.55, pw * 0.66, ph * 0.62, 0.5);
     s += G({ 'clip-path': 'url(#' + clip + ')' }, G({ 'class': 'in-unroll' }, ao(cx + 10, y0 + 30, pw * 0.56, 22, 0.25) + paper + mark));
     var roll = function (y) { return ao(cx, y + 26, pw * 0.58, 8, 0.5) + lit(rr(x0 - 26, y - 20, pw + 52, 40, 20), u('paper'), null, 1.6) + R(x0 - 26, y + 4, pw + 52, 14, 7, V('paper-shade'), O(0.8)) + lit(rr(x0 - 46, y - 24, 26, 48, 10), u('gold'), null, 1.2) + lit(rr(x0 + pw + 20, y - 24, 26, 48, 10), u('gold'), null, 1.2); };
     s += G({ 'class': 'in-roll' }, roll(y0 + ph));
@@ -3546,9 +4144,9 @@ window.NP = window.NP || {};
       lit(rr(-26, -230, 52, 140, 16), u('wood'), null, 2) + lit(el(0, -262, 58, 50), u('wood'), null, 2.4) + E(-20, -282, 20, 11, V('lamp'), { opacity: 0.35, transform: 'rotate(-25 -20 -282)' }))));
     // Father Christmas reads it from the end of the table
     var fx = P ? 710 : 1360, fy = P ? 1450 : 935, fsc = P ? 1.55 : 1.7;
-    s += glow(fx, fy - 200, 260, 220, 0.3) + fc(fx, fy, fsc, { cls: 'in-fc3' });
+    s += pool(fx - 30, fy - 210, 300, 260, 0.4) + fc(fx, fy, fsc, { cls: 'in-fc3' });
     var ey = P ? 1410 : 900;
-    s += R(-100, ey, W + 200, 400, 0, 'url(#in-tblf)') + R(-100, ey, W + 200, 4, 0, V('lamp'), O(0.35));
+    s += R(-100, ey, W + 200, 400, 0, 'url(#in-tblf)') + tex('wood', -100, ey, W + 200, 400, 0.5, { scale: 2 }) + R(-100, ey, W + 200, 4, 0, V('lamp'), O(0.35));
     var pcx = P ? 450 : 800, pcy = P ? 760 : 620;
     return {
       m: G({ 'class': 'in-cam' }, G({ 'class': 'in-shake' }, s)),
@@ -3600,16 +4198,33 @@ window.NP = window.NP || {};
     s += G({ transform: 'scale(' + k + ')' }, Ln(d, V('snow'), 2.4, O(0.92)) + Ln('M20 150H200M20 146V154M200 146V154', V('lamp'), 1.6, O(0.8)));
     return s + Tx(10, h - 8, 11 * k, 'DRAWN BY: ELF', { fill: V('snow-shade'), style: 'font-family:var(--font-mono);font-weight:700' });
   }
+  // the workshop wall: upright planks in lamplight, darker towards the corners
+  function shop(W, h) {
+    var s = R(0, 0, W, h, 0, 'url(#in-warm)') + tex('wood', 0, 0, W, h, 0.75, { vertical: true, scale: 1.6 });
+    for (var i = 0; i < W; i += 120) s += R(i, 0, 4, h, 0, V('night-900'), O(0.16)) + R(i + 4, 0, 2, h, 0, V('lamp'), O(0.07));
+    return s + shd(-W * 0.15, -h * 0.2, W * 1.3, h * 1.4, 0.85);
+  }
+  // set dressing, kept soft: a shelf of half-made toys
+  function shelf(x, y, w) {
+    var t = function (n) { return M(n, 'wood-dark', 55); };
+    return G({ opacity: 0.85 }, cast(x + w / 2 + 12, y + 36, w * 0.56, 28, 0.5) +
+      R(x + 22, y - 46, 46, 46, 5, t('pole-red-dark')) + R(x + 22, y - 46, 46, 5, 2, V('lamp'), O(0.25)) + R(x + 40, y - 84, 40, 38, 5, t('gold-dark')) + R(x + 40, y - 84, 40, 5, 2, V('lamp'), O(0.25)) +
+      C(x + w * 0.52, y - 31, 31, t('pole-green-dark')) + E(x + w * 0.52 - 11, y - 44, 11, 7, V('lamp'), O(0.25)) +
+      Pa('M' + (x + w - 84) + ' ' + y + 'l24-96l24 96Z', t('board')) + Pa('M' + (x + w - 60) + ' ' + (y - 96) + 'l24 96h-12Z', V('night-900'), O(0.25)) +
+      R(x, y, w, 14, 3, u('woodd')) + R(x, y, w, 3, 1.5, V('lamp'), O(0.3)) + R(x + 26, y + 14, 10, 30, 0, V('wood-dark')) + R(x + w - 36, y + 14, 10, 30, 0, V('wood-dark')));
+  }
   // the drawing office: the elf designs, Father Christmas carries the work off to the AI
   function sD(c) {
     var P = c.P, W = c.W, H = c.H, s = '', fy = P ? 1400 : 790;
     var bx = P ? 400 : 620, bs = P ? 1.05 : 1.3, ex = P ? 190 : 340, es = P ? 2.3 : 1.95, lx = P ? 690 : 1230, ls = P ? 1.75 : 1.6;
     var lapX = lx + (P ? 76 : 70), lapY = fy - (P ? 190 : 170);
-    s += R(0, 0, W, fy, 0, 'url(#in-warm)');
-    for (var i = 0; i < W; i += 120) s += R(i, 0, 3, fy, 0, V('night-900'), O(0.08));
-    s += R(0, 96, W, 6, 0, V('lamp'), O(0.12)) + glow(bx - 40, fy - 300, P ? 520 : 640, P ? 500 : 420, 0.5);
-    s += R(0, fy - 8, W, H, 0, 'url(#in-tbl)') + R(0, fy - 8, W, H, 0, V('night-900'), O(0.3)) + R(0, fy - 8, W, 3, 0, V('lamp'), O(0.4));
-    s += pendant(bx - 60, P ? 40 : 30, 0.34);
+    var py = P ? 40 : 30;
+    s += shop(W, fy) + (P ? shelf(590, 690, 330) : shelf(1420, 330, 220)) + pool(bx - 40, fy - 300, P ? 520 : 640, P ? 500 : 420, 0.45);
+    // floorboards, lit under the lamp and falling away under the captions
+    s += R(0, fy - 8, W, H, 0, 'url(#in-tbl)') + R(0, fy - 8, W, H, 0, V('night-900'), O(0.3)) + tex('planks', 0, fy - 8, W, H - fy + 8, 0.5, { scale: 1.2 }) + R(0, fy - 8, W, 3, 0, V('lamp'), O(0.4)) +
+      pool(bx - 60, fy + 46, P ? 440 : 620, 70, 0.4) + fall(0, fy + 10, W, H - fy, 0.65);
+    s += pendant(bx - 60, py, 0.4, fy - py - 40, P ? 760 : 900, 30) + motes(bx - 300, py + 120, 520, fy - py - 300, 12, 7, { r: 2.2 });
+    s += cast(bx + 80 * bs, fy - 290 * bs, 250 * bs, 170 * bs, 0.4);
     // the pinned designs, which leave the wall one at a time
     var pins = P ? [[60, 300, -3], [340, 360, 2], [590, 280, -2]] : [[130, 160, -3], [870, 120, 2], [1140, 170, -2]], sw = P ? 250 : 230, sh = sw * 0.72;
     pins.forEach(function (p, n) {
@@ -3674,9 +4289,10 @@ window.NP = window.NP || {};
     var wx = P ? 70 : 150, wy = P ? 150 : 110, ww = P ? 380 : 420, wh = P ? 420 : 460;
     var kx = P ? 530 : 1200, ky = P ? 170 : 130, kw = P ? 280 : 240, kh = P ? 320 : 290;
     var dy = P ? 1190 : 712, fx = P ? 410 : 780, fsc = P ? 2.5 : 2.3;
-    s += R(0, 0, W, H, 0, 'url(#in-warm)');
-    for (var i = 0; i < W; i += 120) s += R(i, 0, 3, dy, 0, V('night-900'), O(0.08));
-    s += glow(fx - 120, dy - 360, P ? 520 : 640, P ? 520 : 460, 0.42);
+    var i;
+    // lamplight from up and to the left, off frame; he throws a shadow on the planks
+    s += shop(W, dy) + cone(fx - 330, -30, 220, P ? 620 : 760, dy + 30, 0.22, { skew: 300 }) + pool(fx - 60, dy - 330, P ? 480 : 600, P ? 520 : 440, 0.42) +
+      motes(fx - 360, 80, 460, dy - 240, 9, 11, { r: 2.2 }) + cast(fx + 70 * fsc, dy - 100 * fsc, 80 * fsc, 100 * fsc, 0.4, 8);
     // window
     var px0 = wx + 20, py0 = wy + 20, pw = ww - 40, ph = wh - 40;
     var roofs = function (col, op) { return Pa('M' + px0 + ' ' + (py0 + ph * 0.72) + 'L' + (px0 + pw * 0.2) + ' ' + (py0 + ph * 0.6) + 'L' + (px0 + pw * 0.4) + ' ' + (py0 + ph * 0.72) + 'V' + (py0 + ph * 0.66) + 'L' + (px0 + pw * 0.62) + ' ' + (py0 + ph * 0.52) + 'L' + (px0 + pw * 0.84) + ' ' + (py0 + ph * 0.66) + 'L' + (px0 + pw) + ' ' + (py0 + ph * 0.6) + 'V' + (py0 + ph) + 'H' + px0 + 'Z', col, { opacity: op }); };
@@ -3685,7 +4301,9 @@ window.NP = window.NP || {};
     seed = 19;
     for (i = 0; i < 14; i++) s += C(px0 + rnd() * pw, py0 + rnd() * ph * 0.5, 1 + rnd() * 1.5, V('snow'), O(0.7));
     s += C(px0 + pw * 0.75, py0 + ph * 0.2, 22, V('snow')) + C(px0 + pw * 0.75 + 8, py0 + ph * 0.2 - 5, 19, M('snow', 'night-600', 25)) + roofs(M('snow-shade', 'night-600', 55), 1);
-    s += G({ 'class': 'in-day', opacity: 0 }, R(px0, py0, pw, ph, 3, 'url(#in-day)') + glow(px0 + pw * 0.3, py0 + ph * 0.25, 120, 120, 0.9) + C(px0 + pw * 0.3, py0 + ph * 0.25, 26, V('lamp')) + roofs(V('snow'), 1));
+    s += pool(px0 + pw / 2, py0 + ph / 2, pw * 0.8, ph * 0.8, 0.3, 'cool');
+    s += G({ 'class': 'in-day', opacity: 0 }, R(px0, py0, pw, ph, 3, 'url(#in-day)') + glow(px0 + pw * 0.3, py0 + ph * 0.25, 120, 120, 0.9) + C(px0 + pw * 0.3, py0 + ph * 0.25, 26, V('lamp')) + roofs(V('snow'), 1) +
+      pool(px0 + pw / 2, py0 + ph / 2, pw * 0.95, ph * 0.95, 0.5));
     s += R(px0 + pw / 2 - 5, py0, 10, ph, 0, V('wood-dark')) + R(px0, py0 + ph / 2 - 5, pw, 10, 0, V('wood-dark')) + Pa('M' + px0 + ' ' + py0 + 'h' + pw * 0.4 + 'L' + px0 + ' ' + (py0 + ph * 0.5) + 'Z', V('snow'), O(0.07));
     s += ao(wx + ww / 2, wy + wh + 30, ww * 0.55, 10, 0.5) + lit(rr(wx - 16, wy + wh - 6, ww + 32, 28, 6), u('wood'), null, 1.6);
     // calendar
@@ -3702,7 +4320,8 @@ window.NP = window.NP || {};
     s += fc(fx, dy, fsc, { cls: 'in-fc4' });
     var lx = P ? 520 : 920, lw = P ? 280 : 240, lh = P ? 190 : 166, ly = dy - lh - 6;
     s += glow(fx + 40, dy - 220 * fsc / 2.3, 220, 190, 0.32, 1).replace('<ellipse', '<ellipse class="in-sglow"');
-    s += R(0, dy, W, 28, 0, u('desktop')) + R(0, dy, W, 3, 0, V('lamp'), O(0.4)) + R(0, dy + 28, W, H, 0, u('woodd')) + R(0, dy + 28, W, 18, 0, V('night-900'), O(0.3));
+    s += R(0, dy, W, 28, 0, u('desktop')) + tex('wood', 0, dy, W, 28, 0.7) + R(0, dy, W, 3, 0, V('lamp'), O(0.4)) + pool(fx - 60, dy + 14, P ? 400 : 560, 18, 0.5) +
+      R(0, dy + 28, W, H, 0, u('woodd')) + tex('wood', 0, dy + 28, W, H - dy, 0.8, { scale: 1.6 }) + R(0, dy + 28, W, 18, 0, V('night-900'), O(0.3)) + fall(0, dy + 28, W, H - dy - 28, 0.6);
     s += ao(lx + lw / 2, dy + 14, lw * 0.62, 8, 0.6) + Pa('M' + (lx - 14) + ' ' + (dy - 6) + 'H' + (lx + lw + 14) + 'L' + (lx + lw + 22) + ' ' + (dy + 12) + 'H' + (lx - 22) + 'Z', u('metald')) +
       lit(rr(lx, ly, lw, lh, 12), u('metal'), null, 2) + Pa('M' + (lx + 14) + ' ' + (ly + 8) + 'h' + lw * 0.3 + 'L' + (lx + 14) + ' ' + (ly + lh * 0.7) + 'Z', V('snow'), O(0.08)) +
       glow(lx + lw / 2, ly - 6, lw * 0.6, 26, 0.5, 1) + glow(lx + lw / 2, dy + 18, lw * 0.7, 18, 0.35, 1);
@@ -3765,11 +4384,11 @@ window.NP = window.NP || {};
     var t = ao(0, 0, 210, 14, 0.55);
     [-128, 128].forEach(function (wx) { t += R(wx - 7, -150, 14, 128, 4, u('metald')) + C(wx, -20, 20, M('ink', 'board-dark', 60)) + C(wx, -20, 8, u('metal')); });
     t += R(-160, -66, 320, 14, 6, u('metal')) + Pa('M168-160L182-162L246-92L232-86Z', u('metald')) + E(240, -88, 13, 10, V('ink'));
-    t += lit(rr(-172, -178, 344, 112, 12), u('metal'), null, 2) + R(-172, -78, 344, 12, 0, V('night-900'), O(0.25));
+    t += lit(rr(-172, -178, 344, 112, 12), u('metal'), null, 2) + txp('brush', rr(-172, -178, 344, 112, 12), 0.9) + R(-172, -78, 344, 12, 0, V('night-900'), O(0.25));
     t += lit(rr(-146, -166, 292, 82, 10), u('gold'), null, 1.4) + Pa(rr(-139, -159, 278, 68, 7), M('night-900', 'pole-green-dark', 70)) +
       Tm(0, -112, 42, 'TURN ON AI', { fill: V('paper'), style: 'font-weight:900;letter-spacing:.05em' });
     t += R(-180, -190, 360, 14, 7, M('board', 'snow', 66));
-    t += G({ 'class': 'in-gg', opacity: 0.45 }, E(0, -250, 190, 120, 'url(#in-gg)'));
+    t += G({ 'class': 'in-gg', opacity: 0.45 }, pool(0, -244, 380, 250, 0.9, 'green') + pool(0, 4, 330, 36, 0.7, 'green') + E(0, -250, 190, 120, 'url(#in-gg)'));
     t += lit(rr(-118, -222, 236, 34, 16), u('gold'), null, 1.6) + E(0, -222, 116, 18, M('gold', 'lamp', 55));
     t += G({ 'class': 'in-btn' }, lit('M-94-220C-94-306 94-306 94-220Z', 'url(#in-btn)', null, 2.6) + Pa('M40-286C70-276 92-252 94-220H66C66-246 58-268 40-286Z', V('night-900'), O(0.18)) +
       E(-38, -268, 28, 13, V('snow'), { opacity: 0.38, transform: 'rotate(-22 -38 -268)' }) + E(0, -220, 94, 10, V('pole-green-dark'), O(0.6)));
@@ -3780,7 +4399,7 @@ window.NP = window.NP || {};
     var P = c.P, tx = P ? 300 : 1010, ty = P ? 1540 : 880, ts = P ? 1.1 : 1.15, fsc = 1.7;
     var fx = tx + 230 * ts + 150, fy = ty;
     var room = boardroom(c, { noSlide: o.noSlide });
-    var s = (P ? at(0, -150, 1, room) : room) + glow(tx + 150, ty - 260, 520, 300, 0.25);
+    var s = (P ? at(0, -150, 1, room) : room) + pool(tx + 120, ty - 6, 560, 70, 0.3);
     s += G({ 'class': 'in-walk' }, trolley(tx, ty, ts) + fc(fx, fy, fsc, { legs: true, cls: 'in-fc5' }));
     var by = ty - 250 * ts;
     return { s: s, bx: tx, by: by, top: ty - 306 * ts, ts: ts };
@@ -3816,7 +4435,7 @@ window.NP = window.NP || {};
     var dw = P ? 660 : 520, dh = dw * 320 / 520, dx = (P ? 450 : 615) - dw / 2, dy0 = P ? 150 : 30;
     var dash = (NP.art && NP.art.titleDashboard || '').replace('<svg ', '<svg x="0" y="0" width="' + dw + '" height="' + f(dh) + '" ');
     var d = G({ 'class': 'in-dash' }, Ln('M' + f(dx + dw * 0.2) + ' -1200V' + (dy0 + 20) + 'M' + f(dx + dw * 0.8) + ' -1200V' + (dy0 + 20), M('board-dark', 'night-900', 50), 4) +
-      ao(dx + dw / 2, dy0 + dh + 30, dw * 0.45, 16, 0.4) + at(dx, dy0, 1, dash));
+      pool(dx + dw / 2, dy0 + dh / 2, dw * 0.85, dh * 1.05, 0.6, 'green') + ao(dx + dw / 2, dy0 + dh + 30, dw * 0.45, 16, 0.4) + at(dx, dy0, 1, dash));
     // the chair's hand comes in from above
     var hand = at(r.bx, r.top + 6, r.ts, G({ transform: 'rotate(32)' }, G({ 'class': 'in-press' }, lit(rr(-50, -1400, 100, 1330, 40), 'url(#in-suit)', null, 2.4) + Pa('M20-1400H50V-74H20Z', V('night-900'), O(0.22)) +
       lit(rr(-54, -92, 108, 30, 12), u('paper'), null, 1.4) + R(-54, -70, 108, 8, 0, V('paper-shade')) + lit(el(0, -40, 42, 32), 'url(#in-head)', null, 1.8) + lit(el(-4, -6, 15, 20), 'url(#in-head)', null, 1.4) + E(-14, -52, 14, 8, V('snow'), O(0.25)))));
@@ -3874,13 +4493,19 @@ window.NP = window.NP || {};
   function s7(c) {
     var P = c.P, W = c.W, H = c.H, s = '';
     var fy = P ? 1050 : 830;
-    s += R(0, 0, W, fy, 0, u('wall')) + G({ transform: 'scale(2)' }, R(0, 0, W / 2, fy / 2, 0, u('brick'), O(0.3)));
-    s += R(0, 40, W, 22, 11, u('pipe')) + R(0, 74, W, 14, 7, u('pipe')) + R(0, 0, W, fy, 0, M('night-600', 'basement', 50), O(0.22));
-    s += R(0, fy - 10, W, H, 0, u('floor')) + R(0, fy - 10, W, 3, 0, V('basement-light'), O(0.5));
+    // the same basement as the shift: painted brick, damp, service pipes under a dark ceiling, concrete floor
+    s += R(0, 0, W, fy, 0, u('wall')) + tex('brick', 0, 0, W, fy, 0.6, { scale: 2.3 }) + tex('mottle', 0, 0, W, fy, 0.6);
+    s += R(0, 0, W, 30, 0, M('basement', 'night-900', 35)) + R(0, 30, W, 60, 0, u('aov')) + R(0, 40, W, 22, 11, u('pipe')) + R(0, 74, W, 14, 7, u('pipe'));
+    for (var k = 150; k < W; k += 330) s += R(k, 36, 14, 30, 3, u('metald')) + R(k + 3, 70, 8, 22, 2, u('metald'));
+    s += R(0, 0, W, fy, 0, M('night-600', 'basement', 50), O(0.2));
+    s += R(0, fy - 10, W, H, 0, u('floor')) + tex('mottle', 0, fy - 10, W, H - fy + 10, 0.5) + R(0, fy - 10, W, 3, 0, V('basement-light'), O(0.5)) + R(0, fy - 7, W, 16, 0, u('aov'), O(0.5));
+    s += shd(-W * 0.15, -H * 0.1, W * 1.3, H * 1.2, 0.9);
     // door + stairs (upper right), warm light from the party upstairs
     var dX = P ? 760 : 1450, dY = P ? 110 : 40, dW = P ? 130 : 130, dH = P ? 220 : 230, N = 8, sx0 = P ? 740 : 1440, sy0 = dY + dH, sdx = P ? -27.5 : -35, sdy = ((fy - 10) - sy0) / N;
-    s += Pa('M' + dX + ' ' + sy0 + 'H' + (dX + dW) + 'L' + (sx0 + N * sdx + 200) + ' ' + (fy + 40) + 'H' + (sx0 + N * sdx - 160) + 'Z', V('lamp'), O(0.07));
-    s += R(dX - 12, dY - 12, dW + 24, dH + 12, 4, V('wood-dark')) + R(dX, dY, dW, dH, 2, 'url(#in-win)') + glow(dX + dW / 2, dY + dH / 2, 220, 200, 0.55) +
+    s += Pa('M' + dX + ' ' + sy0 + 'H' + (dX + dW) + 'L' + (sx0 + N * sdx + 200) + ' ' + (fy + 40) + 'H' + (sx0 + N * sdx - 160) + 'Z', V('lamp'), O(0.1));
+    // the party upstairs: warm light down the stairwell, into the cold
+    s += cone(dX + dW / 2, sy0 - 20, dW, P ? 460 : 560, fy - sy0 + 50, 0.5, { skew: N * sdx * 0.75 }) + pool(sx0 + N * sdx + 20, fy + 6, 330, 46, 0.45);
+    s += R(dX - 12, dY - 12, dW + 24, dH + 12, 4, V('wood-dark')) + R(dX, dY, dW, dH, 2, 'url(#in-win)') + pool(dX + dW / 2, dY + dH / 2, 280, 260, 0.75) +
       Pa('M' + (dX + dW) + ' ' + dY + 'L' + (dX + dW + 40) + ' ' + (dY + 20) + 'V' + (sy0 + 10) + 'L' + (dX + dW) + ' ' + sy0 + 'Z', u('woodd'));
     s += G({ 'class': 'in-cheer', opacity: 0.6 }, Tx(dX - 24, dY + 150, P ? 34 : 28, '(muffled cheering)', { 'text-anchor': 'end', fill: V('snow-shade'), style: 'font-style:italic;font-weight:600' }) +
       Ln('M' + (dX - 26) + ' ' + (dY + 170) + 'q10 10 0 20M' + (dX - 42) + ' ' + (dY + 164) + 'q16 16 0 32', V('lamp'), 3, O(0.6)));
@@ -3894,12 +4519,13 @@ window.NP = window.NP || {};
     s += R(dX - 40, sy0 - 6, W - dX + 80, 18, 4, u('wood'));
     var stx = sx0 + N * sdx;
     s += Pa('M' + (sx0 + 30) + ' ' + sy0 + 'L' + (stx + 10) + ' ' + (fy - 10) + 'H' + (stx + 60) + 'L' + (sx0 + 80) + ' ' + (sy0 + 10) + 'Z', u('woodd'));
-    for (var k = 1; k <= N; k++) s += ao(sx0 + k * sdx + 60, sy0 + k * sdy + 8, 70, 5, 0.4) + lit(rr(sx0 + k * sdx - 10, sy0 + k * sdy - 14, 140, 18, 4), u('wood'), null, 1.4);
+    for (k = 1; k <= N; k++) s += ao(sx0 + k * sdx + 60, sy0 + k * sdy + 8, 70, 5, 0.4) + lit(rr(sx0 + k * sdx - 10, sy0 + k * sdy - 14, 140, 18, 4), u('wood'), null, 1.4);
     s += Ln('M' + (sx0 + 100) + ' ' + (sy0 - 120) + 'L' + (stx + 70) + ' ' + (fy - 130), u('wood'), 10);
     for (k = 1; k < N; k += 2) s += R(sx0 + k * sdx + 64, sy0 + k * sdy - 134, 6, 120, 3, V('wood-dark'));
     // chute and the sacks
     var cX = P ? 50 : 100, cW = P ? 200 : 220, cY = P ? 560 : 300;
     var pile = P ? [[100, fy, 1, -8], [220, fy + 12, 1.05, 6], [320, fy - 2, 0.95, -4], [160, fy - 80, 0.95, 12], [270, fy - 76, 0.9, -10]] : [[160, fy, 1.05, -8], [290, fy + 6, 1.1, 6], [410, fy + 2, 0.95, -4], [220, fy - 84, 0.95, 12], [350, fy - 80, 0.9, -10]];
+    s += pool(pile[1][0], fy - 80, 330, 190, 0.3);
     pile.forEach(function (p, n) {
       s += G({ 'class': 'in-sk', 'data-h': f(p[1] - cY + 60) }, at(p[0], p[1], p[2] * (P ? 1.15 : 1), G({ 'class': 'in-sq' }, sack(p[3] * 2)) ));
     });
@@ -3911,11 +4537,15 @@ window.NP = window.NP || {};
     // the elf's desk, lamp, monitor
     var eX0 = P ? 40 : 470, eX1 = P ? 580 : 910, eT = P ? 1170 : 650, ex = P ? 200 : 590, es = P ? 1.3 : 1.25;
     var mX = P ? 320 : 690, mW = P ? 240 : 220, mY = eT - (P ? 210 : 196), mH = P ? 180 : 170;
-    s += glow((eX0 + eX1) / 2, eT - 60, 380, 260, 0.35);
+    // his work lamp: the one warm pool down here
+    var pX = P ? 330 : 610, pY = P ? 690 : 120;
+    s += pendant(pX, pY, 0.45, eT - pY - 20, P ? 600 : 640, P ? -60 : -10, 1) + pool((eX0 + eX1) / 2, eT - 90, 400, 280, 0.4) + motes(pX - 220, pY + 90, 400, eT - pY - 200, 10, 13, { r: 2 });
+    s += cast(ex - 90 * es, eT - 60, 80 * es, 120 * es, 0.35, -10);
     s += elf(ex, eT + 52, es);
-    s += glow(mX + 30, mY + mH / 2, 200, 160, 0.3, 1);
+    s += pool(mX + 30, mY + mH / 2, 220, 180, 0.34, 'cool');
     s += ao((eX0 + eX1) / 2, fy + 14, (eX1 - eX0) * 0.56, 16, 0.6) + Pa('M' + eX0 + ' ' + eT + 'H' + eX1 + 'L' + (eX1 + 12) + ' ' + (eT + 22) + 'H' + (eX0 - 12) + 'Z', u('desktop')) +
-      R(eX0 - 12, eT + 22, eX1 - eX0 + 24, (P ? 1420 : fy + 10) - eT - 22, 0, u('woodd')) + R(eX0 - 12, eT + 22, eX1 - eX0 + 24, 3, 0, V('lamp'), O(0.4)) + R(eX0 - 12, eT + 25, eX1 - eX0 + 24, 14, 0, V('night-900'), O(0.3));
+      tex('wood', eX0 - 12, eT, eX1 - eX0 + 24, 22, 0.7) + pool((eX0 + eX1) / 2, eT + 10, (eX1 - eX0) * 0.5, 14, 0.5) +
+      R(eX0 - 12, eT + 22, eX1 - eX0 + 24, (P ? 1420 : fy + 10) - eT - 22, 0, u('woodd')) + tex('wood', eX0 - 12, eT + 22, eX1 - eX0 + 24, (P ? 1420 : fy + 10) - eT - 22, 0.8, { scale: 1.4 }) + R(eX0 - 12, eT + 22, eX1 - eX0 + 24, 3, 0, V('lamp'), O(0.4)) + R(eX0 - 12, eT + 25, eX1 - eX0 + 24, 14, 0, V('night-900'), O(0.3));
     s += mitten(ex - 40 * es, eT + 10, es * 0.85, false) + mitten(ex + 44 * es, eT + 12, es * 0.85, true);
     s += ao(mX + mW / 2, eT + 6, mW * 0.4, 6, 0.6) + R(mX + mW / 2 - 14, mY + mH - 4, 28, eT - mY - mH + 6, 3, u('metald')) + E(mX + mW / 2, eT + 2, 60, 8, u('metald')) +
       lit(rr(mX, mY, mW, mH, 14), u('metald'), null, 1.8) + Pa(rr(mX + 12, mY + 12, mW - 24, mH - 24, 8), u('screen')) +
@@ -3929,7 +4559,7 @@ window.NP = window.NP || {};
     // Father Christmas: walking (stairs) and, after the cut, slumped at his crate desk by the rejects bay
     var kX0 = P ? 600 : 960, kX1 = P ? 870 : 1180, kT = P ? 1190 : 712, kx = (kX0 + kX1) / 2, fs = P ? 1.3 : 1.25;
     s += G({ 'class': 'in-fcs', opacity: 0 }, fc(kx, kT + 12, fs, { cls: 'in-fc7s' }) +
-      ao(kx, P ? 1430 : fy + 10, (kX1 - kX0) * 0.55, 12, 0.6) + lit(rr(kX0, kT, kX1 - kX0, (P ? 1440 : fy + 6) - kT, 6), u('wood'), null, 1.6) +
+      ao(kx, P ? 1430 : fy + 10, (kX1 - kX0) * 0.55, 12, 0.6) + lit(rr(kX0, kT, kX1 - kX0, (P ? 1440 : fy + 6) - kT, 6), u('wood'), null, 1.6) + txp('wood', rr(kX0, kT, kX1 - kX0, (P ? 1440 : fy + 6) - kT, 6), 0.8) +
       R(kX0, kT + 40, kX1 - kX0, 8, 0, V('wood-dark'), O(0.5)) + R(kX0, kT + 100, kX1 - kX0, 8, 0, V('wood-dark'), O(0.5)) +
       ao(kx + 10, kT + 2, 60, 5, 0.6) + Pa('M' + (kx - 44) + ' ' + kT + 'H' + (kx + 64) + 'L' + (kx + 56) + ' ' + (kT - 8) + 'H' + (kx - 36) + 'Z', u('metald')) +
       lit(rr(kx - 34, kT - 78, 86, 70, 7), u('metal'), null, 1.4) + glow(kx, kT - 90, 70, 30, 0.4, 1));
@@ -3998,8 +4628,12 @@ window.NP = window.NP || {};
     var W = c.W, H = c.H, logo = NP.art && NP.art.logo || '', m = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(logo), lw = m ? +m[1] : 800, lh = m ? +m[2] : 128;
     var tw = c.P ? 700 : 1120, th = tw * lh / lw, cy = c.P ? 760 : 450;
     seed = 23;
-    var s = R(0, 0, W, H, 0, 'url(#in-night)') + stars(W, 0, H * 0.7, 60) + glow(W / 2, cy, W * 0.55, H * 0.42, 0.3) +
-      Pa('M-50 ' + (H * 0.84) + 'C' + W * 0.3 + ' ' + (H * 0.8) + ' ' + W * 0.7 + ' ' + (H * 0.86) + ' ' + (W + 50) + ' ' + (H * 0.82) + 'V' + (H + 50) + 'H-50Z', u('fur'), O(0.9)) +
+    var hy = H * 0.84, hill = 'M-50 ' + hy + 'C' + W * 0.3 + ' ' + (H * 0.8) + ' ' + W * 0.7 + ' ' + (H * 0.86) + ' ' + (W + 50) + ' ' + (H * 0.82) + 'V' + (H + 50) + 'H-50Z';
+    // a sky worth the title: stars, aurora, a pale horizon; blue snow and far pines below
+    var s = R(0, 0, W, H, 0, 'url(#in-night)') + stars(W, 0, H * 0.7, 70) + aurora(W, H * (c.P ? 0.2 : 0.2)) + halo(W / 2, hy, W * 0.8, H * 0.3, 0.4, 'cool') +
+      halo(W / 2, cy, W * 0.6, H * 0.4, 0.55, 'cool') + halo(W / 2, cy + th * 0.3, tw * 0.4, th * 0.9, 0.3) +
+      (c.P ? pine(70, hy + 6, 250) + pine(830, hy + 2, 210) : pine(120, hy - 6, 270) + pine(275, hy - 14, 170) + pine(1490, hy - 4, 250) + pine(1345, hy + 4, 150)) + R(0, hy - 320, W, 340, 0, u('haze')) +
+      Pa(hill, u('fur')) + Pa(hill, M('night-600', 'snow-shade', 60), O(0.5)) + halo(W / 2, hy + 30, W * 0.5, 70, 0.3) + R(0, hy, W, H - hy, 0, 'url(#fx-fall)', O(0.5)) +
       G({ 'class': 'in-logo in-fb' }, at(W / 2 - tw / 2, cy - th / 2, 1, logo.replace('<svg ', '<svg x="0" y="0" width="' + tw + '" height="' + f(th) + '" ')));
     return {
       m: s + (c.red ? '' : snow(W, H, c.P ? 50 : 90)) + R(0, 0, W, H, 0, V('night-900'), { 'class': 'in-out', opacity: 0 }),
@@ -4012,11 +4646,12 @@ window.NP = window.NP || {};
   }
 
   /* ---------- storyboard (SPEC §3, locked) ---------- */
-  var MELT = '<span class="sr-only">a melting face</span><svg class="in-melt" viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
+  var MELT = '<svg class="in-melt" viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
     '<path d="M6 22a18 18 0 0 1 36 0c0 6-1 9 0 14 1 5-3 7-5 3-1-3-3-3-4 0-1 6-6 6-6 0-1-3-3-3-4 1-1 4-6 4-6-1 0-3-3-3-4 0-2 4-6 2-5-3 1-5-2-8-2-14z" fill="var(--gold)"/>' +
     '<path d="M30 6a18 18 0 0 1 12 16c0 6-1 9 0 14 1 5-3 7-5 3 0-8 0-22-7-33z" fill="var(--gold-dark)" opacity=".5"/>' +
     '<path d="M14 20q3-4 6 0M28 21q3-4 6 0" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>' +
     '<path d="M16 31q8 5 16-1" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="15" cy="12" rx="5" ry="3" fill="var(--lamp)" opacity=".7"/></svg>';
+  MELT = '<span class="sr-only">a melting face</span>' + MELT;
   var SC = [
     { d: 2000, b: s1, still: 1900, caps: [[150, 'nar', '', '1 December. Quarterly board meeting.']] },
     { d: 12000, b: s2, still: 10500, caps: [[900, 'say', 'Chair', '“Everyone’s doing AI.”'], [3600, 'say', 'Member 2', '“Our competitors are doing AI.”'], [6600, 'say', 'Father Christmas', '“We don’t have competitors.”'], [9300, 'say', 'Member 3', '“Exactly. Imagine if we did.”']] },
@@ -4204,6 +4839,20 @@ window.NP = window.NP || {};
     for (i = 1; i <= n; i++) { var r = f(Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]) * 0.62); d += 'A' + r + ' ' + r + ' 0 0 1 ' + f(pts[i][0]) + ' ' + f(pts[i][1]); }
     return d + 'Z';
   }
+  // shared light, shade and material textures (fx.js): beams and pools are additive, shade multiplies, nothing runs a live filter
+  var FX = NP.fx;
+  // a wall or floor from y0 down: its gradient, then a baked material over it (k scales the tile)
+  function surf(y0, h, grad, tex, k, o, cls) {
+    return R(-400, y0, 2000, h, 0, grad, cls ? { 'class': cls } : null) + FX.tex(tex, -400, y0, 2000, h, o, { scale: k }) + (tex === 'brick' ? FX.tex('mottle', -400, y0, 2000, h, 0.55) : '');
+  }
+  // a band right across the frame
+  function B(y, h, fill, o) { return R(-400, y, 2000, h, 0, fill, o && op(o)); }
+  function shadeP(x, y) { return 'M' + (x - 34) + ' ' + (y + 30) + 'Q' + x + ' ' + (y - 14) + ' ' + (x + 34) + ' ' + (y + 30) + 'Z'; }
+  // a heavy curtain: folds are tone breaks, the hem scallops
+  function drape(x, y, w, h) {
+    return P('M' + x + ' ' + y + 'h' + w + 'v' + h + 'q' + f(-w / 6) + ' 9 ' + f(-w / 3) + ' 0t' + f(-w / 3) + ' 0t' + f(-w / 3) + ' 0Z', 'url(#ep-drape)') +
+      R(x + w * 0.24, y, w * 0.12, h, 0, V('night-900'), op(0.24)) + R(x + w * 0.6, y, w * 0.14, h, 0, V('night-900'), op(0.24)) + R(x + w * 0.06, y, w * 0.08, h, 0, V('lamp'), op(0.1)) + R(x + w * 0.44, y, w * 0.07, h, 0, V('lamp'), op(0.08));
+  }
   var seed = 11;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
 
@@ -4232,6 +4881,7 @@ window.NP = window.NP || {};
     lg('bp', M('good', 'night-600', 42), M('night-600', 'night-900', 62)) +
     lg('autumn', M('lamp', 'lamp-deep', 60), M('lamp-deep', 'pole-red-dark', 70), 0, 1) +
     lg('box', M('paper-shade', 'wood', 55), M('wood', 'wood-dark', 70)) +
+    lg('drape', M('pole-red-dark', 'board-dark', 52), M('pole-red-dark', 'night-900', 36), 1, 0) +
     '</defs>';
 
   /* ---------- copy ---------- */
@@ -4276,8 +4926,8 @@ window.NP = window.NP || {};
   function table(x0, x1, y, depth, W) {
     return ao((x0 + x1) / 2, y + depth + 6, (x1 - x0) * 0.55, 18, 0.6) +
       P('M' + x0 + ' ' + y + 'H' + x1 + 'L' + (x1 + 30) + ' ' + (y + depth) + 'H' + (x0 - 30) + 'Z', 'url(#ep-table)') +
-      R(x0, y, x1 - x0, 2.5, 0, V('lamp'), op(0.45)) +
-      R(x0 - 30, y + depth, x1 - x0 + 60, 400, 0, 'url(#ep-tablef)') + R(x0 - 30, y + depth, x1 - x0 + 60, 3, 0, V('lamp'), op(0.3)) +
+      R(x0, y, x1 - x0, 2.5, 0, V('lamp'), op(0.45)) + FX.pool(W / 2 - (W > 600 ? 180 : 0), y + depth * 0.55, W > 600 ? 210 : 190, depth * 0.8, 0.5) + (W > 600 ? FX.pool(W / 2 + 180, y + depth * 0.55, 210, depth * 0.8, 0.5) : '') +
+      R(x0 - 30, y + depth, x1 - x0 + 60, 400, 0, 'url(#ep-tablef)') + FX.tex('woodv', x0 - 30, y + depth, x1 - x0 + 60, 400, 0.3) + R(x0 - 30, y + depth, x1 - x0 + 60, 3, 0, V('lamp'), op(0.3)) +
       R(x0 - 30, y + depth + 3, x1 - x0 + 60, 16, 0, V('night-900'), op(0.25)) +
       // brass company plaque on the table front
       G('translate(' + W / 2 + ' ' + (y + depth + 74) + ')', R(-130, -26, 260, 52, 10, 'url(#ep-gold)') + R(-124, -20, 248, 40, 6, M('board-dark', 'gold-dark', 80)) +
@@ -4292,18 +4942,33 @@ window.NP = window.NP || {};
     s += R(x + w / 2 - 4, y, 8, h, 0, 'url(#ep-metal)') + R(x, y + h * 0.48, w, 8, 0, 'url(#ep-metal)');
     return s;
   }
-  function pendant(x, y, gy, shade) {
-    return E(x, gy, 300, 170, 'url(#ep-glow)', op(0.34)) + (shade ? R(x - 1, -400, 2, y + 400, 0, V('night-900'), op(0.7)) +
-      lit('M' + (x - 34) + ' ' + (y + 30) + 'Q' + x + ' ' + (y - 14) + ' ' + (x + 34) + ' ' + (y + 30) + 'Z', 'url(#ep-gold)', 1.5) +
-      E(x, y + 30, 26, 5, V('lamp')) + C(x, y + 34, 26, 'url(#ep-glow)') : '');
+  // a pendant lamp: its pool, its beam (drawn here, so call it behind the actors), then the brass shade and the bulb
+  function pendant(x, y, gy, shade, o) {
+    o = o || {};
+    var top = shade ? y + 31 : y;
+    return FX.pool(x, gy, 310, 200, 0.4) + FX.cone(x, top, shade ? 50 : 90, o.w || 520, (o.h || gy + 90) - top, o.op || 0.36, { skew: o.skew == null ? 30 : o.skew }) +
+      (shade ? R(x - 1, -400, 2, y + 400, 0, V('night-900'), op(0.7)) + lit(shadeP(x, y), 'url(#ep-gold)', 1.5) +
+        P('M' + (x + 10) + ' ' + (y + 10) + 'Q' + (x + 26) + ' ' + (y + 18) + ' ' + (x + 34) + ' ' + (y + 30) + 'H' + (x + 16) + 'Z', V('night-900'), op(0.22)) +
+        E(x, y + 30, 26, 5, V('lamp')) + FX.bulb(x, y + 33, 8, 0.8) : '');
   }
   function room(W, H, wide, winInner, wr) {
-    var s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-wall)');
-    for (var x = wide ? 40 : 20; x < W; x += wide ? 160 : 110) s += R(x, wide ? 330 : 300, 2, 600, 0, V('night-900'), op(0.25));
-    s += R(-400, wide ? 324 : 294, W + 800, 6, 0, V('board'), op(0.4));
+    // plaster above the rail, upright panelling below it
+    var ry = wide ? 324 : 294, s = surf(-400, H + 800, 'url(#ep-wall)', 'mottle', 1, 0.6) + FX.tex('woodv', -400, ry, W + 800, H, 0.32);
+    for (var x = wide ? 40 : 20; x < W; x += wide ? 160 : 110) s += R(x, ry + 6, 2, 600, 0, V('night-900'), op(0.3)) + R(x + 2, ry + 6, 1.5, 600, 0, V('snow'), op(0.05));
+    s += B(ry, 6, V('board'), 0.4) + B(ry, 1.5, V('snow-shade'), 0.3) + B(ry + 6, 14, 'url(#fx-rise)', 0.7);
     wr = wr || (wide ? [70, 54, 290, 220] : [24, 300, 128, 110]);
-    s += win(wr[0], wr[1], wr[2], wr[3], winInner);
-    s += wide ? pendant(430, 30, 430, 1) + pendant(790, 30, 430, 1) : pendant(225, 0, 420, 0);
+    var wcx = wr[0] + wr[2] / 2;
+    // moonlight: a cool wash around the window and a shaft off it
+    s += FX.pool(wcx, wr[1] + wr[3] / 2, wr[2] * 0.85, wr[3] * 0.9, 0.42, 'cool') + win(wr[0], wr[1], wr[2], wr[3], winInner);
+    if (wide) {
+      // curtains on a brass pole, and the founder's portrait (a board member, naturally)
+      s += R(wr[0] - 58, wr[1] - 36, wr[2] + 116, 8, 4, 'url(#ep-gold)', op(0.8)) + drape(wr[0] - 50, wr[1] - 30, 56, wr[3] + 78) + drape(wr[0] + wr[2] - 6, wr[1] - 30, 56, wr[3] + 78) +
+        G({ opacity: 0.82 }, ao(612, 226, 70, 12, 0.5) + R(552, 80, 116, 140, 5, 'url(#ep-gold)') + R(561, 89, 98, 122, 2, M('board-dark', 'night-900', 50)) +
+          P('M574 211V190C574 170 590 162 610 162S646 170 646 190V211Z', M('board', 'board-dark', 45)) + P('M604 164H616L613 186L610 190L607 186Z', V('pole-red-dark')) +
+          E(610, 138, 18, 21, M('board', 'snow', 72)) + E(604, 129, 6, 4, V('snow'), op(0.3)) + R(561, 89, 98, 3, 1, V('night-900'), op(0.4)));
+    }
+    s += FX.cone(wcx, wr[1] + wr[3] + 10, wr[2], wr[2] * 1.5, 280, 0.2, { skew: wr[2] * 0.5, cool: true }) + FX.shade(-80, -60, W + 160, H + 120, 0.75);
+    s += wide ? pendant(430, 30, 430, 1) + pendant(790, 30, 430, 1) + FX.motes(330, 90, 560, 300, 10, 3) : pendant(225, -40, 420, 0, { w: 470 }) + FX.motes(90, 60, 270, 320, 7, 3);
     return s;
   }
   // green enamel dashboard: big value, a meter that overruns past 100% (SPEC §9.8 plates)
@@ -4412,23 +5077,34 @@ window.NP = window.NP || {};
     return s;
   }
   function basement(W, H, wide, n) {
-    var s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)');
     var fy = wide ? 520 : 470, py = wide ? 548 : 506, px = wide ? 290 : 128, fx = wide ? 850 : 225, dy = wide ? 476 : 590, ds = wide ? 1.22 : 0.72;
-    s += R(-400, 22, W + 800, 16, 8, 'url(#ep-metal)') + R(-400, 24, W + 800, 3, 0, V('snow-shade'), op(0.25));
-    s += win(wide ? 120 : 280, wide ? 80 : 70, wide ? 150 : 100, wide ? 90 : 70);
-    s += E(wide ? 200 : 330, fy, 260, 50, 'url(#ep-cool)', op(0.5));
-    s += R(-400, fy, W + 800, 600, 0, 'url(#ep-floor)', { 'class': 'ep-flr' }) + R(-400, fy, W + 800, 2, 0, V('lamp-deep'), op(0.3));
+    var wx = wide ? 120 : 280, wy = wide ? 80 : 70, ww = wide ? 150 : 100, wh = wide ? 90 : 70, lx = fx + 184 * ds, ly = dy - 126 * ds, i;
+    // the desk bay from the shift: brick, damp, service pipes under the ceiling, all of it gone cold and blue
+    var s = surf(-400, fy + 400, 'url(#ep-bwall)', 'brick', wide ? 0.8 : 0.62, 0.5) + B(-400, fy + 400, V('night-600'), 0.16) + B(0, 96, 'url(#fx-rise)', 0.85);
+    s += R(-400, 22, W + 800, 16, 8, 'url(#ep-metal)') + FX.tex('brush', -400, 22, W + 800, 16, 0.6) + B(24, 3, V('snow-shade'), 0.25) + R(-400, 46, W + 800, 8, 4, M('board', 'night-900', 42));
+    for (i = 70; i < W; i += 230) s += R(i, 19, 10, 38, 2, M('board-dark', 'night-900', 60));
+    // a riser with its valve, and the shift lamp, switched off
+    var rx = wide ? 694 : 408, ux = wide ? 586 : 196, uy = wide ? 92 : 236, pc = M('board', 'night-900', 40);
+    s += R(rx, 54, 15, fy - 54, 0, pc) + R(rx + 2, 54, 3.5, fy - 54, 0, V('snow'), op(0.14)) + R(rx + 10.5, 54, 4.5, fy - 54, 0, V('night-900'), op(0.3)) +
+      L('M' + (rx - 9) + ' ' + f(fy * 0.56) + 'h33M' + (rx + 7.5) + ' ' + f(fy * 0.56 - 16) + 'v32', M('board-dark', 'night-900', 70), 3.2) + C(rx + 7.5, fy * 0.56, 16, 'none', { stroke: pc, 'stroke-width': 5 }) +
+      R(ux - 1, 54, 2, uy - 46, 0, V('night-900'), op(0.7)) + P(shadeP(ux, uy), M('pole-green-dark', 'night-900', 46)) + E(ux, uy + 30, 26, 5, M('board-dark', 'night-900', 55));
+    // the moon through the high window: a cold shaft down onto the rejects
+    s += FX.pool(wx + ww / 2, wy + wh / 2, ww * 1.05, wh * 1.2, 0.55, 'cool') +
+      win(wx, wy, ww, wh, C(wx + ww * 0.74, wy + wh * 0.3, 9, V('snow'), op(0.9)) + C(wx + ww * 0.74 + 4.5, wy + wh * 0.3 - 2.5, 8.4, M('night-600', 'night-900', 42))) +
+      FX.cone(wx + ww / 2, wy + wh + 10, ww, wide ? 480 : 330, fy + 50 - wy - wh, 0.5, { skew: px - wx - ww / 2 + (wide ? 60 : 20), cool: true }) + FX.shade(-60, -40, W + 120, H + 80, 0.8);
+    s += surf(fy, 600, 'url(#ep-floor)', 'mottle', 1.3, 0.9, 'ep-flr') + B(fy, 2, V('snow-shade'), 0.22) + B(fy + 2, 14, 'url(#fx-rise)', 0.6) +
+      FX.pool(px + (wide ? 30 : 0), fy + 40, wide ? 310 : 190, 44, 0.42, 'cool') + FX.cast(px + (wide ? 150 : 90), py - 70, wide ? 170 : 110, wide ? 90 : 64, 0.5);
     s += G({ 'class': 'ep-sign', transform: 'translate(' + (px - 70) + ' ' + (wide ? 170 : 112) + ') rotate(-3)' }, R(0, 0, 140, 40, 3, 'url(#ep-paper)') + R(62, -6, 16, 10, 1, V('paper-shade'), op(0.9)) +
       Tx(70, 28, 22, 'REJECTS', { 'text-anchor': 'middle', fill: V('ink-soft'), 'font-weight': 800, 'letter-spacing': '.08em' }));
     s += G('translate(' + px + ' ' + py + ')', n ? pile(n, wide ? 72 : 52, 7, py - (wide ? 222 : 164)) : ao(0, 4, 90, 10, 0.3) + Tx(0, -10, 18, '(empty)', { 'text-anchor': 'middle', fill: V('snow-shade'), 'font-weight': 700 }));
-    // the desk lamp: the only warm light down here
-    s += E(fx - 40, dy - 50, 400, 230, 'url(#ep-glow)', op(0.5));
+    // the desk lamp, the only warm light down here: on the wall behind him, then down across his back and the tickets
+    s += FX.pool(lx - 70 * ds, ly + 50 * ds, 330 * ds, 240 * ds, wide ? 0.55 : 0.4) + FX.cast(fx - 120 * ds, dy + 96 * ds, 300 * ds, 22 * ds, 0.55);
     s += G({ 'class': 'ep-desk', transform: 'translate(' + fx + ' ' + dy + ') scale(' + ds + ')' }, fcAsleep(wide ? 100 : 92) +
       G('translate(184 -30)', ao(0, 0, 40, 6) + R(-4, -96, 8, 96, 4, 'url(#ep-metal)') + lit('M-40 -96Q-34 -134 0 -136Q34 -134 40 -96Z', 'url(#ep-green)', 1.5) + E(0, -96, 34, 6, V('lamp')) +
         C(0, -92, 40, 'url(#ep-glow)') + E(0, 0, 34, 6, 'url(#ep-metal)')) +
       G('translate(-186 -22)', ao(0, 0, 20, 4) + R(-13, -30, 26, 30, 5, V('pole-green')) + R(-13, -30, 9, 30, 4, V('snow'), op(0.12)) + E(0, -30, 13, 3.5, M('pole-green', 'snow', 70)) + E(0, -29.6, 10.5, 2.4, V('wood-dark')) +
         L('M13 -24C24 -24 24 -8 13 -9', M('pole-green', 'night-900', 70), 4.5)));
-    return s;
+    return s + FX.cone(lx - 6 * ds, ly + 2 * ds, 56 * ds, 300 * ds, 124 * ds, 0.34, { skew: -150 * ds }) + FX.pool(lx - 100 * ds, dy - 12 * ds, 200 * ds, 30 * ds, 0.5) + FX.bulb(lx, ly + 2 * ds, 7 * ds, 0.7);
   }
   /* ---------- E3 props ---------- */
   function letter(w, h) {
@@ -4536,34 +5212,53 @@ window.NP = window.NP || {};
   var TERMS = ['Role: designing new toys and training', 'the AI on them. Also checking the gifts,', "since you're there.", 'All designs remain the property of the AI.', 'Mittens not provided.'];
   /* ---------- scenes ---------- */
   function svg(W, H, inner) {
-    return '<svg class="ep-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="ep-cam" style="transform-origin:' + W / 2 + 'px ' + H * 0.55 + 'px">' + inner + '</g></svg>';
+    return '<svg class="ep-svg ' + (W > H ? 'ep-wd' : 'ep-nr') + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="ep-cam" style="transform-origin:' + W / 2 + 'px ' + H * 0.55 + 'px">' + inner + '</g></svg>';
   }
   function sceneSVG(k, o, wide) {
     var W = wide ? 1200 : 450, H = wide ? 675 : 800, s = '', ad = Math.round(+o.adoption || 100);
     var xs = wide ? [360, 480, 600, 720, 840] : [65, 145, 225, 305, 385], ty = wide ? 450 : k === 'e1' ? 430 : k === 'bad' ? 610 : 570, ms = wide ? 1 : 0.74;
     var dW = wide ? 310 : 300, dH = wide ? 200 : 186, dpos = wide ? 'translate(830 60)' : 'translate(75 74)';
-    if (k === 'jobless') return svg(W, H, basement(W, H, wide, o.pileCount) + G({ 'class': 'ep-keep' }, wide ? box(650, 612, 1.1) + elf(536, 620, 1.2, { sad: 1 }) : box(344, 728, 0.9) + elf(116, 730, 0.92, { sad: 1 })));
+    if (k === 'jobless') return svg(W, H, basement(W, H, wide, o.pileCount) + (wide ? FX.cast(470, 626, 120, 15, 0.6) + FX.cast(600, 616, 96, 12, 0.5) : FX.cast(70, 736, 84, 12, 0.6) + FX.cast(308, 732, 80, 10, 0.5)) + G({ 'class': 'ep-keep' }, wide ? box(650, 612, 1.1) + elf(536, 620, 1.2, { sad: 1 }) : box(344, 728, 0.9) + elf(116, 730, 0.92, { sad: 1 })));
     if (k === 'autumn') {
-      var fyA = wide ? 560 : 610;
-      s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)') + E(wide ? 860 : 225, 240, 420, 300, 'url(#ep-glow)', op(0.3));
-      var wa = wide ? [720, 70, 330, 300] : [70, 432, 310, 124];
-      s += R(wa[0] - 10, wa[1] - 10, wa[2] + 20, wa[3] + 20, 12, 'url(#ep-metal)') + R(wa[0], wa[1], wa[2], wa[3], 4, 'url(#ep-autumn)');
+      var fyA = wide ? 560 : 610, wa = wide ? [720, 70, 330, 300] : [70, 432, 310, 124], acx = wa[0] + wa[2] / 2, aby = wa[1] + wa[3], pa = acx - wa[2] * 0.95, pb = acx + wa[2] * 0.1;
+      // a plaster wall going dark, and the low sun: it washes the wall round the frame before anything else
+      s = surf(-400, H + 800, 'url(#ep-bwall)', 'mottle', 1, 0.45) + FX.shade(-80, -60, W + 160, H + 120, 0.7) + FX.pool(acx, wa[1] + wa[3] / 2, wa[2] * (wide ? 2 : 1.4), wa[3] * (wide ? 1.8 : 3), 0.8) + FX.pool(acx - wa[2] * 0.3, aby, wa[2] * 2.2, wa[3] * (wide ? 1.5 : 3), 0.3);
+      if (wide) s += R(wa[0] - 76, wa[1] - 38, wa[2] + 152, 8, 4, 'url(#ep-gold)', op(0.85)) + drape(wa[0] - 70, wa[1] - 32, 58, wa[3] + 92) + drape(wa[0] + wa[2] + 12, wa[1] - 32, 58, wa[3] + 92);
+      s += R(wa[0] - 14, wa[1] - 6, wa[2] + 34, wa[3] + 30, 14, V('night-900'), op(0.3)) + R(wa[0] - 10, wa[1] - 10, wa[2] + 20, wa[3] + 20, 12, 'url(#ep-metal)') + R(wa[0], wa[1], wa[2], wa[3], 4, 'url(#ep-autumn)') +
+        C(wa[0] + wa[2] * 0.24, wa[1] + wa[3] * 0.8, wa[3] * 0.34, 'url(#fx-hot)', { opacity: 0.8, 'clip-path': 'url(#ep-wclip)' }) +
+        P('M' + wa[0] + ' ' + aby + 'v' + f(-wa[3] * 0.14) + 'q' + f(wa[2] * 0.2) + ' ' + f(-wa[3] * 0.1) + ' ' + f(wa[2] * 0.45) + ' ' + f(-wa[3] * 0.03) + 't' + f(wa[2] * 0.55) + ' ' + f(-wa[3] * 0.05) + 'V' + aby + 'Z', M('pole-red-dark', 'lamp-deep', 60), op(0.55));
       s += L('M' + (wa[0] + wa[2] * 0.3) + ' ' + (wa[1] + wa[3]) + 'C' + (wa[0] + wa[2] * 0.32) + ' ' + (wa[1] + wa[3] * 0.6) + ' ' + (wa[0] + wa[2] * 0.2) + ' ' + (wa[1] + wa[3] * 0.4) + ' ' + (wa[0] + wa[2] * 0.1) + ' ' + (wa[1] + wa[3] * 0.2) + 'M' + (wa[0] + wa[2] * 0.3) + ' ' + (wa[1] + wa[3] * 0.6) + 'C' + (wa[0] + wa[2] * 0.4) + ' ' + (wa[1] + wa[3] * 0.4) + ' ' + (wa[0] + wa[2] * 0.5) + ' ' + (wa[1] + wa[3] * 0.25) + ' ' + (wa[0] + wa[2] * 0.56) + ' ' + (wa[1] + wa[3] * 0.1), V('wood-dark'), 7);
       s += '<clipPath id="ep-wclip"><rect x="' + wa[0] + '" y="' + wa[1] + '" width="' + wa[2] + '" height="' + wa[3] + '"/></clipPath><g clip-path="url(#ep-wclip)">';
       for (var li = 0; li < 7; li++) s += G('translate(' + f(wa[0] + wa[2] * (0.1 + li * 0.13)) + ' ' + f(wa[1] + wa[3] * 0.3) + ')', P('M0 -7C6 -5 8 2 0 8C-8 2 -6 -5 0 -7Z', li % 2 ? V('lamp-deep') : V('pole-red'), { 'class': 'ep-leaf', style: '--d:-' + (li * 0.57).toFixed(2) + 's' }));
       s += '</g>';
       s += R(wa[0] + wa[2] / 2 - 4, wa[1], 8, wa[3], 0, 'url(#ep-metal)') + R(wa[0], wa[1] + wa[3] * 0.48, wa[2], 8, 0, 'url(#ep-metal)');
-      s += R(-400, fyA, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fyA, W + 800, 2, 0, V('lamp-deep'), op(0.3));
+      s += R(wa[0] - 24, aby + 10, wa[2] + 48, 11, 3, 'url(#ep-wood)') + R(wa[0] - 24, aby + 10, wa[2] + 48, 2, 1, V('lamp'), op(0.7)) + R(wa[0] - 16, aby + 21, wa[2] + 32, 8, 0, 'url(#fx-rise)', op(0.6));
+      // boards, a skirting, then the shaft and the window's own shape thrown across the floor
+      s += B(fyA - 14, 14, M('wood-dark', 'night-900', 50)) + B(fyA - 14, 1.6, V('lamp-deep'), 0.35) +
+        surf(fyA, 600, 'url(#ep-floor)', 'planks', wide ? 1.1 : 0.8, 0.42) + B(fyA, 2, V('lamp-deep'), 0.3) + B(fyA + 2, 14, 'url(#fx-rise)', 0.6) +
+        FX.cone(acx, aby, wa[2], wa[2] * 1.5, H - aby + 60, 0.42, { skew: -wa[2] * 0.6 }) +
+        P('M' + f(pa) + ' ' + (fyA + 8) + 'H' + f(pb) + 'L' + f(pb - 90) + ' ' + (H + 30) + 'H' + f(pa - 190) + 'Z', V('lamp'), { opacity: 0.3, 'class': 'fx-add' }) +
+        L('M' + f((pa + pb) / 2) + ' ' + (fyA + 8) + 'L' + f((pa + pb) / 2 - 140) + ' ' + (H + 30) + 'M' + f(pa - 60) + ' ' + f(fyA + (H - fyA) * 0.42) + 'H' + f(pb - 30), M('wood-dark', 'night-900', 45), 9, op(0.5)) +
+        FX.motes(acx - wa[2] * 0.8, aby - (wide ? 150 : 20), wa[2] * 1.1, wide ? 300 : 170, 10, 8, { r: 1.5 });
       var nw = wide ? 540 : 400, nh = nw * 0.74;
       s += G('translate(' + (wide ? 120 : 25) + ' ' + (wide ? 100 : 104) + ') rotate(-1.5 ' + nw / 2 + ' ' + nh / 2 + ')', G({ 'class': 'ep-letter' }, notice(nw, nh)));
-      s += wide ? wheelyBear(890, fyA + 34, 3.2) : wheelyBear(340, fyA + 58, 1.9);
+      s += (wide ? FX.cast(790, fyA + 58, 190, 20, 0.6) + wheelyBear(890, fyA + 34, 3.2) : FX.cast(280, fyA + 72, 110, 13, 0.6) + wheelyBear(340, fyA + 58, 1.9));
       return svg(W, H, s);
     }
     if (k === 'rehire') {
       var fyR = wide ? 568 : 708, cw = wide ? 370 : 400;
-      s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)') + E(wide ? 420 : 225, wide ? 300 : 520, 520, 330, 'url(#ep-glow)', op(0.55));
-      s += wide ? pendant(420, 20, 430, 1) : pendant(150, 372, 520, 0);
-      s += R(-400, fyR, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fyR, W + 800, 2, 0, V('lamp'), op(0.3));
+      // the workshop: brick, a tool board, a bench of half-made toys, and one pendant over the drawing board
+      var tc = M('board', 'basement', 52), th = M('wood', 'basement', 48), bx = 880, by = fyR - 94, bw = M('wood-dark', 'night-900', 55);
+      s = surf(-400, fyR + 400, 'url(#ep-bwall)', 'brick', wide ? 0.8 : 0.62, 0.5) + B(0, 90, 'url(#fx-rise)', 0.8);
+      if (wide) s += G('translate(62 96)', R(4, 6, 252, 172, 6, V('night-900'), op(0.35)) + R(0, 0, 252, 172, 6, M('wood-dark', 'basement', 52)) + FX.tex('wood', 0, 0, 252, 172, 0.6, { rx: 6 }) + R(0, 0, 252, 2.5, 1, V('lamp'), op(0.2)) +
+          R(38, 40, 9, 96, 3, th) + R(20, 30, 46, 19, 4, tc) + P('M100 42H184L196 72H100Z', tc) + R(80, 38, 24, 40, 7, th) + L('M222 52V138', tc, 9) + C(222, 44, 13, tc) + C(222, 37, 5.5, M('wood-dark', 'basement', 52))) +
+        ao(bx + 150, fyR + 3, 180, 10, 0.55) + R(bx + 14, by, 12, 94, 2, bw) + R(bx + 274, by, 12, 94, 2, bw) + R(bx + 10, fyR - 34, 280, 8, 2, bw) + R(bx, by, 300, 13, 3, M('wood', 'basement', 46)) + R(bx, by, 300, 2, 1, V('lamp'), op(0.28)) +
+        C(bx + 52, by - 17, 17, M('pole-red', 'basement', 46)) + R(bx + 92, by - 28, 28, 28, 4, M('gold', 'basement', 44)) + R(bx + 124, by - 20, 24, 20, 3, M('good', 'basement', 44)) +
+        P('M' + (bx + 92) + ' ' + (by - 28) + 'l14 -16l14 16Z', M('pole-green', 'basement', 46)) + R(bx + 196, by - 34, 44, 34, 5, M('wood', 'basement', 44));
+      s += E(wide ? 420 : 225, wide ? 300 : 560, 520, 330, 'url(#ep-glow)', op(0.26)) + FX.shade(-80, -60, W + 160, H + 120, 0.8);
+      s += surf(fyR, 600, 'url(#ep-floor)', 'planks', wide ? 1.1 : 0.7, 0.42) + B(fyR, 2, V('lamp'), 0.3) + B(fyR + 2, 14, 'url(#fx-rise)', 0.6);
+      s += wide ? FX.cast(540, fyR - 210, 250, 200, 0.42) + pendant(420, 20, 430, 1, { h: fyR + 40, w: 660, op: 0.44 }) + FX.pool(450, fyR + 30, 360, 36, 0.5) + FX.motes(300, 110, 280, 320, 9, 6) :
+        pendant(225, 430, 610, 1, { h: fyR + 50, w: 450, op: 0.44, skew: 12 }) + FX.pool(225, fyR + 30, 210, 30, 0.5) + FX.motes(120, 480, 210, 200, 7, 6);
       s += G('translate(' + (wide ? 782 : 25) + ' ' + (wide ? 78 : 122) + ') rotate(' + (wide ? 1.5 : -0.8) + ')', G({ 'class': 'ep-cert' }, contract(cw, TERMS)));
       var sleeve = function (a, b, c, d, k) { return L('M' + a + ' ' + b + 'Q' + ((a + c) / 2 + 12 * k) + ' ' + ((b + d) / 2 + 8 * k) + ' ' + c + ' ' + d, V('pole-green-dark'), 19 * k) + L('M' + a + ' ' + (b - 2) + 'Q' + ((a + c) / 2 + 11 * k) + ' ' + ((b + d) / 2 + 5 * k) + ' ' + c + ' ' + (d - 2), V('pole-green'), 13 * k); };
       s += wide ? drawingBoard(450, fyR, 0.86) + elf(232, fyR + 4, 1.24, { badge: 1, look: 5 }) + sleeve(278, fyR - 80, 344, fyR - 196, 1.5) + mitten(362, fyR - 200, 0.8) + bot(640, fyR + 6, 190, 'pad') :
@@ -4599,6 +5294,7 @@ window.NP = window.NP || {};
   NP.epilogue = {
     play: function (el, o) {
       o = o || {};
+      FX.ensure();
       var reduced = !!o.reduced || document.documentElement.classList.contains('reduced');
       var wide = (el.clientWidth || window.innerWidth) >= 640 && (el.clientWidth || window.innerWidth) >= (el.clientHeight || window.innerHeight) * 0.85;
       var b = band(o.pct), vk = ['good', 'mid', 'bad'][b], ad = Math.round(+o.adoption || 100), n = Math.max(0, Math.round(+o.pileCount || 0));
@@ -6044,6 +6740,7 @@ window.NP = window.NP || {};
     if (NP.art) {
       if (NP.art.logo) { $("titleLogo").innerHTML = NP.art.logo; }
       if (NP.art.titleDashboard) { $("titleDash").innerHTML = NP.art.titleDashboard; }
+      if (NP.art.titleScene) { $("titleScene").innerHTML = NP.art.titleScene(); }
       $("btnPause").innerHTML = icon("pause");
       Array.prototype.forEach.call(document.querySelectorAll(".k-ico"), function (s) { s.innerHTML = icon(s.dataset.icon); });
     }

@@ -35,6 +35,11 @@ window.NP = window.NP || {};
   function lit(d, fl, o, k) { k = k || 2; return Pa(d, V('lamp'), { transform: 'translate(' + -k + ' ' + f(-k * 0.8) + ')', opacity: 0.8 }) + Pa(d, fl, o); }
   function ao(x, y, rx, ry, op) { return E(x, y, rx, ry, u('ao'), { opacity: op || 0.35 }); }
   function glow(x, y, rx, ry, op, cool) { return E(x, y, rx, ry, cool ? u('glowc') : u('glow'), { opacity: op }); }
+  // the shared light and texture layer (fx.js); without it the scenes still draw, just flatter
+  var FX = NP.fx || {}, nil = function () { return ''; }, pool = FX.pool || nil, cone = FX.cone || nil, tex = FX.tex || nil, txp = FX.texPath || nil,
+    cast = FX.cast || nil, shd = FX.shade || nil, fall = FX.fall || nil, motes = FX.motes || nil, bulb = FX.bulb || nil;
+  // a pool without the blend: for the big ambient glows over night sky and dark walls, where it looks the same and paints faster
+  function halo(cx, cy, rx, ry, op, kind, o) { return pool(cx, cy, rx, ry, op, kind, mg({ 'class': null }, o)); }
   var seed = 3;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
   function q(r, s) { return r.querySelector(s); }
@@ -47,11 +52,11 @@ window.NP = window.NP || {};
   function lg(id, a, b, o) { return T('linearGradient', mg({ id: 'in-' + id, x1: 0.1, y1: 0, x2: 0.9, y2: 1 }, o), T('stop', { offset: 0, 'stop-color': a }) + T('stop', { offset: 1, 'stop-color': b })); }
   function rg(id, c, a) { return T('radialGradient', { id: 'in-' + id }, T('stop', { offset: 0, 'stop-color': c, 'stop-opacity': a }) + T('stop', { offset: 1, 'stop-color': c, 'stop-opacity': 0 })); }
   var DEFS =
-    lg('suit', M('board', 'snow', 84), V('board-dark')) +
-    lg('head', M('board', 'snow', 70), M('board', 'board-dark', 62)) +
+    lg('suit', M('board', 'snow', 80), M('board-dark', 'night-900', 82)) +
+    lg('head', M('board', 'snow', 62), M('board-dark', 'board', 70)) +
     lg('night', V('night-900'), V('night-600'), VERT) +
-    lg('room', M('night-600', 'board-dark', 58), M('night-900', 'board-dark', 72), VERT) +
-    lg('carpet', M('board-dark', 'night-900', 62), V('night-900'), VERT) +
+    lg('room', M('night-600', 'night-900', 62), M('night-900', 'board-dark', 80), VERT) +
+    lg('carpet', M('pole-red-dark', 'night-900', 36), M('night-900', 'pole-red-dark', 88), VERT) +
     lg('tbl', M('wood-dark', 'lamp', 74), M('wood-dark', 'night-900', 52)) +
     lg('tblf', M('wood-dark', 'night-900', 62), V('night-900'), VERT) +
     lg('glass', M('night-600', 'board', 70), M('night-900', 'night-600', 55)) +
@@ -67,9 +72,11 @@ window.NP = window.NP || {};
     lg('pine', M('pole-green-dark', 'night-600', 60), M('night-900', 'pole-green-dark', 75)) +
     lg('boot', M('ink', 'board-dark', 55), V('ink')) +
     lg('bp', M('good', 'night-600', 42), M('night-600', 'night-900', 62)) +
-    rg('gg', V('pole-green'), 0.75) + rg('fl', V('lamp'), 1);
+    rg('gg', V('pole-green'), 0.75) + rg('fl', V('lamp'), 1) +
+    T('clipPath', { id: 'in-ctl' }, Pa('M140 598H1460L1520 668H80Z')) + T('clipPath', { id: 'in-ctp' }, Pa('M330 620H570L880 1400H20Z'));
   function ensureDefs(root) {
     if (NP.scene && NP.scene.fcArt) NP.scene.fcArt();   // makes sure the shared sc-* defs exist
+    if (FX.ensure) FX.ensure();
     if (NP.icons && NP.icons.sprite && !document.getElementById('g-giftbox')) {
       var s = document.createElement('div'); s.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; s.innerHTML = NP.icons.sprite; root.appendChild(s);
     }
@@ -97,13 +104,14 @@ window.NP = window.NP || {};
     var lo = o.tall ? 420 : 0, cx = o.cx || 0, ck = o.ck || 1;
     var body = 'M-62 ' + lo + 'V-116C-62-146-44-160 0-160C44-160 62-146 62-116V' + lo + 'Z';
     var b = lit(body, 'url(#in-suit)', null, 2.6) +
-      Pa('M26-157C48-153 62-142 62-116V' + lo + 'H36C42-50 40-118 26-157Z', V('night-900'), O(0.22)) +
+      Pa('M26-157C48-153 62-142 62-116V' + lo + 'H36C42-50 40-118 26-157Z', V('night-900'), O(0.3)) +
+      Pa('M-62-116C-62-144-46-158-16-160C-40-150-50-136-50-112V' + lo + 'H-62Z', V('lamp'), O(0.14)) + Pa('M56-136C60-130 62-124 62-116V' + lo + 'H58Z', V('snow-shade'), O(0.3)) +
       Pa('M-20-158L0-100L20-158Z', u('paper')) + Pa('M-6-153H6L9-114L0-101L-9-114Z', M('night-600', 'pole-red-dark', 70)) +
       Pa('M-34-154L-3-97L-20-160Z', M('board', 'snow', 70)) + Pa('M34-154L3-97L20-160Z', M('board-dark', 'night-900', 75)) +
       E(0, -157, 30, 6, V('night-900'), O(0.28));
     var h = lit(el(0, -198, 34, 40), 'url(#in-head)', null, 2.4) +
       E(-12, -216, 11, 6.5, V('snow'), { opacity: 0.32, transform: 'rotate(-32 -12 -216)' }) +
-      E(4, -168, 22, 5, V('snow-shade'), O(0.14));
+      Pa('M18-232C38-218 40-180 18-164C30-180 31-216 18-232Z', V('snow-shade'), O(0.42)) + E(4, -168, 22, 5, V('snow-shade'), O(0.14));
     var back = at(x, y, s, G({ 'class': 'in-mb' }, b + G({ 'class': 'in-mh', 'data-dir': o.dir || 1 }, h)));
     var hand = function (hx, hy, rx, ry) { return E(hx, hy, rx, ry, 'url(#in-head)') + E(hx - rx * 0.3, hy - ry * 0.35, rx * 0.4, ry * 0.25, V('snow'), O(0.25)); };
     var sleeve = 'M-60-128C-66-98-48-76-22-80L-18-98C-34-100-42-112-42-130Z';
@@ -190,25 +198,33 @@ window.NP = window.NP || {};
     });
   }
   function stars(W, y0, y1, n) { var s = ''; for (var i = 0; i < n; i++) s += C(rnd() * W, y0 + rnd() * (y1 - y0), 0.8 + rnd() * 2, V('snow'), { opacity: f(0.25 + rnd() * 0.6) }); return s; }
-  function pendant(x, y, op) {
-    return glow(x, y + 60, 300, 230, op || 0.32) + R(x - 1.5, -10, 3, y + 10, 0, V('board-dark')) +
-      lit('M' + (x - 46) + ' ' + (y + 30) + 'C' + (x - 40) + ' ' + y + ' ' + (x + 40) + ' ' + y + ' ' + (x + 46) + ' ' + (y + 30) + 'Z', u('gold'), null, 1.4) +
-      E(x, y + 30, 40, 7, V('lamp')) + glow(x, y + 34, 70, 30, 0.8);
+  // pendant lamp: its beam (h tall, w wide at the foot), the halo on the wall behind, the brass shade and the hot bulb
+  function pendant(x, y, op, h, w, sk, g) {
+    return (h ? cone(x, y + 30, 84, w, h, op || 0.4, { skew: sk }) : '') + halo(x, y + 50, 250, 190, 0.4) + R(x - 1.5, -10, 3, y + 10, 0, V('board-dark')) +
+      lit('M' + (x - 46) + ' ' + (y + 30) + 'C' + (x - 40) + ' ' + y + ' ' + (x + 40) + ' ' + y + ' ' + (x + 46) + ' ' + (y + 30) + 'Z', u(g ? 'green' : 'gold'), null, 1.4) +
+      Pa('M' + (x + 12) + ' ' + (y + 8) + 'C' + (x + 34) + ' ' + (y + 12) + ' ' + (x + 44) + ' ' + (y + 20) + ' ' + (x + 46) + ' ' + (y + 30) + 'H' + (x + 22) + 'Z', V('night-900'), O(0.25)) +
+      E(x, y + 30, 40, 7, V('lamp')) + bulb(x, y + 32, 10, 0.8);
   }
   function cityWin(x, y, w, h) {
-    var s = Pa(rr(x, y, w, h, 6), M('board-dark', 'night-900', 60)) + R(x + 8, y + 8, w - 16, h - 16, 3, 'url(#in-night)');
-    seed = 41;
-    for (var i = 0; i < 4; i++) {
+    var fr = M('board-dark', 'night-900', 60), s = lit(rr(x, y, w, h, 6), fr, null, 1.6) + R(x + 8, y + 8, w - 16, h - 16, 3, 'url(#in-night)'), i;
+    seed = 41 + x;
+    // far skyline in haze, then the near blocks
+    for (i = 0; i < 3; i++) s += R(x + 8 + (w - 16) * i / 3, y + h * (0.42 + rnd() * 0.2), (w - 16) / 3, h * 0.6, 0, M('night-600', 'snow-shade', 90), O(0.55));
+    s += R(x + 8, y + h * 0.4, w - 16, h * 0.6 - 8, 0, u('haze'), O(0.6));
+    for (i = 0; i < 4; i++) {
       var bw = w * (0.18 + rnd() * 0.2), bx = x + 8 + rnd() * (w - 16 - bw), bh = h * (0.25 + rnd() * 0.35);
       s += R(bx, y + h - 8 - bh, bw, bh, 0, 'url(#in-glassd)');
       for (var j = 0; j < 5; j++) s += R(bx + 6 + rnd() * (bw - 16), y + h - 8 - bh + 10 + rnd() * (bh - 26), 6, 9, 1, V('lamp'), O(0.55));
     }
-    return s + R(x + 8, y + 8, w - 16, h - 16, 3, V('night-600'), O(0.25)) + Pa('M' + (x + 20) + ' ' + (y + 8) + 'h' + w * 0.3 + 'L' + (x + 8) + ' ' + (y + h * 0.6) + 'V' + (y + 30) + 'Z', V('snow'), O(0.06));
+    return s + R(x + 8, y + 8, w - 16, h - 16, 3, V('night-600'), O(0.16)) + Pa('M' + (x + 20) + ' ' + (y + 8) + 'h' + w * 0.3 + 'L' + (x + 8) + ' ' + (y + h * 0.6) + 'V' + (y + 30) + 'Z', V('snow'), O(0.07)) +
+      R(x + 8, y + h * 0.34, w - 16, 7, 0, fr) + R(x + 8, y + h * 0.34 + 7, w - 16, 3, 0, V('night-900'), O(0.3)) + halo(x + w / 2, y + h * 0.82, w * 0.7, h * 0.3, 0.2, 'cool') +
+      R(x - 8, y + h - 5, w + 16, 12, 3, M('board', 'night-900', 55)) + R(x - 8, y + h - 5, w + 16, 2.5, 1, V('snow-shade'), O(0.4));
   }
   function slide(x, y, w, h) {
     var cx = x + w * 0.66, by = y + h * 0.8;
-    return ao(x + w / 2, y + h + 10, w * 0.5, 10, 0.35) + lit(rr(x, y, w, h, 10), M('board-dark', 'night-900', 60), null, 1.6) +
-      Pa(rr(x + 12, y + 12, w - 24, h - 24, 5), 'url(#in-lbox)') + R(x + 12, y + 12, w - 24, h - 24, 5, V('night-600'), O(0.22)) + glow(x + w / 2, y + h / 2, w * 0.6, h * 0.6, 0.18, 1) +
+    return halo(x + w / 2, y + h / 2, w * 0.86, h * 1.05, 0.5, 'cool') + ao(x + w / 2, y + h + 10, w * 0.5, 10, 0.35) + lit(rr(x, y, w, h, 10), M('board-dark', 'night-900', 60), null, 1.6) +
+      Pa(rr(x + 12, y + 12, w - 24, h - 24, 5), 'url(#in-lbox)') + R(x + 12, y + 12, w - 24, h - 24, 5, V('night-600'), O(0.08)) + glow(x + w * 0.45, y + h * 0.42, w * 0.5, h * 0.55, 0.5, 1) +
+      R(x + 12, y + 12, w - 24, h - 24, 5, u('shadel'), O(0.3)) +
       Tx(x + w * 0.07, y + h * 0.72, h * 0.5, 'AI', { fill: V('night-600'), style: 'font-weight:900;letter-spacing:-.02em' }) +
       Ln('M' + f(x + w * 0.42) + ' ' + f(by) + 'C' + f(cx) + ' ' + f(by + 4) + ' ' + f(x + w * 0.8) + ' ' + f(by - 10) + ' ' + f(x + w * 0.88) + ' ' + f(y + h * 0.3), V('gold-dark'), h * 0.035) +
       // drawn rocket riding the curve
@@ -222,35 +238,49 @@ window.NP = window.NP || {};
   var NAMES = ['CHAIR', 'MEMBER 2', 'MEMBER 3', 'MEMBER 4', 'MEMBER 5'];
   function boardroom(c, o) {
     o = o || {};
-    var s = '', P = c.P, m;
+    var s = '', P = c.P, m, i, W0 = P ? 0 : -300, W1 = P ? 900 : 2200, wall = P ? 680 : 720;
+    // back wall: painted plaster in tall panels, deep in the corners
+    s += R(W0, 0, W1, wall, 0, 'url(#in-room)') + tex('mottle', W0, 0, W1, wall, 0.6);
+    for (i = W0 + 24; i < W0 + W1; i += 236) s += R(i, 0, 5, wall - 160, 0, V('night-900'), O(0.22)) + R(i + 5, 0, 2, wall - 160, 0, V('snow-shade'), O(0.07));
+    s += R(W0, wall - 160, W1, 8, 0, V('night-900'), O(0.3)) + R(W0, wall - 152, W1, 2, 0, V('snow-shade'), O(0.08)) + R(W0, wall - 150, W1, 150, 0, V('night-900'), O(0.2));
     if (!P) {
-      s += R(-300, 0, 2200, 720, 0, 'url(#in-room)') + glow(240, 60, 700, 420, 0.22) + cityWin(960, 90, 196, 470) + cityWin(1172, 90, 196, 470) + cityWin(1384, 90, 196, 470);
-      s += R(-300, 560, 2200, 8, 0, V('night-900'), O(0.2)) + R(-300, 690, 2200, 14, 0, M('board-dark', 'night-900', 70));
+      s += cityWin(960, 90, 196, 470) + cityWin(1172, 90, 196, 470) + cityWin(1384, 90, 196, 470) + halo(1270, 320, 560, 460, 0.16, 'cool');
+      s += R(-300, 690, 2200, 14, 0, M('board-dark', 'night-900', 70));
       if (!o.noSlide) s += slide(330, 96, 570, 330);
-      s += pendant(1250, 150);
-      s += R(-300, 0, 2200, 720, 0, V('night-600'), O(0.1));
-      s += R(-300, 700, 2200, 600, 0, 'url(#in-carpet)') + R(-300, 700, 2200, 3, 0, V('lamp'), O(0.12));
+      s += cast(152, 352, 130, 120, 0.45) + lit(rr(54, 232, 172, 204, 6), M('gold-dark', 'night-900', 72), null, 1.6) + R(66, 244, 148, 180, 3, M('board-dark', 'night-900', 40)) +
+        E(140, 316, 29, 34, M('board', 'night-900', 42)) + Pa('M86 424C86 372 108 356 140 356S194 372 194 424Z', M('board', 'night-900', 32)) + R(66, 244, 148, 180, 3, u('shadel'), O(0.45));
+      s += pendant(170, 150, 0.32, 440, 520, 40) + pendant(1250, 150, 0.34, 440, 520, -20);
+      // carpet, with moonlight from the windows laid across it
+      s += R(-300, 700, 2200, 900, 0, 'url(#in-carpet)') + tex('grain', -300, 700, 2200, 900, 0.55, { scale: 1.5 }) + R(-300, 700, 2200, 3, 0, V('lamp'), O(0.12));
+      [1058, 1270, 1482].forEach(function (x) { s += cone(x, 706, 150, 250, 250, 0.3, { skew: -190, cool: true }); });
+      s += shd(-400, -260, 2400, 1700, 0.85, { 'class': null });
       m = members([[300, 614, 1, NAMES[0]], [470, 614, 1, NAMES[1]], [640, 614, 1, NAMES[2]], [810, 614, 1, NAMES[3]], [980, 614, 1, NAMES[4]]].map(function (a) { a.push({ dir: 1 }); return a; }));
       s += m.b;
       s += o.fc ? fc(1250, 622, 1.38, { chair: true }) : at(1250, 622, 1.38, G({ transform: 'translate(-262 -201)' }, lit(rr(206, 112, 112, 100, 26), u('metald'), null, 1.4)));
-      s += ao(800, 744, 800, 30, 0.7);
+      s += ao(800, 744, 800, 30, 0.8);
       [150, 1420].forEach(function (lx) { s += R(lx, 720, 34, 100, 6, 'url(#in-tblf)') + ao(lx + 17, 822, 40, 6, 0.6); });
-      s += Pa('M140 598H1460L1520 668H80Z', 'url(#in-tbl)') + E(420, 626, 170, 12, V('lamp'), O(0.16)) + E(800, 626, 170, 12, V('lamp'), O(0.16)) + E(1180, 626, 170, 12, V('lamp'), O(0.16)) +
-        R(80, 668, 1440, 62, 0, 'url(#in-tblf)') + R(80, 667, 1440, 3, 0, V('lamp'), O(0.4)) + Pa('M140 598H1460L1462 601H138Z', V('lamp'), O(0.3));
+      // the table: polished wood that takes the lamps, the slide and the windows
+      s += Pa('M140 598H1460L1520 668H80Z', 'url(#in-tbl)') + tex('wood', 80, 598, 1440, 70, 0.7, { scale: 1.7, clip: 'in-ctl' }) +
+        (o.noSlide ? '' : Pa('M338 598H892L912 668H322Z', V('snow'), O(0.06))) + Pa('M966 598H1150L1130 668H930ZM1178 598H1362L1352 668H1152Z', V('snow-shade'), O(0.06)) +
+        pool(240, 632, 330, 40, 0.75) + pool(1240, 632, 330, 40, 0.75) + pool(740, 634, 420, 30, 0.22);
+      [300, 470, 640, 810, 980].forEach(function (x) { s += cast(x + 16, 616, 84, 13, 0.55); });
+      s += R(80, 668, 1440, 62, 0, 'url(#in-tblf)') + tex('wood', 80, 668, 1440, 62, 0.5, { scale: 1.7 }) + R(80, 667, 1440, 3, 0, V('lamp'), O(0.45)) + Pa('M140 598H1460L1462 601H138Z', V('lamp'), O(0.3));
       s += m.f;
     } else {
-      s += R(0, 0, 900, 680, 0, 'url(#in-room)') + cityWin(30, 110, 150, 470) + cityWin(720, 110, 150, 470);
+      s += cityWin(30, 110, 150, 470) + cityWin(720, 110, 150, 470) + halo(105, 330, 250, 380, 0.22, 'cool') + halo(795, 330, 250, 380, 0.22, 'cool');
       if (!o.noSlide) s += slide(205, 70, 490, 300);
-      s += pendant(260, 440, 0.3) + pendant(640, 440, 0.3);
-      s += R(0, 0, 900, 680, 0, V('night-600'), O(0.1)) + R(0, 660, 900, 1140, 0, 'url(#in-carpet)');
+      s += R(0, 660, 900, 1400, 0, 'url(#in-carpet)') + tex('grain', 0, 660, 900, 1400, 0.55, { scale: 1.5 }) + shd(-80, -160, 1060, 2200, 0.85, { 'class': null });
+      s += pendant(260, 440, 0.34, 330, 420, 60) + pendant(640, 440, 0.34, 330, 420, -60);
       s += o.fc ? fc(450, 642, 1.25, { chair: true }) : at(450, 642, 1.25, G({ transform: 'translate(-262 -201)' }, lit(rr(206, 112, 112, 100, 26), u('metald'), null, 1.4)));
-      s += ao(450, 1420, 470, 40, 0.6) + Pa('M330 620H570L880 1400H20Z', 'url(#in-tbl)') + Pa('M330 620H570L572 624H328Z', V('lamp'), O(0.4)) +
-        E(450, 760, 60, 90, V('lamp'), O(0.1)) + E(450, 1100, 120, 170, V('lamp'), O(0.08)) +
-        R(20, 1400, 860, 70, 0, 'url(#in-tblf)') + R(20, 1399, 860, 3, 0, V('lamp'), O(0.4));
+      s += ao(450, 1420, 470, 40, 0.7) + Pa('M330 620H570L880 1400H20Z', 'url(#in-tbl)') + tex('wood', 20, 620, 860, 780, 0.7, { vertical: true, scale: 2.2, clip: 'in-ctp' }) +
+        Pa('M330 620H570L572 624H328Z', V('lamp'), O(0.4)) + (o.noSlide ? '' : Pa('M350 624H550L590 760H310Z', V('snow'), O(0.05))) +
+        pool(450, 830, 300, 190, 0.6) + pool(450, 1180, 420, 230, 0.3) +
+        R(20, 1400, 860, 70, 0, 'url(#in-tblf)') + tex('wood', 20, 1400, 860, 70, 0.5, { scale: 1.7 }) + R(20, 1399, 860, 3, 0, V('lamp'), O(0.4));
       // shot from the end of the table: far to near, alternating sides; the chair sits nearest
       var D = [[0.1, -1, 4], [0.28, 1, 3], [0.46, -1, 2], [0.62, 1, 1], [0.8, -1, 0]];
       var list = D.map(function (d) {
         var y = 620 + 780 * d[0], sc = 0.55 + 0.7 * d[0], ex = d[1] < 0 ? 330 - 310 * d[0] - 18 * sc : 570 + 310 * d[0] + 18 * sc;
+        s += cast(ex - d[1] * 50 * sc, y + 18, 96 * sc, 16 * sc, 0.5);
         return [ex, y + 10, f(sc), NAMES[d[2]], { dir: -d[1], cx: d[1] < 0 ? 96 : -96, ck: 1.35 }];
       });
       m = members(list);
@@ -271,44 +301,67 @@ window.NP = window.NP || {};
   /* =====================================================================
      SCENES (landscape viewBox 1600x1000, portrait 900x1800; captions sit over the bottom ~18%)
      ===================================================================== */
+  function rot(a, x, y) { return { transform: 'rotate(' + a + ' ' + f(x) + ' ' + f(y) + ')' }; }
+  // the aurora: two soft green ribbons low in the sky
+  function aurora(W, y) { return halo(W * 0.3, y, W * 0.56, 150, 0.5, 'green', rot(-9, W * 0.3, y)) + halo(W * 0.74, y - 110, W * 0.44, 110, 0.4, 'green', rot(7, W * 0.74, y - 110)); }
+  function pine(x, y, h) {
+    var w = h * 0.42, s = cast(x + w * 0.7, y + 4, w * 1.3, 14, 0.5) + ao(x, y, w * 0.8, 10, 0.5) + R(x - 8, y - 30, 16, 32, 3, V('wood-dark'));
+    for (var i = 0; i < 3; i++) { var ty = y - 20 - i * h * 0.28, tw = w * (1 - i * 0.24); s += lit('M' + (x - tw) + ' ' + ty + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw) + ' ' + ty + 'Z', 'url(#in-pine)', null, 2.4) + Pa('M' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw) + ' ' + ty + 'H' + (x + tw * 0.2) + 'Z', V('night-900'), O(0.34)) + Pa('M' + (x - tw * 0.5) + ' ' + (ty - h * 0.2) + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw * 0.16) + ' ' + (ty - h * 0.26) + 'L' + (x - tw * 0.1) + ' ' + (ty - h * 0.18) + 'Z', V('snow'), O(0.7)) + E(x - tw * 0.5, ty - 3, tw * 0.3, 5, V('snow'), O(0.5)); }
+    return s;
+  }
+
   // 1. Cold open: snowy night, the camera drops to the glass office block
   function s1(c) {
     var P = c.P, W = c.W, bx = P ? 450 : 800, bw = P ? 400 : 440, top = P ? 640 : 400, gy = P ? 1380 : 915, D = P ? 900 : 700;
     seed = 7;
+    var mx = P ? 170 : 1215, mY = P ? 330 : 200;
+    // sky: stars, a low aurora behind the ridge, the moon
     var l0 = R(-200, -1300, W + 400, 1300 + c.H, 0, 'url(#in-night)') + stars(W, -1250, top + 80, P ? 70 : 90) +
-      glow(W * 0.78, -540, 220, 220, 0.3, 1) + C(W * 0.78, -540, 44, V('snow')) + C(W * 0.78 + 14, -548, 38, M('snow', 'snow-shade', 30));
+      aurora(W, top - 40) +
+      halo(W * 0.5, top + 150, W * 0.8, 260, 0.3, 'cool') +
+      halo(mx, mY, 230, 230, 0.5, 'cool') + C(mx, mY, 44, V('snow')) + C(mx + 13, mY - 8, 39, M('night-600', 'night-900', 42));
     var my = gy - (P ? 330 : 300);
     var l1 = Pa('M-100 ' + (my + 150) + 'L' + W * 0.08 + ' ' + (my - 10) + 'L' + W * 0.17 + ' ' + (my + 80) + 'L' + W * 0.27 + ' ' + (my - 50) + 'L' + W * 0.38 + ' ' + (my + 90) + 'L' + W * 0.48 + ' ' + my + 'L' + W * 0.57 + ' ' + (my + 80) + 'L' + W * 0.68 + ' ' + (my - 40) + 'L' + W * 0.79 + ' ' + (my + 70) + 'L' + W * 0.89 + ' ' + (my - 20) + 'L' + (W + 100) + ' ' + (my + 110) + 'V' + (c.H + 200) + 'H-100Z', 'url(#in-ice)') +
-      R(-100, my - 60, W + 200, c.H, 0, V('night-600'), O(0.4));
+      Pa('M' + W * 0.27 + ' ' + (my - 50) + 'L' + W * 0.31 + ' ' + (my + 2) + 'L' + W * 0.255 + ' ' + (my - 8) + 'L' + W * 0.23 + ' ' + (my + 2) + 'ZM' + W * 0.68 + ' ' + (my - 40) + 'L' + W * 0.725 + ' ' + (my + 6) + 'L' + W * 0.675 + ' ' + (my - 4) + 'L' + W * 0.65 + ' ' + (my - 8) + 'Z', V('snow'), O(0.5)) +
+      R(-100, my - 60, W + 200, c.H, 0, V('night-600'), O(0.4)) + R(-100, my + 30, W + 200, 300, 0, u('haze'));
     var l2 = '';
     (P ? [[10, 180, 360], [120, 120, 250], [700, 130, 300], [800, 140, 420]] : [[60, 170, 300], [210, 130, 220], [330, 150, 380], [1150, 140, 340], [1290, 160, 250], [1440, 150, 400]]).forEach(function (b) {
       var y = gy - b[2];
       l2 += R(b[0], y, b[1], b[2] + 80, 0, 'url(#in-glassd)') + R(b[0], y - 6, b[1], 8, 3, V('snow-shade'), O(0.7));
-      for (var i = 0; i < 6; i++) l2 += R(b[0] + 12 + rnd() * (b[1] - 34), y + 20 + rnd() * (b[2] - 40), 12, 16, 2, V('lamp'), O(0.6));
+      l2 += R(b[0], y, 7, b[2], 0, V('snow-shade'), O(0.14)) + R(b[0] + b[1] * 0.7, y, b[1] * 0.3, b[2], 0, V('night-900'), O(0.3));
+      for (var i = 0; i < 7; i++) l2 += R(b[0] + 12 + rnd() * (b[1] - 34), y + 20 + rnd() * (b[2] - 40), 12, 16, 2, V(i % 3 ? 'lamp' : 'lamp-deep'), O(f(0.35 + rnd() * 0.4)));
     });
-    l2 += R(-100, gy - 460, W + 200, 600, 0, V('night-600'), O(0.28));
+    var tx = P ? 826 : 1515, ty = gy - (P ? 420 : 400);
+    l2 += R(tx - 2, ty - 50, 4, 50, 0, V('board-dark')) + G({ 'class': 'fx-breathe' }, halo(tx, ty - 52, 46, 46, 0.9, 'red') + C(tx, ty - 52, 4.5, V('bad')));
+    l2 += R(-100, gy - 460, W + 200, 600, 0, V('night-600'), O(0.24)) + R(-100, gy - 260, W + 200, 300, 0, u('haze')) + halo(bx, gy - 60, W * 0.6, 230, 0.2);
     var x0 = bx - bw / 2, win = '', cols = P ? 5 : 6, cw = (bw - 40) / cols;
     for (var r = 0; top + 50 + r * 64 < gy - 70; r++) for (var k = 0; k < cols; k++) {
-      var on = rnd() > 0.28;
-      win += R(x0 + 24 + k * cw, top + 44 + r * 64, cw - 16, 40, 3, on ? 'url(#in-win)' : V('night-600'), { opacity: on ? 0.95 : 0.7 });
+      var v = rnd(), on = v > 0.28, wx = x0 + 24 + k * cw, wy = top + 44 + r * 64;
+      win += R(wx, wy, cw - 16, 40, 3, on ? (v > 0.5 ? 'url(#in-win)' : M('lamp-deep', 'night-900', 76)) : V('night-600'), { opacity: on ? 0.98 : 0.7 }) +
+        (on ? '' : Pa('M' + f(wx) + ' ' + wy + 'h' + f(cw * 0.4) + 'l' + f(-cw * 0.3) + ' 40H' + f(wx) + 'Z', V('snow-shade'), O(0.12)));
+      if (!k) win += R(x0, wy + 46, bw, 5, 2, V('snow'), O(0.4)) + R(x0, wy + 51, bw, 4, 0, V('night-900'), O(0.2));
     }
     var sw = P ? 600 : 560, fs = P ? 58 : 60;
-    var l3 = glow(bx, top - 60, sw * 0.8, 200, 0.4) +
+    var l3 = halo(bx, top - 110, sw * 0.8, 230, 0.75) +
       Pa('M' + (x0 + bw) + ' ' + top + 'L' + (x0 + bw + 50) + ' ' + (top + 24) + 'V' + (gy + 40) + 'H' + (x0 + bw) + 'Z', 'url(#in-glassd)') +
       lit(rr(x0, top, bw, gy - top + 60, 6), 'url(#in-glass)', null, 2.4) + win +
       Pa('M' + (x0 + 30) + ' ' + top + 'h' + bw * 0.35 + 'L' + x0 + ' ' + (top + bw * 0.9) + 'V' + (top + 40) + 'Z', V('snow'), O(0.06)) +
-      R(bx - 50, gy - 92, 100, 96, 4, 'url(#in-win)') + R(bx - 2, gy - 92, 4, 96, 0, V('lamp-deep')) + glow(bx, gy - 20, 200, 60, 0.6) +
+      halo(bx, (top + gy) / 2 + 30, bw * 0.8, (gy - top) * 0.62, 0.3) +
+      R(bx - 50, gy - 92, 100, 96, 4, 'url(#in-win)') + R(bx - 2, gy - 92, 4, 96, 0, V('lamp-deep')) + lit(rr(bx - 76, gy - 112, 152, 16, 5), u('metald'), null, 1.4) + R(bx - 78, gy - 118, 156, 9, 4.5, u('fur')) +
+      halo(bx, gy - 40, 150, 90, 0.7) +
       R(x0 - 8, top - 12, bw + 16, 20, 10, u('fur')) +
       R(bx - sw * 0.33, top - 70, 8, 64, 0, V('board-dark')) + R(bx + sw * 0.33 - 8, top - 70, 8, 64, 0, V('board-dark')) +
       lit(rr(bx - sw / 2, top - 168, sw, 104, 14), u('gold'), null, 2) + Pa(rr(bx - sw / 2 + 9, top - 159, sw - 18, 86, 9), 'url(#in-lbox)') +
       Tm(bx, top - 95, fs, 'NORTH POLE LTD', { fill: V('pole-red'), style: 'font-weight:900;letter-spacing:.03em' }) +
-      R(bx - sw / 2 + 14, top - 172, sw - 28, 12, 6, u('fur'));
-    var gnd = ao(bx + 20, gy + 8, bw * 0.7, 18, 0.55) + Pa('M-100 ' + (gy + 10) + 'C' + W * 0.25 + ' ' + (gy - 20) + ' ' + W * 0.6 + ' ' + (gy + 4) + ' ' + (W + 100) + ' ' + (gy - 16) + 'V' + (c.H + 300) + 'H-100Z', u('fur')) + glow(bx, gy + 30, 240, 34, 0.5);
-    var pine = function (x, y, h) {
-      var w = h * 0.42, s = ao(x, y, w * 0.8, 10, 0.5) + R(x - 8, y - 30, 16, 32, 3, V('wood-dark'));
-      for (var i = 0; i < 3; i++) { var ty = y - 20 - i * h * 0.28, tw = w * (1 - i * 0.24); s += lit('M' + (x - tw) + ' ' + ty + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x + tw) + ' ' + ty + 'Z', 'url(#in-pine)', null, 2.4) + Pa('M' + (x - tw * 0.5) + ' ' + (ty - h * 0.2) + 'L' + x + ' ' + (ty - h * 0.42) + 'L' + (x - tw * 0.1) + ' ' + (ty - h * 0.18) + 'Z', V('snow'), O(0.55)); }
-      return s;
-    };
+      R(bx - sw / 2 + 14, top - 172, sw - 28, 12, 6, u('fur')) + halo(bx, top + 4, bw * 0.6, 50, 0.5);
+    // snow: blue in the night, warm where the doorway and the windows spill onto it
+    var gnd = ao(bx + 20, gy + 8, bw * 0.7, 18, 0.55) + Pa('M-100 ' + (gy + 10) + 'C' + W * 0.25 + ' ' + (gy - 20) + ' ' + W * 0.6 + ' ' + (gy + 4) + ' ' + (W + 100) + ' ' + (gy - 16) + 'V' + (c.H + 300) + 'H-100Z', u('fur')) +
+      R(-100, gy - 20, W + 200, c.H, 0, M('night-600', 'snow-shade', 60), O(0.5)) + R(-100, gy + 10, W + 200, c.H - gy + 200, 0, 'url(#fx-fall)', O(0.5)) +
+      Pa('M' + (bx - 50) + ' ' + (gy + 2) + 'h100L' + (bx + 190) + ' ' + (gy + 90) + 'H' + (bx - 190) + 'Z', V('lamp'), O(0.1)) + halo(bx, gy + 34, bw * 0.95, 64, 0.6) +
+      Pa('M-100 ' + (gy + 76) + 'C' + W * 0.2 + ' ' + (gy + 40) + ' ' + W * 0.45 + ' ' + (gy + 96) + ' ' + W * 0.7 + ' ' + (gy + 60) + 'S' + W + ' ' + (gy + 50) + ' ' + (W + 100) + ' ' + (gy + 70) + 'V' + (gy + 80) + 'H-100Z', V('snow'), O(0.16));
+    var sx = bx - bw / 2 - (P ? 96 : 150);
+    gnd += cone(sx + 30, gy - 196, 26, 230, 236, 0.5) + halo(sx + 30, gy + 40, 150, 26, 0.7) + ao(sx, gy + 38, 26, 5, 0.5) + lit(rr(sx - 5, gy - 214, 10, 254, 4), u('metald'), null, 1.4) +
+      R(sx - 5, gy - 218, 52, 8, 4, u('metald')) + R(sx - 8, gy - 224, 58, 6, 3, u('fur')) + lit(rr(sx + 16, gy - 210, 28, 14, 5), u('gold'), null, 1.2) + bulb(sx + 30, gy - 196, 7, 0.8);
     var l4 = P ? pine(40, gy + 70, 380) + pine(860, gy + 90, 300) : pine(140, gy + 80, 380) + pine(1480, gy + 70, 320) + pine(1350, gy + 90, 220);
     return {
       m: G({ 'class': 'in-cam' }, G({ 'class': 'in-l0' }, l0) + G({ 'class': 'in-l1' }, l1) + G({ 'class': 'in-l2' }, l2) + G({ 'class': 'in-l3' }, l3 + gnd) + G({ 'class': 'in-l4' }, l4)) + (c.red ? '' : snow(W, c.H, P ? 60 : 120)),
@@ -345,16 +398,17 @@ window.NP = window.NP || {};
   // 3. The edict: the scroll unrolls down the table, the stamp slams
   function s3(c) {
     var P = c.P, W = c.W, H = c.H, s = '', cx = W / 2, wy = P ? 400 : 360;
-    s += R(-200, 0, W + 400, wy + 20, 0, 'url(#in-room)') + pendant(P ? 450 : 800, 40, 0.3);
+    s += R(-200, 0, W + 400, wy + 20, 0, 'url(#in-room)') + tex('mottle', -200, 0, W + 400, wy + 20, 0.6) + pendant(cx, 40, 0.3, wy - 40, W * 0.8);
     var row = [];
     for (var i = 0; i < 5; i++) row.push([cx + (i - 2) * (P ? 132 : 150), wy + 14, P ? 0.56 : 0.7, null, { noRest: true }]);
     var m = members(row);
-    s += m.b + R(-200, 0, W + 400, wy + 20, 0, V('night-600'), O(0.32));
-    s += Pa('M-200 ' + wy + 'H' + (W + 200) + 'V' + (H + 200) + 'H-200Z', 'url(#in-tbl)') + R(0, wy, W, 6, 0, V('lamp'), O(0.3)) +
-      E(cx, wy + 70, W * 0.4, 40, V('lamp'), O(0.1)) + R(0, wy + 4, W, 30, 0, V('night-900'), O(0.2));
+    s += m.b + R(-200, 0, W + 400, wy + 20, 0, V('night-600'), O(0.2));
+    // the table from above: long grain, one pool of lamplight, dark towards the edges
+    s += Pa('M-200 ' + wy + 'H' + (W + 200) + 'V' + (H + 200) + 'H-200Z', 'url(#in-tbl)') + tex('wood', -200, wy, W + 400, H - wy + 200, 0.8, { scale: 1.7 }) + R(-200, wy, W + 400, 6, 0, V('lamp'), O(0.35)) +
+      R(-200, wy + 4, W + 400, 30, 0, V('night-900'), O(0.2)) + pool(cx, wy + (P ? 420 : 300), W * 0.62, P ? 620 : 440, 0.5) + shd(-300, -300, W + 600, H + 600, 0.9);
     // the scroll
     var pw = P ? 600 : 480, ph = P ? 660 : 480, x0 = cx - pw / 2, y0 = wy + 34, k = P ? 1.2 : 1;
-    var paper = Pa(rr(x0, y0, pw, ph, 4), u('paper')) + R(x0, y0, pw, ph, 0, u('shadel'), O(0.35)) +
+    var paper = Pa(rr(x0, y0, pw, ph, 4), u('paper')) + tex('mottle', x0, y0, pw, ph, 0.18) + R(x0, y0, pw, ph, 0, u('shadel'), O(0.35)) + fall(x0, y0 + ph * 0.4, pw, ph * 0.6, 0.2) +
       Tm(cx, y0 + 108 * k, 78 * k, 'EDICT', { style: 'font-weight:900;letter-spacing:.14em' }) +
       R(cx - 120 * k, y0 + 132 * k, 240 * k, 4, 2, V('pole-red'), O(0.8)) +
       Tm(cx, y0 + 196 * k, 40 * k, 'CHRISTMAS WILL BE', { style: 'font-weight:800;letter-spacing:.04em' }) +
@@ -367,7 +421,7 @@ window.NP = window.NP || {};
       C(-90, -10, 5, V('paper')) + C(60, 22, 4, V('paper')) + C(110, -20, 3, V('paper')) + R(-40, 30, 30, 4, 2, V('paper')))));
     var clip = 'in-cl' + c.i;
     s += T('clipPath', { id: clip }, R(x0 - 60, y0 - 4, pw + 120, ph + 60, 0, V('ink')));
-    s += ao(cx, y0 + ph + 12, pw * 0.6, 14, 0.4);
+    s += ao(cx, y0 + ph + 12, pw * 0.6, 14, 0.4) + cast(cx + 14, y0 + ph * 0.55, pw * 0.66, ph * 0.62, 0.5);
     s += G({ 'clip-path': 'url(#' + clip + ')' }, G({ 'class': 'in-unroll' }, ao(cx + 10, y0 + 30, pw * 0.56, 22, 0.25) + paper + mark));
     var roll = function (y) { return ao(cx, y + 26, pw * 0.58, 8, 0.5) + lit(rr(x0 - 26, y - 20, pw + 52, 40, 20), u('paper'), null, 1.6) + R(x0 - 26, y + 4, pw + 52, 14, 7, V('paper-shade'), O(0.8)) + lit(rr(x0 - 46, y - 24, 26, 48, 10), u('gold'), null, 1.2) + lit(rr(x0 + pw + 20, y - 24, 26, 48, 10), u('gold'), null, 1.2); };
     s += G({ 'class': 'in-roll' }, roll(y0 + ph));
@@ -379,9 +433,9 @@ window.NP = window.NP || {};
       lit(rr(-26, -230, 52, 140, 16), u('wood'), null, 2) + lit(el(0, -262, 58, 50), u('wood'), null, 2.4) + E(-20, -282, 20, 11, V('lamp'), { opacity: 0.35, transform: 'rotate(-25 -20 -282)' }))));
     // Father Christmas reads it from the end of the table
     var fx = P ? 710 : 1360, fy = P ? 1450 : 935, fsc = P ? 1.55 : 1.7;
-    s += glow(fx, fy - 200, 260, 220, 0.3) + fc(fx, fy, fsc, { cls: 'in-fc3' });
+    s += pool(fx - 30, fy - 210, 300, 260, 0.4) + fc(fx, fy, fsc, { cls: 'in-fc3' });
     var ey = P ? 1410 : 900;
-    s += R(-100, ey, W + 200, 400, 0, 'url(#in-tblf)') + R(-100, ey, W + 200, 4, 0, V('lamp'), O(0.35));
+    s += R(-100, ey, W + 200, 400, 0, 'url(#in-tblf)') + tex('wood', -100, ey, W + 200, 400, 0.5, { scale: 2 }) + R(-100, ey, W + 200, 4, 0, V('lamp'), O(0.35));
     var pcx = P ? 450 : 800, pcy = P ? 760 : 620;
     return {
       m: G({ 'class': 'in-cam' }, G({ 'class': 'in-shake' }, s)),
@@ -433,16 +487,33 @@ window.NP = window.NP || {};
     s += G({ transform: 'scale(' + k + ')' }, Ln(d, V('snow'), 2.4, O(0.92)) + Ln('M20 150H200M20 146V154M200 146V154', V('lamp'), 1.6, O(0.8)));
     return s + Tx(10, h - 8, 11 * k, 'DRAWN BY: ELF', { fill: V('snow-shade'), style: 'font-family:var(--font-mono);font-weight:700' });
   }
+  // the workshop wall: upright planks in lamplight, darker towards the corners
+  function shop(W, h) {
+    var s = R(0, 0, W, h, 0, 'url(#in-warm)') + tex('wood', 0, 0, W, h, 0.75, { vertical: true, scale: 1.6 });
+    for (var i = 0; i < W; i += 120) s += R(i, 0, 4, h, 0, V('night-900'), O(0.16)) + R(i + 4, 0, 2, h, 0, V('lamp'), O(0.07));
+    return s + shd(-W * 0.15, -h * 0.2, W * 1.3, h * 1.4, 0.85);
+  }
+  // set dressing, kept soft: a shelf of half-made toys
+  function shelf(x, y, w) {
+    var t = function (n) { return M(n, 'wood-dark', 55); };
+    return G({ opacity: 0.85 }, cast(x + w / 2 + 12, y + 36, w * 0.56, 28, 0.5) +
+      R(x + 22, y - 46, 46, 46, 5, t('pole-red-dark')) + R(x + 22, y - 46, 46, 5, 2, V('lamp'), O(0.25)) + R(x + 40, y - 84, 40, 38, 5, t('gold-dark')) + R(x + 40, y - 84, 40, 5, 2, V('lamp'), O(0.25)) +
+      C(x + w * 0.52, y - 31, 31, t('pole-green-dark')) + E(x + w * 0.52 - 11, y - 44, 11, 7, V('lamp'), O(0.25)) +
+      Pa('M' + (x + w - 84) + ' ' + y + 'l24-96l24 96Z', t('board')) + Pa('M' + (x + w - 60) + ' ' + (y - 96) + 'l24 96h-12Z', V('night-900'), O(0.25)) +
+      R(x, y, w, 14, 3, u('woodd')) + R(x, y, w, 3, 1.5, V('lamp'), O(0.3)) + R(x + 26, y + 14, 10, 30, 0, V('wood-dark')) + R(x + w - 36, y + 14, 10, 30, 0, V('wood-dark')));
+  }
   // the drawing office: the elf designs, Father Christmas carries the work off to the AI
   function sD(c) {
     var P = c.P, W = c.W, H = c.H, s = '', fy = P ? 1400 : 790;
     var bx = P ? 400 : 620, bs = P ? 1.05 : 1.3, ex = P ? 190 : 340, es = P ? 2.3 : 1.95, lx = P ? 690 : 1230, ls = P ? 1.75 : 1.6;
     var lapX = lx + (P ? 76 : 70), lapY = fy - (P ? 190 : 170);
-    s += R(0, 0, W, fy, 0, 'url(#in-warm)');
-    for (var i = 0; i < W; i += 120) s += R(i, 0, 3, fy, 0, V('night-900'), O(0.08));
-    s += R(0, 96, W, 6, 0, V('lamp'), O(0.12)) + glow(bx - 40, fy - 300, P ? 520 : 640, P ? 500 : 420, 0.5);
-    s += R(0, fy - 8, W, H, 0, 'url(#in-tbl)') + R(0, fy - 8, W, H, 0, V('night-900'), O(0.3)) + R(0, fy - 8, W, 3, 0, V('lamp'), O(0.4));
-    s += pendant(bx - 60, P ? 40 : 30, 0.34);
+    var py = P ? 40 : 30;
+    s += shop(W, fy) + (P ? shelf(590, 690, 330) : shelf(1420, 330, 220)) + pool(bx - 40, fy - 300, P ? 520 : 640, P ? 500 : 420, 0.45);
+    // floorboards, lit under the lamp and falling away under the captions
+    s += R(0, fy - 8, W, H, 0, 'url(#in-tbl)') + R(0, fy - 8, W, H, 0, V('night-900'), O(0.3)) + tex('planks', 0, fy - 8, W, H - fy + 8, 0.5, { scale: 1.2 }) + R(0, fy - 8, W, 3, 0, V('lamp'), O(0.4)) +
+      pool(bx - 60, fy + 46, P ? 440 : 620, 70, 0.4) + fall(0, fy + 10, W, H - fy, 0.65);
+    s += pendant(bx - 60, py, 0.4, fy - py - 40, P ? 760 : 900, 30) + motes(bx - 300, py + 120, 520, fy - py - 300, 12, 7, { r: 2.2 });
+    s += cast(bx + 80 * bs, fy - 290 * bs, 250 * bs, 170 * bs, 0.4);
     // the pinned designs, which leave the wall one at a time
     var pins = P ? [[60, 300, -3], [340, 360, 2], [590, 280, -2]] : [[130, 160, -3], [870, 120, 2], [1140, 170, -2]], sw = P ? 250 : 230, sh = sw * 0.72;
     pins.forEach(function (p, n) {
@@ -507,9 +578,10 @@ window.NP = window.NP || {};
     var wx = P ? 70 : 150, wy = P ? 150 : 110, ww = P ? 380 : 420, wh = P ? 420 : 460;
     var kx = P ? 530 : 1200, ky = P ? 170 : 130, kw = P ? 280 : 240, kh = P ? 320 : 290;
     var dy = P ? 1190 : 712, fx = P ? 410 : 780, fsc = P ? 2.5 : 2.3;
-    s += R(0, 0, W, H, 0, 'url(#in-warm)');
-    for (var i = 0; i < W; i += 120) s += R(i, 0, 3, dy, 0, V('night-900'), O(0.08));
-    s += glow(fx - 120, dy - 360, P ? 520 : 640, P ? 520 : 460, 0.42);
+    var i;
+    // lamplight from up and to the left, off frame; he throws a shadow on the planks
+    s += shop(W, dy) + cone(fx - 330, -30, 220, P ? 620 : 760, dy + 30, 0.22, { skew: 300 }) + pool(fx - 60, dy - 330, P ? 480 : 600, P ? 520 : 440, 0.42) +
+      motes(fx - 360, 80, 460, dy - 240, 9, 11, { r: 2.2 }) + cast(fx + 70 * fsc, dy - 100 * fsc, 80 * fsc, 100 * fsc, 0.4, 8);
     // window
     var px0 = wx + 20, py0 = wy + 20, pw = ww - 40, ph = wh - 40;
     var roofs = function (col, op) { return Pa('M' + px0 + ' ' + (py0 + ph * 0.72) + 'L' + (px0 + pw * 0.2) + ' ' + (py0 + ph * 0.6) + 'L' + (px0 + pw * 0.4) + ' ' + (py0 + ph * 0.72) + 'V' + (py0 + ph * 0.66) + 'L' + (px0 + pw * 0.62) + ' ' + (py0 + ph * 0.52) + 'L' + (px0 + pw * 0.84) + ' ' + (py0 + ph * 0.66) + 'L' + (px0 + pw) + ' ' + (py0 + ph * 0.6) + 'V' + (py0 + ph) + 'H' + px0 + 'Z', col, { opacity: op }); };
@@ -518,7 +590,9 @@ window.NP = window.NP || {};
     seed = 19;
     for (i = 0; i < 14; i++) s += C(px0 + rnd() * pw, py0 + rnd() * ph * 0.5, 1 + rnd() * 1.5, V('snow'), O(0.7));
     s += C(px0 + pw * 0.75, py0 + ph * 0.2, 22, V('snow')) + C(px0 + pw * 0.75 + 8, py0 + ph * 0.2 - 5, 19, M('snow', 'night-600', 25)) + roofs(M('snow-shade', 'night-600', 55), 1);
-    s += G({ 'class': 'in-day', opacity: 0 }, R(px0, py0, pw, ph, 3, 'url(#in-day)') + glow(px0 + pw * 0.3, py0 + ph * 0.25, 120, 120, 0.9) + C(px0 + pw * 0.3, py0 + ph * 0.25, 26, V('lamp')) + roofs(V('snow'), 1));
+    s += pool(px0 + pw / 2, py0 + ph / 2, pw * 0.8, ph * 0.8, 0.3, 'cool');
+    s += G({ 'class': 'in-day', opacity: 0 }, R(px0, py0, pw, ph, 3, 'url(#in-day)') + glow(px0 + pw * 0.3, py0 + ph * 0.25, 120, 120, 0.9) + C(px0 + pw * 0.3, py0 + ph * 0.25, 26, V('lamp')) + roofs(V('snow'), 1) +
+      pool(px0 + pw / 2, py0 + ph / 2, pw * 0.95, ph * 0.95, 0.5));
     s += R(px0 + pw / 2 - 5, py0, 10, ph, 0, V('wood-dark')) + R(px0, py0 + ph / 2 - 5, pw, 10, 0, V('wood-dark')) + Pa('M' + px0 + ' ' + py0 + 'h' + pw * 0.4 + 'L' + px0 + ' ' + (py0 + ph * 0.5) + 'Z', V('snow'), O(0.07));
     s += ao(wx + ww / 2, wy + wh + 30, ww * 0.55, 10, 0.5) + lit(rr(wx - 16, wy + wh - 6, ww + 32, 28, 6), u('wood'), null, 1.6);
     // calendar
@@ -535,7 +609,8 @@ window.NP = window.NP || {};
     s += fc(fx, dy, fsc, { cls: 'in-fc4' });
     var lx = P ? 520 : 920, lw = P ? 280 : 240, lh = P ? 190 : 166, ly = dy - lh - 6;
     s += glow(fx + 40, dy - 220 * fsc / 2.3, 220, 190, 0.32, 1).replace('<ellipse', '<ellipse class="in-sglow"');
-    s += R(0, dy, W, 28, 0, u('desktop')) + R(0, dy, W, 3, 0, V('lamp'), O(0.4)) + R(0, dy + 28, W, H, 0, u('woodd')) + R(0, dy + 28, W, 18, 0, V('night-900'), O(0.3));
+    s += R(0, dy, W, 28, 0, u('desktop')) + tex('wood', 0, dy, W, 28, 0.7) + R(0, dy, W, 3, 0, V('lamp'), O(0.4)) + pool(fx - 60, dy + 14, P ? 400 : 560, 18, 0.5) +
+      R(0, dy + 28, W, H, 0, u('woodd')) + tex('wood', 0, dy + 28, W, H - dy, 0.8, { scale: 1.6 }) + R(0, dy + 28, W, 18, 0, V('night-900'), O(0.3)) + fall(0, dy + 28, W, H - dy - 28, 0.6);
     s += ao(lx + lw / 2, dy + 14, lw * 0.62, 8, 0.6) + Pa('M' + (lx - 14) + ' ' + (dy - 6) + 'H' + (lx + lw + 14) + 'L' + (lx + lw + 22) + ' ' + (dy + 12) + 'H' + (lx - 22) + 'Z', u('metald')) +
       lit(rr(lx, ly, lw, lh, 12), u('metal'), null, 2) + Pa('M' + (lx + 14) + ' ' + (ly + 8) + 'h' + lw * 0.3 + 'L' + (lx + 14) + ' ' + (ly + lh * 0.7) + 'Z', V('snow'), O(0.08)) +
       glow(lx + lw / 2, ly - 6, lw * 0.6, 26, 0.5, 1) + glow(lx + lw / 2, dy + 18, lw * 0.7, 18, 0.35, 1);
@@ -598,11 +673,11 @@ window.NP = window.NP || {};
     var t = ao(0, 0, 210, 14, 0.55);
     [-128, 128].forEach(function (wx) { t += R(wx - 7, -150, 14, 128, 4, u('metald')) + C(wx, -20, 20, M('ink', 'board-dark', 60)) + C(wx, -20, 8, u('metal')); });
     t += R(-160, -66, 320, 14, 6, u('metal')) + Pa('M168-160L182-162L246-92L232-86Z', u('metald')) + E(240, -88, 13, 10, V('ink'));
-    t += lit(rr(-172, -178, 344, 112, 12), u('metal'), null, 2) + R(-172, -78, 344, 12, 0, V('night-900'), O(0.25));
+    t += lit(rr(-172, -178, 344, 112, 12), u('metal'), null, 2) + txp('brush', rr(-172, -178, 344, 112, 12), 0.9) + R(-172, -78, 344, 12, 0, V('night-900'), O(0.25));
     t += lit(rr(-146, -166, 292, 82, 10), u('gold'), null, 1.4) + Pa(rr(-139, -159, 278, 68, 7), M('night-900', 'pole-green-dark', 70)) +
       Tm(0, -112, 42, 'TURN ON AI', { fill: V('paper'), style: 'font-weight:900;letter-spacing:.05em' });
     t += R(-180, -190, 360, 14, 7, M('board', 'snow', 66));
-    t += G({ 'class': 'in-gg', opacity: 0.45 }, E(0, -250, 190, 120, 'url(#in-gg)'));
+    t += G({ 'class': 'in-gg', opacity: 0.45 }, pool(0, -244, 380, 250, 0.9, 'green') + pool(0, 4, 330, 36, 0.7, 'green') + E(0, -250, 190, 120, 'url(#in-gg)'));
     t += lit(rr(-118, -222, 236, 34, 16), u('gold'), null, 1.6) + E(0, -222, 116, 18, M('gold', 'lamp', 55));
     t += G({ 'class': 'in-btn' }, lit('M-94-220C-94-306 94-306 94-220Z', 'url(#in-btn)', null, 2.6) + Pa('M40-286C70-276 92-252 94-220H66C66-246 58-268 40-286Z', V('night-900'), O(0.18)) +
       E(-38, -268, 28, 13, V('snow'), { opacity: 0.38, transform: 'rotate(-22 -38 -268)' }) + E(0, -220, 94, 10, V('pole-green-dark'), O(0.6)));
@@ -613,7 +688,7 @@ window.NP = window.NP || {};
     var P = c.P, tx = P ? 300 : 1010, ty = P ? 1540 : 880, ts = P ? 1.1 : 1.15, fsc = 1.7;
     var fx = tx + 230 * ts + 150, fy = ty;
     var room = boardroom(c, { noSlide: o.noSlide });
-    var s = (P ? at(0, -150, 1, room) : room) + glow(tx + 150, ty - 260, 520, 300, 0.25);
+    var s = (P ? at(0, -150, 1, room) : room) + pool(tx + 120, ty - 6, 560, 70, 0.3);
     s += G({ 'class': 'in-walk' }, trolley(tx, ty, ts) + fc(fx, fy, fsc, { legs: true, cls: 'in-fc5' }));
     var by = ty - 250 * ts;
     return { s: s, bx: tx, by: by, top: ty - 306 * ts, ts: ts };
@@ -649,7 +724,7 @@ window.NP = window.NP || {};
     var dw = P ? 660 : 520, dh = dw * 320 / 520, dx = (P ? 450 : 615) - dw / 2, dy0 = P ? 150 : 30;
     var dash = (NP.art && NP.art.titleDashboard || '').replace('<svg ', '<svg x="0" y="0" width="' + dw + '" height="' + f(dh) + '" ');
     var d = G({ 'class': 'in-dash' }, Ln('M' + f(dx + dw * 0.2) + ' -1200V' + (dy0 + 20) + 'M' + f(dx + dw * 0.8) + ' -1200V' + (dy0 + 20), M('board-dark', 'night-900', 50), 4) +
-      ao(dx + dw / 2, dy0 + dh + 30, dw * 0.45, 16, 0.4) + at(dx, dy0, 1, dash));
+      pool(dx + dw / 2, dy0 + dh / 2, dw * 0.85, dh * 1.05, 0.6, 'green') + ao(dx + dw / 2, dy0 + dh + 30, dw * 0.45, 16, 0.4) + at(dx, dy0, 1, dash));
     // the chair's hand comes in from above
     var hand = at(r.bx, r.top + 6, r.ts, G({ transform: 'rotate(32)' }, G({ 'class': 'in-press' }, lit(rr(-50, -1400, 100, 1330, 40), 'url(#in-suit)', null, 2.4) + Pa('M20-1400H50V-74H20Z', V('night-900'), O(0.22)) +
       lit(rr(-54, -92, 108, 30, 12), u('paper'), null, 1.4) + R(-54, -70, 108, 8, 0, V('paper-shade')) + lit(el(0, -40, 42, 32), 'url(#in-head)', null, 1.8) + lit(el(-4, -6, 15, 20), 'url(#in-head)', null, 1.4) + E(-14, -52, 14, 8, V('snow'), O(0.25)))));
@@ -707,13 +782,19 @@ window.NP = window.NP || {};
   function s7(c) {
     var P = c.P, W = c.W, H = c.H, s = '';
     var fy = P ? 1050 : 830;
-    s += R(0, 0, W, fy, 0, u('wall')) + G({ transform: 'scale(2)' }, R(0, 0, W / 2, fy / 2, 0, u('brick'), O(0.3)));
-    s += R(0, 40, W, 22, 11, u('pipe')) + R(0, 74, W, 14, 7, u('pipe')) + R(0, 0, W, fy, 0, M('night-600', 'basement', 50), O(0.22));
-    s += R(0, fy - 10, W, H, 0, u('floor')) + R(0, fy - 10, W, 3, 0, V('basement-light'), O(0.5));
+    // the same basement as the shift: painted brick, damp, service pipes under a dark ceiling, concrete floor
+    s += R(0, 0, W, fy, 0, u('wall')) + tex('brick', 0, 0, W, fy, 0.6, { scale: 2.3 }) + tex('mottle', 0, 0, W, fy, 0.6);
+    s += R(0, 0, W, 30, 0, M('basement', 'night-900', 35)) + R(0, 30, W, 60, 0, u('aov')) + R(0, 40, W, 22, 11, u('pipe')) + R(0, 74, W, 14, 7, u('pipe'));
+    for (var k = 150; k < W; k += 330) s += R(k, 36, 14, 30, 3, u('metald')) + R(k + 3, 70, 8, 22, 2, u('metald'));
+    s += R(0, 0, W, fy, 0, M('night-600', 'basement', 50), O(0.2));
+    s += R(0, fy - 10, W, H, 0, u('floor')) + tex('mottle', 0, fy - 10, W, H - fy + 10, 0.5) + R(0, fy - 10, W, 3, 0, V('basement-light'), O(0.5)) + R(0, fy - 7, W, 16, 0, u('aov'), O(0.5));
+    s += shd(-W * 0.15, -H * 0.1, W * 1.3, H * 1.2, 0.9);
     // door + stairs (upper right), warm light from the party upstairs
     var dX = P ? 760 : 1450, dY = P ? 110 : 40, dW = P ? 130 : 130, dH = P ? 220 : 230, N = 8, sx0 = P ? 740 : 1440, sy0 = dY + dH, sdx = P ? -27.5 : -35, sdy = ((fy - 10) - sy0) / N;
-    s += Pa('M' + dX + ' ' + sy0 + 'H' + (dX + dW) + 'L' + (sx0 + N * sdx + 200) + ' ' + (fy + 40) + 'H' + (sx0 + N * sdx - 160) + 'Z', V('lamp'), O(0.07));
-    s += R(dX - 12, dY - 12, dW + 24, dH + 12, 4, V('wood-dark')) + R(dX, dY, dW, dH, 2, 'url(#in-win)') + glow(dX + dW / 2, dY + dH / 2, 220, 200, 0.55) +
+    s += Pa('M' + dX + ' ' + sy0 + 'H' + (dX + dW) + 'L' + (sx0 + N * sdx + 200) + ' ' + (fy + 40) + 'H' + (sx0 + N * sdx - 160) + 'Z', V('lamp'), O(0.1));
+    // the party upstairs: warm light down the stairwell, into the cold
+    s += cone(dX + dW / 2, sy0 - 20, dW, P ? 460 : 560, fy - sy0 + 50, 0.5, { skew: N * sdx * 0.75 }) + pool(sx0 + N * sdx + 20, fy + 6, 330, 46, 0.45);
+    s += R(dX - 12, dY - 12, dW + 24, dH + 12, 4, V('wood-dark')) + R(dX, dY, dW, dH, 2, 'url(#in-win)') + pool(dX + dW / 2, dY + dH / 2, 280, 260, 0.75) +
       Pa('M' + (dX + dW) + ' ' + dY + 'L' + (dX + dW + 40) + ' ' + (dY + 20) + 'V' + (sy0 + 10) + 'L' + (dX + dW) + ' ' + sy0 + 'Z', u('woodd'));
     s += G({ 'class': 'in-cheer', opacity: 0.6 }, Tx(dX - 24, dY + 150, P ? 34 : 28, '(muffled cheering)', { 'text-anchor': 'end', fill: V('snow-shade'), style: 'font-style:italic;font-weight:600' }) +
       Ln('M' + (dX - 26) + ' ' + (dY + 170) + 'q10 10 0 20M' + (dX - 42) + ' ' + (dY + 164) + 'q16 16 0 32', V('lamp'), 3, O(0.6)));
@@ -727,12 +808,13 @@ window.NP = window.NP || {};
     s += R(dX - 40, sy0 - 6, W - dX + 80, 18, 4, u('wood'));
     var stx = sx0 + N * sdx;
     s += Pa('M' + (sx0 + 30) + ' ' + sy0 + 'L' + (stx + 10) + ' ' + (fy - 10) + 'H' + (stx + 60) + 'L' + (sx0 + 80) + ' ' + (sy0 + 10) + 'Z', u('woodd'));
-    for (var k = 1; k <= N; k++) s += ao(sx0 + k * sdx + 60, sy0 + k * sdy + 8, 70, 5, 0.4) + lit(rr(sx0 + k * sdx - 10, sy0 + k * sdy - 14, 140, 18, 4), u('wood'), null, 1.4);
+    for (k = 1; k <= N; k++) s += ao(sx0 + k * sdx + 60, sy0 + k * sdy + 8, 70, 5, 0.4) + lit(rr(sx0 + k * sdx - 10, sy0 + k * sdy - 14, 140, 18, 4), u('wood'), null, 1.4);
     s += Ln('M' + (sx0 + 100) + ' ' + (sy0 - 120) + 'L' + (stx + 70) + ' ' + (fy - 130), u('wood'), 10);
     for (k = 1; k < N; k += 2) s += R(sx0 + k * sdx + 64, sy0 + k * sdy - 134, 6, 120, 3, V('wood-dark'));
     // chute and the sacks
     var cX = P ? 50 : 100, cW = P ? 200 : 220, cY = P ? 560 : 300;
     var pile = P ? [[100, fy, 1, -8], [220, fy + 12, 1.05, 6], [320, fy - 2, 0.95, -4], [160, fy - 80, 0.95, 12], [270, fy - 76, 0.9, -10]] : [[160, fy, 1.05, -8], [290, fy + 6, 1.1, 6], [410, fy + 2, 0.95, -4], [220, fy - 84, 0.95, 12], [350, fy - 80, 0.9, -10]];
+    s += pool(pile[1][0], fy - 80, 330, 190, 0.3);
     pile.forEach(function (p, n) {
       s += G({ 'class': 'in-sk', 'data-h': f(p[1] - cY + 60) }, at(p[0], p[1], p[2] * (P ? 1.15 : 1), G({ 'class': 'in-sq' }, sack(p[3] * 2)) ));
     });
@@ -744,11 +826,15 @@ window.NP = window.NP || {};
     // the elf's desk, lamp, monitor
     var eX0 = P ? 40 : 470, eX1 = P ? 580 : 910, eT = P ? 1170 : 650, ex = P ? 200 : 590, es = P ? 1.3 : 1.25;
     var mX = P ? 320 : 690, mW = P ? 240 : 220, mY = eT - (P ? 210 : 196), mH = P ? 180 : 170;
-    s += glow((eX0 + eX1) / 2, eT - 60, 380, 260, 0.35);
+    // his work lamp: the one warm pool down here
+    var pX = P ? 330 : 610, pY = P ? 690 : 120;
+    s += pendant(pX, pY, 0.45, eT - pY - 20, P ? 600 : 640, P ? -60 : -10, 1) + pool((eX0 + eX1) / 2, eT - 90, 400, 280, 0.4) + motes(pX - 220, pY + 90, 400, eT - pY - 200, 10, 13, { r: 2 });
+    s += cast(ex - 90 * es, eT - 60, 80 * es, 120 * es, 0.35, -10);
     s += elf(ex, eT + 52, es);
-    s += glow(mX + 30, mY + mH / 2, 200, 160, 0.3, 1);
+    s += pool(mX + 30, mY + mH / 2, 220, 180, 0.34, 'cool');
     s += ao((eX0 + eX1) / 2, fy + 14, (eX1 - eX0) * 0.56, 16, 0.6) + Pa('M' + eX0 + ' ' + eT + 'H' + eX1 + 'L' + (eX1 + 12) + ' ' + (eT + 22) + 'H' + (eX0 - 12) + 'Z', u('desktop')) +
-      R(eX0 - 12, eT + 22, eX1 - eX0 + 24, (P ? 1420 : fy + 10) - eT - 22, 0, u('woodd')) + R(eX0 - 12, eT + 22, eX1 - eX0 + 24, 3, 0, V('lamp'), O(0.4)) + R(eX0 - 12, eT + 25, eX1 - eX0 + 24, 14, 0, V('night-900'), O(0.3));
+      tex('wood', eX0 - 12, eT, eX1 - eX0 + 24, 22, 0.7) + pool((eX0 + eX1) / 2, eT + 10, (eX1 - eX0) * 0.5, 14, 0.5) +
+      R(eX0 - 12, eT + 22, eX1 - eX0 + 24, (P ? 1420 : fy + 10) - eT - 22, 0, u('woodd')) + tex('wood', eX0 - 12, eT + 22, eX1 - eX0 + 24, (P ? 1420 : fy + 10) - eT - 22, 0.8, { scale: 1.4 }) + R(eX0 - 12, eT + 22, eX1 - eX0 + 24, 3, 0, V('lamp'), O(0.4)) + R(eX0 - 12, eT + 25, eX1 - eX0 + 24, 14, 0, V('night-900'), O(0.3));
     s += mitten(ex - 40 * es, eT + 10, es * 0.85, false) + mitten(ex + 44 * es, eT + 12, es * 0.85, true);
     s += ao(mX + mW / 2, eT + 6, mW * 0.4, 6, 0.6) + R(mX + mW / 2 - 14, mY + mH - 4, 28, eT - mY - mH + 6, 3, u('metald')) + E(mX + mW / 2, eT + 2, 60, 8, u('metald')) +
       lit(rr(mX, mY, mW, mH, 14), u('metald'), null, 1.8) + Pa(rr(mX + 12, mY + 12, mW - 24, mH - 24, 8), u('screen')) +
@@ -762,7 +848,7 @@ window.NP = window.NP || {};
     // Father Christmas: walking (stairs) and, after the cut, slumped at his crate desk by the rejects bay
     var kX0 = P ? 600 : 960, kX1 = P ? 870 : 1180, kT = P ? 1190 : 712, kx = (kX0 + kX1) / 2, fs = P ? 1.3 : 1.25;
     s += G({ 'class': 'in-fcs', opacity: 0 }, fc(kx, kT + 12, fs, { cls: 'in-fc7s' }) +
-      ao(kx, P ? 1430 : fy + 10, (kX1 - kX0) * 0.55, 12, 0.6) + lit(rr(kX0, kT, kX1 - kX0, (P ? 1440 : fy + 6) - kT, 6), u('wood'), null, 1.6) +
+      ao(kx, P ? 1430 : fy + 10, (kX1 - kX0) * 0.55, 12, 0.6) + lit(rr(kX0, kT, kX1 - kX0, (P ? 1440 : fy + 6) - kT, 6), u('wood'), null, 1.6) + txp('wood', rr(kX0, kT, kX1 - kX0, (P ? 1440 : fy + 6) - kT, 6), 0.8) +
       R(kX0, kT + 40, kX1 - kX0, 8, 0, V('wood-dark'), O(0.5)) + R(kX0, kT + 100, kX1 - kX0, 8, 0, V('wood-dark'), O(0.5)) +
       ao(kx + 10, kT + 2, 60, 5, 0.6) + Pa('M' + (kx - 44) + ' ' + kT + 'H' + (kx + 64) + 'L' + (kx + 56) + ' ' + (kT - 8) + 'H' + (kx - 36) + 'Z', u('metald')) +
       lit(rr(kx - 34, kT - 78, 86, 70, 7), u('metal'), null, 1.4) + glow(kx, kT - 90, 70, 30, 0.4, 1));
@@ -831,8 +917,12 @@ window.NP = window.NP || {};
     var W = c.W, H = c.H, logo = NP.art && NP.art.logo || '', m = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(logo), lw = m ? +m[1] : 800, lh = m ? +m[2] : 128;
     var tw = c.P ? 700 : 1120, th = tw * lh / lw, cy = c.P ? 760 : 450;
     seed = 23;
-    var s = R(0, 0, W, H, 0, 'url(#in-night)') + stars(W, 0, H * 0.7, 60) + glow(W / 2, cy, W * 0.55, H * 0.42, 0.3) +
-      Pa('M-50 ' + (H * 0.84) + 'C' + W * 0.3 + ' ' + (H * 0.8) + ' ' + W * 0.7 + ' ' + (H * 0.86) + ' ' + (W + 50) + ' ' + (H * 0.82) + 'V' + (H + 50) + 'H-50Z', u('fur'), O(0.9)) +
+    var hy = H * 0.84, hill = 'M-50 ' + hy + 'C' + W * 0.3 + ' ' + (H * 0.8) + ' ' + W * 0.7 + ' ' + (H * 0.86) + ' ' + (W + 50) + ' ' + (H * 0.82) + 'V' + (H + 50) + 'H-50Z';
+    // a sky worth the title: stars, aurora, a pale horizon; blue snow and far pines below
+    var s = R(0, 0, W, H, 0, 'url(#in-night)') + stars(W, 0, H * 0.7, 70) + aurora(W, H * (c.P ? 0.2 : 0.2)) + halo(W / 2, hy, W * 0.8, H * 0.3, 0.4, 'cool') +
+      halo(W / 2, cy, W * 0.6, H * 0.4, 0.55, 'cool') + halo(W / 2, cy + th * 0.3, tw * 0.4, th * 0.9, 0.3) +
+      (c.P ? pine(70, hy + 6, 250) + pine(830, hy + 2, 210) : pine(120, hy - 6, 270) + pine(275, hy - 14, 170) + pine(1490, hy - 4, 250) + pine(1345, hy + 4, 150)) + R(0, hy - 320, W, 340, 0, u('haze')) +
+      Pa(hill, u('fur')) + Pa(hill, M('night-600', 'snow-shade', 60), O(0.5)) + halo(W / 2, hy + 30, W * 0.5, 70, 0.3) + R(0, hy, W, H - hy, 0, 'url(#fx-fall)', O(0.5)) +
       G({ 'class': 'in-logo in-fb' }, at(W / 2 - tw / 2, cy - th / 2, 1, logo.replace('<svg ', '<svg x="0" y="0" width="' + tw + '" height="' + f(th) + '" ')));
     return {
       m: s + (c.red ? '' : snow(W, H, c.P ? 50 : 90)) + R(0, 0, W, H, 0, V('night-900'), { 'class': 'in-out', opacity: 0 }),
@@ -845,11 +935,12 @@ window.NP = window.NP || {};
   }
 
   /* ---------- storyboard (SPEC §3, locked) ---------- */
-  var MELT = '<span class="sr-only">a melting face</span><svg class="in-melt" viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
+  var MELT = '<svg class="in-melt" viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
     '<path d="M6 22a18 18 0 0 1 36 0c0 6-1 9 0 14 1 5-3 7-5 3-1-3-3-3-4 0-1 6-6 6-6 0-1-3-3-3-4 1-1 4-6 4-6-1 0-3-3-3-4 0-2 4-6 2-5-3 1-5-2-8-2-14z" fill="var(--gold)"/>' +
     '<path d="M30 6a18 18 0 0 1 12 16c0 6-1 9 0 14 1 5-3 7-5 3 0-8 0-22-7-33z" fill="var(--gold-dark)" opacity=".5"/>' +
     '<path d="M14 20q3-4 6 0M28 21q3-4 6 0" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>' +
     '<path d="M16 31q8 5 16-1" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="15" cy="12" rx="5" ry="3" fill="var(--lamp)" opacity=".7"/></svg>';
+  MELT = '<span class="sr-only">a melting face</span>' + MELT;
   var SC = [
     { d: 2000, b: s1, still: 1900, caps: [[150, 'nar', '', '1 December. Quarterly board meeting.']] },
     { d: 12000, b: s2, still: 10500, caps: [[900, 'say', 'Chair', '“Everyone’s doing AI.”'], [3600, 'say', 'Member 2', '“Our competitors are doing AI.”'], [6600, 'say', 'Father Christmas', '“We don’t have competitors.”'], [9300, 'say', 'Member 3', '“Exactly. Imagine if we did.”']] },

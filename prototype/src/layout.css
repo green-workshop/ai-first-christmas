@@ -253,3 +253,52 @@ html.touch p.tch, html.touch div.tch { display: block; }
 
 /* Why a gift was wrong, under its caption in the report */
 .rs-item .rs-why { display: block; margin-top: 3px; font-weight: 700; font-style: italic; color: var(--pole-red); }
+
+/* ---- Graphics pass: the game screen is one console. The two bays sit in a single steel bezel, and the belt bay is
+   drawn 100 units taller (800x400) so the hopper, the lamp and the gift's tag are inside the picture. ---- */
+body::before {   /* worn paint behind everything in the game; the title screen keeps its night sky */
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .55;
+  background: var(--fx-mottle, none) 0 0 / 640px 640px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 20%, transparent 90%); mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 20%, transparent 90%);
+}
+body.on-title::before { display: none; }
+body:not(.on-title) {
+  background:
+    radial-gradient(ellipse 60% 46% at 50% 46%, color-mix(in srgb, var(--lamp-deep) 13%, transparent), transparent 72%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, var(--basement-light), transparent 70%),
+    linear-gradient(180deg, var(--basement) 0%, var(--night-900) 100%);
+  background-color: var(--night-900);
+}
+.belt-panel { aspect-ratio: 800 / 400; }
+.belt-wrap { padding-top: 0; }
+.floor {
+  gap: 8px; padding: 8px 8px 0; border-radius: 22px; align-items: start;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--board) 46%, var(--board-dark)), var(--board-dark) 12%, color-mix(in srgb, var(--board-dark) 62%, var(--night-900)) 100%);
+  box-shadow:
+    inset 0 1.5px 0 color-mix(in srgb, var(--snow) 30%, transparent), inset 0 -2px 0 color-mix(in srgb, var(--night-900) 60%, transparent),
+    0 0 0 1.5px color-mix(in srgb, var(--night-900) 70%, transparent), 0 22px 44px -18px color-mix(in srgb, var(--night-900) 90%, transparent),
+    0 0 70px -20px color-mix(in srgb, var(--lamp) 26%, transparent);
+}
+.belt-panel, .desk-panel { border-radius: 14px; overflow: hidden; background: var(--night-900); }
+.belt-panel::after, .desk-panel::after {   /* the glass: an inner edge and a soft shadow all round */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--night-900) 80%, transparent), inset 0 3px 10px color-mix(in srgb, var(--night-900) 70%, transparent), inset 0 0 26px color-mix(in srgb, var(--night-900) 45%, transparent);
+}
+.desk-caption { z-index: 2; }
+.timerbar { left: 2%; right: 2%; bottom: 1px; }
+.floor.spot-desk .desk-panel { transform: none; filter: none; box-shadow: 0 0 0 2px var(--lamp), 0 0 26px color-mix(in srgb, var(--lamp) 55%, transparent); }
+@media (max-width: 760px) {
+  #screen-game .floor { gap: 5px; padding: 5px 5px 5px; border-radius: 16px; }
+  #screen-game .belt-wrap { padding-top: 0; }
+  #screen-game .belt-panel { aspect-ratio: 800 / 470; }   /* a taller bay on a phone: the tag is bigger there */
+  #screen-game .belt-panel, #screen-game .desk-panel { border-radius: 11px; }
+}
+
+/* Title backdrop: the workshop at night, full-bleed behind the title screen (the snow canvas falls in front of it) */
+#titleScene { position: fixed; inset: 0; z-index: 0; display: none; pointer-events: none; }
+body.on-title #titleScene { display: block; }
+#titleScene svg { display: block; width: 100%; height: 100%; }
+#screen-title { background: none; }
+#screen-title .title-strap { text-shadow: 0 1px 10px var(--night-900), 0 0 2px var(--night-900); }
+#screen-title .title-credit { color: var(--snow); opacity: .85; text-shadow: 0 1px 6px var(--night-900); }

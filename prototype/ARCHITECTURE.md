@@ -180,3 +180,23 @@ var ep = NP.epilogue.play(el, { pct, pileCount, adoption, reduced: bool, onFinal
 - The droid (`NP.art.droid`, `#droid`) lives in `#droidBay`, a fixed full-screen clip layer, so it can't add sideways scroll. It runs on `after()` and `trackAnim`, so pause holds it. `beginShift` and `beginChild` clear it.
 - Settings: "Skip cutscenes" turns itself on after the first complete shift. It skips the intro and the epilogue, but the E3 verdict line is still shown. Interludes are never skipped automatically.
 - `?skipintro=1` skips the intro in tests. `?rounds=N` stops after N rounds, for quick tests.
+
+---
+
+# Graphics pass: shared light and texture
+
+`src/fx.js` (`NP.fx`, ids and classes `fx-…`) is loaded straight after `icons.js`, before every scene file. The build order is now: JS icons, fx, ui-art, scene, interlude, intro, epilogue, content, engine. `promo/build.mjs` loads it too.
+
+- `NP.fx.ensure()` bakes six tiling textures once at load on a small canvas (no live filters) and registers them as SVG patterns: `fx-grain`, `fx-mottle`, `fx-wood` / `fx-woodv`, `fx-brush` / `fx-brushv`, `fx-brick`, `fx-planks`. The same tiles are set on `:root` as `--fx-<name>` for CSS backgrounds. Textures are alpha-only shade and light, so they sit on top of a surface's own fill.
+- Markup builders, all returning SVG strings in the caller's units: `tex`, `texPath`, `pool` (additive light), `cone` (a lamp's beam), `bulb`, `shade`, `fall`, `cast` (multiplied shadow) and `motes` (dust; still under reduced motion).
+- Light is added with `mix-blend-mode: screen` (class `fx-add`) and shadow with `multiply` (`fx-mul`). Large full-frame glows are cheaper unblended.
+
+## Game screen
+- The belt bay's SVG is `viewBox="0 -170 800 470"` with `preserveAspectRatio="xMidYMax slice"`. The engine's 800x300 gift lane is unchanged at the bottom; the bay is drawn 100 units taller on a wide screen (`.belt-panel` is 800/400) and 170 on a phone (800/470), so the hopper, the lamp and the gift's tag sit inside the picture. The ceiling group `.sc-ceil` is lifted 70 units by a media query on a phone.
+- `.floor` is one steel bezel holding both bays; `.belt-wrap` no longer has padding above the belt.
+- `NP.art.titleScene()` draws the title screen's backdrop into `#titleScene` (fixed, behind the snow canvas, shown only with `body.on-title`).
+
+## Art-review tools (`tests/`, PowerShell only)
+- `shot.mjs <outDir> [--phone]`: the game screen in a few seconds (belt, reject, rework, pack).
+- `cuts.mjs <outDir> [--only intro,interlude,epilogue,title] [--scene N] [--view desktop|phone|both] [--reduced]`: stills of the cutscenes by calling each player directly.
+- `gallery.mjs [--view …] [--only …] [--out dir]`: plays a whole shift with real keys and saves every screen.

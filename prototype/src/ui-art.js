@@ -204,4 +204,80 @@ window.NP = window.NP || {};
     return '<svg class="ico ico-' + name + '" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">' + b + '</svg>';
   };
   art.symbols = Object.keys(ICONS);
+
+  // ---- Title backdrop: the workshop at night, under an aurora. Full-bleed behind the title screen (ids ui-ts-*).
+  // The middle is kept calm for the logo and buttons; the workshop and the pines sit out at the sides.
+  art.titleScene = function () {
+    var FX = NP.fx, W = 1600, H = 1000, s = '', seed = 77, i;
+    if (FX) FX.ensure();
+    function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    function f(n) { return Math.round(n * 10) / 10; }
+    function mix(a, b, p) { return 'color-mix(in srgb,var(--' + a + ') ' + p + '%,var(--' + b + '))'; }
+    function P(d, fill, x) { return '<path d="' + d + '" fill="' + fill + '"' + (x || '') + '/>'; }
+    function pool(cx, cy, rx, ry, op, kind) { return FX ? FX.pool(cx, cy, rx, ry, op, kind) : ''; }
+    function pine(x, y, h, dim) {
+      var w = h * 0.4, p = '<ellipse cx="' + f(x + w * 0.5) + '" cy="' + y + '" rx="' + f(w * 1.1) + '" ry="' + f(h * 0.045) + '" fill="url(#ui-ts-ao)"/>' +
+        '<rect x="' + f(x - h * 0.025) + '" y="' + f(y - h * 0.1) + '" width="' + f(h * 0.05) + '" height="' + f(h * 0.1) + '" fill="var(--wood-dark)"/>';
+      for (var k = 0; k < 3; k++) {
+        var ty = y - h * 0.06 - k * h * 0.27, tw = w * (1 - k * 0.24), top = ty - h * 0.42;
+        p += P('M' + f(x - tw) + ' ' + f(ty) + 'L' + f(x) + ' ' + f(top) + 'L' + f(x + tw) + ' ' + f(ty) + 'Z', 'url(#ui-ts-pine)') +
+          P('M' + f(x) + ' ' + f(top) + 'L' + f(x + tw) + ' ' + f(ty) + 'H' + f(x + tw * 0.2) + 'Z', 'var(--night-900)', ' opacity=".28"') +
+          P('M' + f(x - tw * 0.62) + ' ' + f(ty - h * 0.15) + 'L' + f(x) + ' ' + f(top) + 'L' + f(x + tw * 0.3) + ' ' + f(ty - h * 0.2) + 'L' + f(x - tw * 0.05) + ' ' + f(ty - h * 0.13) + 'L' + f(x - tw * 0.3) + ' ' + f(ty - h * 0.19) + 'Z', 'var(--snow)', ' opacity=".8"');
+      }
+      return '<g' + (dim ? ' opacity="' + dim + '"' : '') + '>' + p + '</g>';
+    }
+    var defs = '<defs>' +
+      '<linearGradient id="ui-ts-sky" x1="0" y1="0" x2="0" y2="1">' + sp('0', 'var(--night-900)') + sp('.5', mix('night-600', 'night-900', 62)) + sp('.8', 'var(--night-600)') + sp('1', mix('night-600', 'snow-shade', 72)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-aur" x1="0" y1="0" x2="0" y2="1">' + sp('0', '#8DF0C2', '0') + sp('.45', '#8DF0C2', '.5') + sp('.8', 'var(--pole-green)', '.2') + sp('1', 'var(--pole-green)', '0') + '</linearGradient>' +
+      '<linearGradient id="ui-ts-snow" x1="0" y1="0" x2="0" y2="1">' + sp('0', mix('snow-shade', 'snow', 70)) + sp('1', mix('night-600', 'snow-shade', 62)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-far" x1="0" y1="0" x2="0" y2="1">' + sp('0', mix('night-600', 'snow-shade', 70)) + sp('1', mix('night-600', 'night-900', 80)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-pine" x1=".1" y1="0" x2=".9" y2="1">' + sp('0', mix('pole-green', 'night-600', 62)) + sp('1', mix('pole-green-dark', 'night-900', 55)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-wall" x1=".1" y1="0" x2=".9" y2="1">' + sp('0', mix('wood', 'night-600', 48)) + sp('1', mix('wood-dark', 'night-900', 44)) + '</linearGradient>' +
+      '<linearGradient id="ui-ts-win" x1="0" y1="0" x2="0" y2="1">' + sp('0', 'var(--paper)') + sp('.4', 'var(--lamp)') + sp('1', 'var(--lamp-deep)') + '</linearGradient>' +
+      '<radialGradient id="ui-ts-ao">' + sp('0', 'var(--night-900)', '.5') + sp('1', 'var(--night-900)', '0') + '</radialGradient>' +
+      '<radialGradient id="ui-ts-vig" cx=".5" cy=".42" r=".75">' + sp('.5', 'var(--night-900)', '0') + sp('1', 'var(--night-900)', '.6') + '</radialGradient></defs>';
+    s += '<rect width="' + W + '" height="' + H + '" fill="url(#ui-ts-sky)"/>';
+    // stars, thinning towards the horizon
+    for (i = 0; i < 110; i++) { var sy = rnd() * rnd() * 620; s += '<circle cx="' + f(rnd() * W) + '" cy="' + f(sy) + '" r="' + f(0.7 + rnd() * 1.7) + '" fill="var(--snow)" opacity="' + f(0.25 + rnd() * 0.6) + '"/>'; }
+    // aurora: two soft curtains, breathing slowly
+    s += '<g class="fx-add"><path class="fx-breathe" d="M-40 250C240 120 520 300 800 190C1080 90 1360 250 1640 150V330C1360 420 1080 280 800 370C520 470 240 300 -40 430Z" fill="url(#ui-ts-aur)" opacity=".42"/>' +
+      '<path class="fx-breathe" style="animation-delay:-2.3s" d="M-40 120C300 40 560 170 860 90C1160 20 1400 120 1640 60V190C1400 250 1160 150 860 220C560 300 300 180 -40 250Z" fill="url(#ui-ts-aur)" opacity=".26"/></g>';
+    // moon with its halo
+    s += pool(1300, 170, 230, 230, 0.5, 'cool') + '<circle cx="1300" cy="170" r="44" fill="var(--snow)"/><circle cx="1284" cy="158" r="9" fill="var(--snow-shade)" opacity=".35"/><circle cx="1314" cy="188" r="6" fill="var(--snow-shade)" opacity=".3"/><circle cx="1310" cy="152" r="4" fill="var(--snow-shade)" opacity=".25"/>';
+    // far range with snow caps, then haze
+    s += P('M-20 700L130 560L250 640L420 500L560 620L700 540L860 650L1010 520L1150 610L1290 500L1440 620L1620 540V760H-20Z', 'url(#ui-ts-far)') +
+      P('M420 500L470 545L440 552L405 590L380 566L350 590L390 526Z', 'var(--snow)', ' opacity=".5"') + P('M1010 520L1060 566L1030 570L1000 604L972 578L945 598L980 548Z', 'var(--snow)', ' opacity=".5"') +
+      P('M1290 500L1344 548L1312 556L1286 592L1256 562L1230 586L1262 530Z', 'var(--snow)', ' opacity=".5"') + P('M130 560L172 600L146 606L120 634L98 612L80 628L104 586Z', 'var(--snow)', ' opacity=".45"') +
+      '<rect y="560" width="' + W + '" height="220" fill="' + mix('night-600', 'snow-shade', 80) + '" opacity=".3"/>';
+    // back hill, with a far stand of pines
+    s += P('M-20 760C240 690 520 720 800 742C1080 764 1340 700 1620 736V1000H-20Z', mix('snow-shade', 'night-600', 62));
+    [[560, 742, 70], [610, 746, 92], [660, 748, 64], [960, 752, 80], [1010, 750, 58], [760, 745, 52]].forEach(function (p) { s += pine(p[0], p[1], p[2], 0.55); });
+    // the workshop, lit from inside, on the left
+    var bx = 14, by = 836;
+    s += pool(bx + 150, by + 20, 330, 90, 0.5) + '<ellipse cx="' + (bx + 160) + '" cy="' + (by + 4) + '" rx="210" ry="16" fill="url(#ui-ts-ao)"/>';
+    s += '<rect x="' + (bx + 214) + '" y="' + (by - 250) + '" width="34" height="80" fill="' + mix('wood-dark', 'night-900', 60) + '"/><rect x="' + (bx + 208) + '" y="' + (by - 258) + '" width="46" height="12" rx="4" fill="var(--snow)"/>';
+    [[236, -292, 20, 0.34], [252, -334, 28, 0.24], [276, -384, 38, 0.15]].forEach(function (p) { s += '<circle cx="' + (bx + p[0]) + '" cy="' + (by + p[1]) + '" r="' + p[2] + '" fill="var(--snow-shade)" opacity="' + p[3] + '"/>'; });
+    s += '<rect x="' + bx + '" y="' + (by - 150) + '" width="300" height="150" fill="url(#ui-ts-wall)"/>' + (FX ? FX.tex('wood', bx, by - 150, 300, 150, 0.5) : '') +
+      '<rect x="' + (bx + 210) + '" y="' + (by - 150) + '" width="90" height="150" fill="var(--night-900)" opacity=".28"/>';
+    s += P('M' + (bx - 30) + ' ' + (by - 140) + 'L' + (bx + 150) + ' ' + (by - 256) + 'L' + (bx + 330) + ' ' + (by - 140) + 'L' + (bx + 318) + ' ' + (by - 124) + 'L' + (bx + 150) + ' ' + (by - 232) + 'L' + (bx - 18) + ' ' + (by - 124) + 'Z', 'var(--snow)') +
+      P('M' + (bx + 150) + ' ' + (by - 256) + 'L' + (bx + 330) + ' ' + (by - 140) + 'L' + (bx + 318) + ' ' + (by - 124) + 'L' + (bx + 150) + ' ' + (by - 232) + 'Z', 'var(--snow-shade)', ' opacity=".7"') +
+      P('M' + (bx - 2) + ' ' + (by - 134) + 'L' + (bx + 150) + ' ' + (by - 232) + 'L' + (bx + 302) + ' ' + (by - 134) + 'Z', 'url(#ui-ts-wall)') +
+      '<circle cx="' + (bx + 150) + '" cy="' + (by - 176) + '" r="17" fill="url(#ui-ts-win)"/><rect x="' + (bx + 148.5) + '" y="' + (by - 193) + '" width="3" height="34" fill="var(--wood-dark)"/><rect x="' + (bx + 133) + '" y="' + (by - 177.5) + '" width="34" height="3" fill="var(--wood-dark)"/>';
+    [[34, 0], [108, 0], [232, 0]].forEach(function (w) {
+      var wx = bx + w[0], wy = by - 112;
+      s += '<rect x="' + (wx - 5) + '" y="' + (wy - 5) + '" width="54" height="64" rx="3" fill="var(--wood-dark)"/><rect x="' + wx + '" y="' + wy + '" width="44" height="54" fill="url(#ui-ts-win)"/>' +
+        '<rect x="' + (wx + 20.5) + '" y="' + wy + '" width="3" height="54" fill="var(--wood-dark)"/><rect x="' + wx + '" y="' + (wy + 24) + '" width="44" height="3" fill="var(--wood-dark)"/>' +
+        '<rect x="' + (wx - 8) + '" y="' + (wy + 56) + '" width="60" height="7" rx="3.5" fill="var(--snow)"/>' + pool(wx + 22, wy + 27, 70, 76, 0.55);
+    });
+    s += '<rect x="' + (bx + 168) + '" y="' + (by - 96) + '" width="48" height="96" rx="4" fill="var(--wood-dark)"/><rect x="' + (bx + 173) + '" y="' + (by - 91) + '" width="38" height="91" fill="' + mix('pole-red', 'night-900', 62) + '"/>' +
+      '<circle cx="' + (bx + 204) + '" cy="' + (by - 44) + '" r="3" fill="var(--gold)"/><circle cx="' + (bx + 192) + '" cy="' + (by - 72) + '" r="11" fill="none" stroke="' + mix('pole-green', 'lamp', 70) + '" stroke-width="5"/>';
+    // front snow, drifts and near pines
+    s += P('M-20 850C200 800 430 836 640 860C900 890 1180 820 1620 846V1000H-20Z', 'url(#ui-ts-snow)') +
+      P('M-20 850C200 800 430 836 640 860C520 862 300 838 -20 880Z', 'var(--snow)', ' opacity=".55"') + P('M1620 846C1400 826 1180 842 1000 870C1200 852 1420 848 1620 872Z', 'var(--snow)', ' opacity=".4"');
+    s += pool(bx + 190, by + 40, 280, 60, 0.42);
+    s += pine(1250, 872, 210) + pine(1392, 900, 330) + pine(1520, 880, 250) + pine(1150, 884, 130, 0.9) + pine(430, 884, 150, 0.9) + pine(1090, 868, 90, 0.8);
+    s += P('M-20 940C260 900 520 950 800 934C1080 918 1340 960 1620 926V1000H-20Z', mix('snow', 'snow-shade', 60)) + '<rect y="900" width="' + W + '" height="100" fill="' + mix('night-600', 'night-900', 60) + '" opacity=".25"/>';
+    s += '<rect width="' + W + '" height="' + H + '" fill="url(#ui-ts-vig)"/>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' + defs + s + '</svg>';
+  };
 })(window.NP);

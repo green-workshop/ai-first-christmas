@@ -6,6 +6,8 @@
 .in-fb { transform-box: fill-box; transform-origin: 50% 50%; }
 .in-btn, .in-sq, .in-stsq { transform-box: fill-box; transform-origin: 50% 100%; }
 .in-red .sc-rig { transition: none; }
+.in-red .fx-mote { animation: none; opacity: var(--o, .5); }
+.in-red .fx-breathe { animation: none; }
 
 /* lens: vignette (§9.3) and static grain */
 .in-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 78% 72% at 50% 45%, transparent 60%, color-mix(in srgb, var(--night-900) 45%, transparent)); }
@@ -35,3 +37,12 @@
   .in-skip { font-size: .9375rem; }
   .in-hint { max-width: 40%; }
 }
+
+/* Framing: the whole picture always fits. On a window wider than the art (16:10 landscape, 1:2 portrait) the scene keeps its
+   shape in the middle and its side edges melt into the dark, instead of the top and bottom being cropped away. */
+.in-scene.in-l { width: min(100%, 160vh); width: min(100%, 160dvh); margin-inline: auto; }
+.in-scene.in-p { width: min(100%, 52vh); width: min(100%, 52dvh); margin-inline: auto; }
+.in-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; display: none;
+  background: linear-gradient(90deg, var(--night-900), transparent 5%, transparent 95%, var(--night-900)); }
+@media (min-aspect-ratio: 33/20) { .in-scene.in-l::after { display: block; } }
+@media (min-aspect-ratio: 11/20) and (max-aspect-ratio: 9/10) { .in-scene.in-p::after { display: block; } }
