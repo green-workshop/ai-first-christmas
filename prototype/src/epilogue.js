@@ -37,6 +37,20 @@ window.NP = window.NP || {};
     for (i = 1; i <= n; i++) { var r = f(Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]) * 0.62); d += 'A' + r + ' ' + r + ' 0 0 1 ' + f(pts[i][0]) + ' ' + f(pts[i][1]); }
     return d + 'Z';
   }
+  // shared light, shade and material textures (fx.js): beams and pools are additive, shade multiplies, nothing runs a live filter
+  var FX = NP.fx;
+  // a wall or floor from y0 down: its gradient, then a baked material over it (k scales the tile)
+  function surf(y0, h, grad, tex, k, o, cls) {
+    return R(-400, y0, 2000, h, 0, grad, cls ? { 'class': cls } : null) + FX.tex(tex, -400, y0, 2000, h, o, { scale: k }) + (tex === 'brick' ? FX.tex('mottle', -400, y0, 2000, h, 0.55) : '');
+  }
+  // a band right across the frame
+  function B(y, h, fill, o) { return R(-400, y, 2000, h, 0, fill, o && op(o)); }
+  function shadeP(x, y) { return 'M' + (x - 34) + ' ' + (y + 30) + 'Q' + x + ' ' + (y - 14) + ' ' + (x + 34) + ' ' + (y + 30) + 'Z'; }
+  // a heavy curtain: folds are tone breaks, the hem scallops
+  function drape(x, y, w, h) {
+    return P('M' + x + ' ' + y + 'h' + w + 'v' + h + 'q' + f(-w / 6) + ' 9 ' + f(-w / 3) + ' 0t' + f(-w / 3) + ' 0t' + f(-w / 3) + ' 0Z', 'url(#ep-drape)') +
+      R(x + w * 0.24, y, w * 0.12, h, 0, V('night-900'), op(0.24)) + R(x + w * 0.6, y, w * 0.14, h, 0, V('night-900'), op(0.24)) + R(x + w * 0.06, y, w * 0.08, h, 0, V('lamp'), op(0.1)) + R(x + w * 0.44, y, w * 0.07, h, 0, V('lamp'), op(0.08));
+  }
   var seed = 11;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
 
@@ -65,6 +79,7 @@ window.NP = window.NP || {};
     lg('bp', M('good', 'night-600', 42), M('night-600', 'night-900', 62)) +
     lg('autumn', M('lamp', 'lamp-deep', 60), M('lamp-deep', 'pole-red-dark', 70), 0, 1) +
     lg('box', M('paper-shade', 'wood', 55), M('wood', 'wood-dark', 70)) +
+    lg('drape', M('pole-red-dark', 'board-dark', 52), M('pole-red-dark', 'night-900', 36), 1, 0) +
     '</defs>';
 
   /* ---------- copy ---------- */
@@ -109,8 +124,8 @@ window.NP = window.NP || {};
   function table(x0, x1, y, depth, W) {
     return ao((x0 + x1) / 2, y + depth + 6, (x1 - x0) * 0.55, 18, 0.6) +
       P('M' + x0 + ' ' + y + 'H' + x1 + 'L' + (x1 + 30) + ' ' + (y + depth) + 'H' + (x0 - 30) + 'Z', 'url(#ep-table)') +
-      R(x0, y, x1 - x0, 2.5, 0, V('lamp'), op(0.45)) +
-      R(x0 - 30, y + depth, x1 - x0 + 60, 400, 0, 'url(#ep-tablef)') + R(x0 - 30, y + depth, x1 - x0 + 60, 3, 0, V('lamp'), op(0.3)) +
+      R(x0, y, x1 - x0, 2.5, 0, V('lamp'), op(0.45)) + FX.pool(W / 2 - (W > 600 ? 180 : 0), y + depth * 0.55, W > 600 ? 210 : 190, depth * 0.8, 0.5) + (W > 600 ? FX.pool(W / 2 + 180, y + depth * 0.55, 210, depth * 0.8, 0.5) : '') +
+      R(x0 - 30, y + depth, x1 - x0 + 60, 400, 0, 'url(#ep-tablef)') + FX.tex('woodv', x0 - 30, y + depth, x1 - x0 + 60, 400, 0.3) + R(x0 - 30, y + depth, x1 - x0 + 60, 3, 0, V('lamp'), op(0.3)) +
       R(x0 - 30, y + depth + 3, x1 - x0 + 60, 16, 0, V('night-900'), op(0.25)) +
       // brass company plaque on the table front
       G('translate(' + W / 2 + ' ' + (y + depth + 74) + ')', R(-130, -26, 260, 52, 10, 'url(#ep-gold)') + R(-124, -20, 248, 40, 6, M('board-dark', 'gold-dark', 80)) +
@@ -125,18 +140,33 @@ window.NP = window.NP || {};
     s += R(x + w / 2 - 4, y, 8, h, 0, 'url(#ep-metal)') + R(x, y + h * 0.48, w, 8, 0, 'url(#ep-metal)');
     return s;
   }
-  function pendant(x, y, gy, shade) {
-    return E(x, gy, 300, 170, 'url(#ep-glow)', op(0.34)) + (shade ? R(x - 1, -400, 2, y + 400, 0, V('night-900'), op(0.7)) +
-      lit('M' + (x - 34) + ' ' + (y + 30) + 'Q' + x + ' ' + (y - 14) + ' ' + (x + 34) + ' ' + (y + 30) + 'Z', 'url(#ep-gold)', 1.5) +
-      E(x, y + 30, 26, 5, V('lamp')) + C(x, y + 34, 26, 'url(#ep-glow)') : '');
+  // a pendant lamp: its pool, its beam (drawn here, so call it behind the actors), then the brass shade and the bulb
+  function pendant(x, y, gy, shade, o) {
+    o = o || {};
+    var top = shade ? y + 31 : y;
+    return FX.pool(x, gy, 310, 200, 0.4) + FX.cone(x, top, shade ? 50 : 90, o.w || 520, (o.h || gy + 90) - top, o.op || 0.36, { skew: o.skew == null ? 30 : o.skew }) +
+      (shade ? R(x - 1, -400, 2, y + 400, 0, V('night-900'), op(0.7)) + lit(shadeP(x, y), 'url(#ep-gold)', 1.5) +
+        P('M' + (x + 10) + ' ' + (y + 10) + 'Q' + (x + 26) + ' ' + (y + 18) + ' ' + (x + 34) + ' ' + (y + 30) + 'H' + (x + 16) + 'Z', V('night-900'), op(0.22)) +
+        E(x, y + 30, 26, 5, V('lamp')) + FX.bulb(x, y + 33, 8, 0.8) : '');
   }
   function room(W, H, wide, winInner, wr) {
-    var s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-wall)');
-    for (var x = wide ? 40 : 20; x < W; x += wide ? 160 : 110) s += R(x, wide ? 330 : 300, 2, 600, 0, V('night-900'), op(0.25));
-    s += R(-400, wide ? 324 : 294, W + 800, 6, 0, V('board'), op(0.4));
+    // plaster above the rail, upright panelling below it
+    var ry = wide ? 324 : 294, s = surf(-400, H + 800, 'url(#ep-wall)', 'mottle', 1, 0.6) + FX.tex('woodv', -400, ry, W + 800, H, 0.32);
+    for (var x = wide ? 40 : 20; x < W; x += wide ? 160 : 110) s += R(x, ry + 6, 2, 600, 0, V('night-900'), op(0.3)) + R(x + 2, ry + 6, 1.5, 600, 0, V('snow'), op(0.05));
+    s += B(ry, 6, V('board'), 0.4) + B(ry, 1.5, V('snow-shade'), 0.3) + B(ry + 6, 14, 'url(#fx-rise)', 0.7);
     wr = wr || (wide ? [70, 54, 290, 220] : [24, 300, 128, 110]);
-    s += win(wr[0], wr[1], wr[2], wr[3], winInner);
-    s += wide ? pendant(430, 30, 430, 1) + pendant(790, 30, 430, 1) : pendant(225, 0, 420, 0);
+    var wcx = wr[0] + wr[2] / 2;
+    // moonlight: a cool wash around the window and a shaft off it
+    s += FX.pool(wcx, wr[1] + wr[3] / 2, wr[2] * 0.85, wr[3] * 0.9, 0.42, 'cool') + win(wr[0], wr[1], wr[2], wr[3], winInner);
+    if (wide) {
+      // curtains on a brass pole, and the founder's portrait (a board member, naturally)
+      s += R(wr[0] - 58, wr[1] - 36, wr[2] + 116, 8, 4, 'url(#ep-gold)', op(0.8)) + drape(wr[0] - 50, wr[1] - 30, 56, wr[3] + 78) + drape(wr[0] + wr[2] - 6, wr[1] - 30, 56, wr[3] + 78) +
+        G({ opacity: 0.82 }, ao(612, 226, 70, 12, 0.5) + R(552, 80, 116, 140, 5, 'url(#ep-gold)') + R(561, 89, 98, 122, 2, M('board-dark', 'night-900', 50)) +
+          P('M574 211V190C574 170 590 162 610 162S646 170 646 190V211Z', M('board', 'board-dark', 45)) + P('M604 164H616L613 186L610 190L607 186Z', V('pole-red-dark')) +
+          E(610, 138, 18, 21, M('board', 'snow', 72)) + E(604, 129, 6, 4, V('snow'), op(0.3)) + R(561, 89, 98, 3, 1, V('night-900'), op(0.4)));
+    }
+    s += FX.cone(wcx, wr[1] + wr[3] + 10, wr[2], wr[2] * 1.5, 280, 0.2, { skew: wr[2] * 0.5, cool: true }) + FX.shade(-80, -60, W + 160, H + 120, 0.75);
+    s += wide ? pendant(430, 30, 430, 1) + pendant(790, 30, 430, 1) + FX.motes(330, 90, 560, 300, 10, 3) : pendant(225, -40, 420, 0, { w: 470 }) + FX.motes(90, 60, 270, 320, 7, 3);
     return s;
   }
   // green enamel dashboard: big value, a meter that overruns past 100% (SPEC §9.8 plates)
@@ -245,23 +275,34 @@ window.NP = window.NP || {};
     return s;
   }
   function basement(W, H, wide, n) {
-    var s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)');
     var fy = wide ? 520 : 470, py = wide ? 548 : 506, px = wide ? 290 : 128, fx = wide ? 850 : 225, dy = wide ? 476 : 590, ds = wide ? 1.22 : 0.72;
-    s += R(-400, 22, W + 800, 16, 8, 'url(#ep-metal)') + R(-400, 24, W + 800, 3, 0, V('snow-shade'), op(0.25));
-    s += win(wide ? 120 : 280, wide ? 80 : 70, wide ? 150 : 100, wide ? 90 : 70);
-    s += E(wide ? 200 : 330, fy, 260, 50, 'url(#ep-cool)', op(0.5));
-    s += R(-400, fy, W + 800, 600, 0, 'url(#ep-floor)', { 'class': 'ep-flr' }) + R(-400, fy, W + 800, 2, 0, V('lamp-deep'), op(0.3));
+    var wx = wide ? 120 : 280, wy = wide ? 80 : 70, ww = wide ? 150 : 100, wh = wide ? 90 : 70, lx = fx + 184 * ds, ly = dy - 126 * ds, i;
+    // the desk bay from the shift: brick, damp, service pipes under the ceiling, all of it gone cold and blue
+    var s = surf(-400, fy + 400, 'url(#ep-bwall)', 'brick', wide ? 0.8 : 0.62, 0.5) + B(-400, fy + 400, V('night-600'), 0.16) + B(0, 96, 'url(#fx-rise)', 0.85);
+    s += R(-400, 22, W + 800, 16, 8, 'url(#ep-metal)') + FX.tex('brush', -400, 22, W + 800, 16, 0.6) + B(24, 3, V('snow-shade'), 0.25) + R(-400, 46, W + 800, 8, 4, M('board', 'night-900', 42));
+    for (i = 70; i < W; i += 230) s += R(i, 19, 10, 38, 2, M('board-dark', 'night-900', 60));
+    // a riser with its valve, and the shift lamp, switched off
+    var rx = wide ? 694 : 408, ux = wide ? 586 : 196, uy = wide ? 92 : 236, pc = M('board', 'night-900', 40);
+    s += R(rx, 54, 15, fy - 54, 0, pc) + R(rx + 2, 54, 3.5, fy - 54, 0, V('snow'), op(0.14)) + R(rx + 10.5, 54, 4.5, fy - 54, 0, V('night-900'), op(0.3)) +
+      L('M' + (rx - 9) + ' ' + f(fy * 0.56) + 'h33M' + (rx + 7.5) + ' ' + f(fy * 0.56 - 16) + 'v32', M('board-dark', 'night-900', 70), 3.2) + C(rx + 7.5, fy * 0.56, 16, 'none', { stroke: pc, 'stroke-width': 5 }) +
+      R(ux - 1, 54, 2, uy - 46, 0, V('night-900'), op(0.7)) + P(shadeP(ux, uy), M('pole-green-dark', 'night-900', 46)) + E(ux, uy + 30, 26, 5, M('board-dark', 'night-900', 55));
+    // the moon through the high window: a cold shaft down onto the rejects
+    s += FX.pool(wx + ww / 2, wy + wh / 2, ww * 1.05, wh * 1.2, 0.55, 'cool') +
+      win(wx, wy, ww, wh, C(wx + ww * 0.74, wy + wh * 0.3, 9, V('snow'), op(0.9)) + C(wx + ww * 0.74 + 4.5, wy + wh * 0.3 - 2.5, 8.4, M('night-600', 'night-900', 42))) +
+      FX.cone(wx + ww / 2, wy + wh + 10, ww, wide ? 480 : 330, fy + 50 - wy - wh, 0.5, { skew: px - wx - ww / 2 + (wide ? 60 : 20), cool: true }) + FX.shade(-60, -40, W + 120, H + 80, 0.8);
+    s += surf(fy, 600, 'url(#ep-floor)', 'mottle', 1.3, 0.9, 'ep-flr') + B(fy, 2, V('snow-shade'), 0.22) + B(fy + 2, 14, 'url(#fx-rise)', 0.6) +
+      FX.pool(px + (wide ? 30 : 0), fy + 40, wide ? 310 : 190, 44, 0.42, 'cool') + FX.cast(px + (wide ? 150 : 90), py - 70, wide ? 170 : 110, wide ? 90 : 64, 0.5);
     s += G({ 'class': 'ep-sign', transform: 'translate(' + (px - 70) + ' ' + (wide ? 170 : 112) + ') rotate(-3)' }, R(0, 0, 140, 40, 3, 'url(#ep-paper)') + R(62, -6, 16, 10, 1, V('paper-shade'), op(0.9)) +
       Tx(70, 28, 22, 'REJECTS', { 'text-anchor': 'middle', fill: V('ink-soft'), 'font-weight': 800, 'letter-spacing': '.08em' }));
     s += G('translate(' + px + ' ' + py + ')', n ? pile(n, wide ? 72 : 52, 7, py - (wide ? 222 : 164)) : ao(0, 4, 90, 10, 0.3) + Tx(0, -10, 18, '(empty)', { 'text-anchor': 'middle', fill: V('snow-shade'), 'font-weight': 700 }));
-    // the desk lamp: the only warm light down here
-    s += E(fx - 40, dy - 50, 400, 230, 'url(#ep-glow)', op(0.5));
+    // the desk lamp, the only warm light down here: on the wall behind him, then down across his back and the tickets
+    s += FX.pool(lx - 70 * ds, ly + 50 * ds, 330 * ds, 240 * ds, wide ? 0.55 : 0.4) + FX.cast(fx - 120 * ds, dy + 96 * ds, 300 * ds, 22 * ds, 0.55);
     s += G({ 'class': 'ep-desk', transform: 'translate(' + fx + ' ' + dy + ') scale(' + ds + ')' }, fcAsleep(wide ? 100 : 92) +
       G('translate(184 -30)', ao(0, 0, 40, 6) + R(-4, -96, 8, 96, 4, 'url(#ep-metal)') + lit('M-40 -96Q-34 -134 0 -136Q34 -134 40 -96Z', 'url(#ep-green)', 1.5) + E(0, -96, 34, 6, V('lamp')) +
         C(0, -92, 40, 'url(#ep-glow)') + E(0, 0, 34, 6, 'url(#ep-metal)')) +
       G('translate(-186 -22)', ao(0, 0, 20, 4) + R(-13, -30, 26, 30, 5, V('pole-green')) + R(-13, -30, 9, 30, 4, V('snow'), op(0.12)) + E(0, -30, 13, 3.5, M('pole-green', 'snow', 70)) + E(0, -29.6, 10.5, 2.4, V('wood-dark')) +
         L('M13 -24C24 -24 24 -8 13 -9', M('pole-green', 'night-900', 70), 4.5)));
-    return s;
+    return s + FX.cone(lx - 6 * ds, ly + 2 * ds, 56 * ds, 300 * ds, 124 * ds, 0.34, { skew: -150 * ds }) + FX.pool(lx - 100 * ds, dy - 12 * ds, 200 * ds, 30 * ds, 0.5) + FX.bulb(lx, ly + 2 * ds, 7 * ds, 0.7);
   }
   /* ---------- E3 props ---------- */
   function letter(w, h) {
@@ -369,34 +410,53 @@ window.NP = window.NP || {};
   var TERMS = ['Role: designing new toys and training', 'the AI on them. Also checking the gifts,', "since you're there.", 'All designs remain the property of the AI.', 'Mittens not provided.'];
   /* ---------- scenes ---------- */
   function svg(W, H, inner) {
-    return '<svg class="ep-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="ep-cam" style="transform-origin:' + W / 2 + 'px ' + H * 0.55 + 'px">' + inner + '</g></svg>';
+    return '<svg class="ep-svg ' + (W > H ? 'ep-wd' : 'ep-nr') + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="ep-cam" style="transform-origin:' + W / 2 + 'px ' + H * 0.55 + 'px">' + inner + '</g></svg>';
   }
   function sceneSVG(k, o, wide) {
     var W = wide ? 1200 : 450, H = wide ? 675 : 800, s = '', ad = Math.round(+o.adoption || 100);
     var xs = wide ? [360, 480, 600, 720, 840] : [65, 145, 225, 305, 385], ty = wide ? 450 : k === 'e1' ? 430 : k === 'bad' ? 610 : 570, ms = wide ? 1 : 0.74;
     var dW = wide ? 310 : 300, dH = wide ? 200 : 186, dpos = wide ? 'translate(830 60)' : 'translate(75 74)';
-    if (k === 'jobless') return svg(W, H, basement(W, H, wide, o.pileCount) + G({ 'class': 'ep-keep' }, wide ? box(650, 612, 1.1) + elf(536, 620, 1.2, { sad: 1 }) : box(344, 728, 0.9) + elf(116, 730, 0.92, { sad: 1 })));
+    if (k === 'jobless') return svg(W, H, basement(W, H, wide, o.pileCount) + (wide ? FX.cast(470, 626, 120, 15, 0.6) + FX.cast(600, 616, 96, 12, 0.5) : FX.cast(70, 736, 84, 12, 0.6) + FX.cast(308, 732, 80, 10, 0.5)) + G({ 'class': 'ep-keep' }, wide ? box(650, 612, 1.1) + elf(536, 620, 1.2, { sad: 1 }) : box(344, 728, 0.9) + elf(116, 730, 0.92, { sad: 1 })));
     if (k === 'autumn') {
-      var fyA = wide ? 560 : 610;
-      s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)') + E(wide ? 860 : 225, 240, 420, 300, 'url(#ep-glow)', op(0.3));
-      var wa = wide ? [720, 70, 330, 300] : [70, 432, 310, 124];
-      s += R(wa[0] - 10, wa[1] - 10, wa[2] + 20, wa[3] + 20, 12, 'url(#ep-metal)') + R(wa[0], wa[1], wa[2], wa[3], 4, 'url(#ep-autumn)');
+      var fyA = wide ? 560 : 610, wa = wide ? [720, 70, 330, 300] : [70, 432, 310, 124], acx = wa[0] + wa[2] / 2, aby = wa[1] + wa[3], pa = acx - wa[2] * 0.95, pb = acx + wa[2] * 0.1;
+      // a plaster wall going dark, and the low sun: it washes the wall round the frame before anything else
+      s = surf(-400, H + 800, 'url(#ep-bwall)', 'mottle', 1, 0.45) + FX.shade(-80, -60, W + 160, H + 120, 0.7) + FX.pool(acx, wa[1] + wa[3] / 2, wa[2] * (wide ? 2 : 1.4), wa[3] * (wide ? 1.8 : 3), 0.8) + FX.pool(acx - wa[2] * 0.3, aby, wa[2] * 2.2, wa[3] * (wide ? 1.5 : 3), 0.3);
+      if (wide) s += R(wa[0] - 76, wa[1] - 38, wa[2] + 152, 8, 4, 'url(#ep-gold)', op(0.85)) + drape(wa[0] - 70, wa[1] - 32, 58, wa[3] + 92) + drape(wa[0] + wa[2] + 12, wa[1] - 32, 58, wa[3] + 92);
+      s += R(wa[0] - 14, wa[1] - 6, wa[2] + 34, wa[3] + 30, 14, V('night-900'), op(0.3)) + R(wa[0] - 10, wa[1] - 10, wa[2] + 20, wa[3] + 20, 12, 'url(#ep-metal)') + R(wa[0], wa[1], wa[2], wa[3], 4, 'url(#ep-autumn)') +
+        C(wa[0] + wa[2] * 0.24, wa[1] + wa[3] * 0.8, wa[3] * 0.34, 'url(#fx-hot)', { opacity: 0.8, 'clip-path': 'url(#ep-wclip)' }) +
+        P('M' + wa[0] + ' ' + aby + 'v' + f(-wa[3] * 0.14) + 'q' + f(wa[2] * 0.2) + ' ' + f(-wa[3] * 0.1) + ' ' + f(wa[2] * 0.45) + ' ' + f(-wa[3] * 0.03) + 't' + f(wa[2] * 0.55) + ' ' + f(-wa[3] * 0.05) + 'V' + aby + 'Z', M('pole-red-dark', 'lamp-deep', 60), op(0.55));
       s += L('M' + (wa[0] + wa[2] * 0.3) + ' ' + (wa[1] + wa[3]) + 'C' + (wa[0] + wa[2] * 0.32) + ' ' + (wa[1] + wa[3] * 0.6) + ' ' + (wa[0] + wa[2] * 0.2) + ' ' + (wa[1] + wa[3] * 0.4) + ' ' + (wa[0] + wa[2] * 0.1) + ' ' + (wa[1] + wa[3] * 0.2) + 'M' + (wa[0] + wa[2] * 0.3) + ' ' + (wa[1] + wa[3] * 0.6) + 'C' + (wa[0] + wa[2] * 0.4) + ' ' + (wa[1] + wa[3] * 0.4) + ' ' + (wa[0] + wa[2] * 0.5) + ' ' + (wa[1] + wa[3] * 0.25) + ' ' + (wa[0] + wa[2] * 0.56) + ' ' + (wa[1] + wa[3] * 0.1), V('wood-dark'), 7);
       s += '<clipPath id="ep-wclip"><rect x="' + wa[0] + '" y="' + wa[1] + '" width="' + wa[2] + '" height="' + wa[3] + '"/></clipPath><g clip-path="url(#ep-wclip)">';
       for (var li = 0; li < 7; li++) s += G('translate(' + f(wa[0] + wa[2] * (0.1 + li * 0.13)) + ' ' + f(wa[1] + wa[3] * 0.3) + ')', P('M0 -7C6 -5 8 2 0 8C-8 2 -6 -5 0 -7Z', li % 2 ? V('lamp-deep') : V('pole-red'), { 'class': 'ep-leaf', style: '--d:-' + (li * 0.57).toFixed(2) + 's' }));
       s += '</g>';
       s += R(wa[0] + wa[2] / 2 - 4, wa[1], 8, wa[3], 0, 'url(#ep-metal)') + R(wa[0], wa[1] + wa[3] * 0.48, wa[2], 8, 0, 'url(#ep-metal)');
-      s += R(-400, fyA, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fyA, W + 800, 2, 0, V('lamp-deep'), op(0.3));
+      s += R(wa[0] - 24, aby + 10, wa[2] + 48, 11, 3, 'url(#ep-wood)') + R(wa[0] - 24, aby + 10, wa[2] + 48, 2, 1, V('lamp'), op(0.7)) + R(wa[0] - 16, aby + 21, wa[2] + 32, 8, 0, 'url(#fx-rise)', op(0.6));
+      // boards, a skirting, then the shaft and the window's own shape thrown across the floor
+      s += B(fyA - 14, 14, M('wood-dark', 'night-900', 50)) + B(fyA - 14, 1.6, V('lamp-deep'), 0.35) +
+        surf(fyA, 600, 'url(#ep-floor)', 'planks', wide ? 1.1 : 0.8, 0.42) + B(fyA, 2, V('lamp-deep'), 0.3) + B(fyA + 2, 14, 'url(#fx-rise)', 0.6) +
+        FX.cone(acx, aby, wa[2], wa[2] * 1.5, H - aby + 60, 0.42, { skew: -wa[2] * 0.6 }) +
+        P('M' + f(pa) + ' ' + (fyA + 8) + 'H' + f(pb) + 'L' + f(pb - 90) + ' ' + (H + 30) + 'H' + f(pa - 190) + 'Z', V('lamp'), { opacity: 0.3, 'class': 'fx-add' }) +
+        L('M' + f((pa + pb) / 2) + ' ' + (fyA + 8) + 'L' + f((pa + pb) / 2 - 140) + ' ' + (H + 30) + 'M' + f(pa - 60) + ' ' + f(fyA + (H - fyA) * 0.42) + 'H' + f(pb - 30), M('wood-dark', 'night-900', 45), 9, op(0.5)) +
+        FX.motes(acx - wa[2] * 0.8, aby - (wide ? 150 : 20), wa[2] * 1.1, wide ? 300 : 170, 10, 8, { r: 1.5 });
       var nw = wide ? 540 : 400, nh = nw * 0.74;
       s += G('translate(' + (wide ? 120 : 25) + ' ' + (wide ? 100 : 104) + ') rotate(-1.5 ' + nw / 2 + ' ' + nh / 2 + ')', G({ 'class': 'ep-letter' }, notice(nw, nh)));
-      s += wide ? wheelyBear(890, fyA + 34, 3.2) : wheelyBear(340, fyA + 58, 1.9);
+      s += (wide ? FX.cast(790, fyA + 58, 190, 20, 0.6) + wheelyBear(890, fyA + 34, 3.2) : FX.cast(280, fyA + 72, 110, 13, 0.6) + wheelyBear(340, fyA + 58, 1.9));
       return svg(W, H, s);
     }
     if (k === 'rehire') {
       var fyR = wide ? 568 : 708, cw = wide ? 370 : 400;
-      s = R(-400, -400, W + 800, H + 800, 0, 'url(#ep-bwall)') + E(wide ? 420 : 225, wide ? 300 : 520, 520, 330, 'url(#ep-glow)', op(0.55));
-      s += wide ? pendant(420, 20, 430, 1) : pendant(150, 372, 520, 0);
-      s += R(-400, fyR, W + 800, 600, 0, 'url(#ep-floor)') + R(-400, fyR, W + 800, 2, 0, V('lamp'), op(0.3));
+      // the workshop: brick, a tool board, a bench of half-made toys, and one pendant over the drawing board
+      var tc = M('board', 'basement', 52), th = M('wood', 'basement', 48), bx = 880, by = fyR - 94, bw = M('wood-dark', 'night-900', 55);
+      s = surf(-400, fyR + 400, 'url(#ep-bwall)', 'brick', wide ? 0.8 : 0.62, 0.5) + B(0, 90, 'url(#fx-rise)', 0.8);
+      if (wide) s += G('translate(62 96)', R(4, 6, 252, 172, 6, V('night-900'), op(0.35)) + R(0, 0, 252, 172, 6, M('wood-dark', 'basement', 52)) + FX.tex('wood', 0, 0, 252, 172, 0.6, { rx: 6 }) + R(0, 0, 252, 2.5, 1, V('lamp'), op(0.2)) +
+          R(38, 40, 9, 96, 3, th) + R(20, 30, 46, 19, 4, tc) + P('M100 42H184L196 72H100Z', tc) + R(80, 38, 24, 40, 7, th) + L('M222 52V138', tc, 9) + C(222, 44, 13, tc) + C(222, 37, 5.5, M('wood-dark', 'basement', 52))) +
+        ao(bx + 150, fyR + 3, 180, 10, 0.55) + R(bx + 14, by, 12, 94, 2, bw) + R(bx + 274, by, 12, 94, 2, bw) + R(bx + 10, fyR - 34, 280, 8, 2, bw) + R(bx, by, 300, 13, 3, M('wood', 'basement', 46)) + R(bx, by, 300, 2, 1, V('lamp'), op(0.28)) +
+        C(bx + 52, by - 17, 17, M('pole-red', 'basement', 46)) + R(bx + 92, by - 28, 28, 28, 4, M('gold', 'basement', 44)) + R(bx + 124, by - 20, 24, 20, 3, M('good', 'basement', 44)) +
+        P('M' + (bx + 92) + ' ' + (by - 28) + 'l14 -16l14 16Z', M('pole-green', 'basement', 46)) + R(bx + 196, by - 34, 44, 34, 5, M('wood', 'basement', 44));
+      s += E(wide ? 420 : 225, wide ? 300 : 560, 520, 330, 'url(#ep-glow)', op(0.26)) + FX.shade(-80, -60, W + 160, H + 120, 0.8);
+      s += surf(fyR, 600, 'url(#ep-floor)', 'planks', wide ? 1.1 : 0.7, 0.42) + B(fyR, 2, V('lamp'), 0.3) + B(fyR + 2, 14, 'url(#fx-rise)', 0.6);
+      s += wide ? FX.cast(540, fyR - 210, 250, 200, 0.42) + pendant(420, 20, 430, 1, { h: fyR + 40, w: 660, op: 0.44 }) + FX.pool(450, fyR + 30, 360, 36, 0.5) + FX.motes(300, 110, 280, 320, 9, 6) :
+        pendant(225, 430, 610, 1, { h: fyR + 50, w: 450, op: 0.44, skew: 12 }) + FX.pool(225, fyR + 30, 210, 30, 0.5) + FX.motes(120, 480, 210, 200, 7, 6);
       s += G('translate(' + (wide ? 782 : 25) + ' ' + (wide ? 78 : 122) + ') rotate(' + (wide ? 1.5 : -0.8) + ')', G({ 'class': 'ep-cert' }, contract(cw, TERMS)));
       var sleeve = function (a, b, c, d, k) { return L('M' + a + ' ' + b + 'Q' + ((a + c) / 2 + 12 * k) + ' ' + ((b + d) / 2 + 8 * k) + ' ' + c + ' ' + d, V('pole-green-dark'), 19 * k) + L('M' + a + ' ' + (b - 2) + 'Q' + ((a + c) / 2 + 11 * k) + ' ' + ((b + d) / 2 + 5 * k) + ' ' + c + ' ' + (d - 2), V('pole-green'), 13 * k); };
       s += wide ? drawingBoard(450, fyR, 0.86) + elf(232, fyR + 4, 1.24, { badge: 1, look: 5 }) + sleeve(278, fyR - 80, 344, fyR - 196, 1.5) + mitten(362, fyR - 200, 0.8) + bot(640, fyR + 6, 190, 'pad') :
@@ -432,6 +492,7 @@ window.NP = window.NP || {};
   NP.epilogue = {
     play: function (el, o) {
       o = o || {};
+      FX.ensure();
       var reduced = !!o.reduced || document.documentElement.classList.contains('reduced');
       var wide = (el.clientWidth || window.innerWidth) >= 640 && (el.clientWidth || window.innerWidth) >= (el.clientHeight || window.innerHeight) * 0.85;
       var b = band(o.pct), vk = ['good', 'mid', 'bad'][b], ad = Math.round(+o.adoption || 100), n = Math.max(0, Math.round(+o.pileCount || 0));

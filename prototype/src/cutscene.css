@@ -28,12 +28,75 @@
 @keyframes il-led { 50% { opacity: .25; } }
 @keyframes il-rh { to { transform: rotate(6deg); } }
 
+/* ---------- interlude sets: light, material and dressing (the base il-* look is in ui.css; fx.js bakes the --fx-* tiles) ---------- */
+.il { --k4: color-mix(in srgb,var(--night-900) 46%, transparent); --k7: color-mix(in srgb,var(--night-900) 72%, transparent); --k9: color-mix(in srgb,var(--night-900) 88%, transparent); --l5: color-mix(in srgb,var(--lamp) 50%, transparent); }
+.il-p, .il-set, .il-pool { position: absolute; pointer-events: none; }
+.il-p { overflow: visible; }
+.il-set, .il-pool { inset: 0; width: 100%; height: 100%; }
+/* beat 1: a wooden desk top under one lamp, dark in the far corners */
+.il .il-b1 { background:
+  repeating-linear-gradient(179.3deg, transparent 0 171px, var(--k4) 171px 173px, color-mix(in srgb,var(--lamp) 14%, transparent) 173px 174.5px, transparent 174.5px 177px),
+  var(--fx-wood) 0 0 / 760px 190px,
+  linear-gradient(160deg, color-mix(in srgb,var(--wood) 80%, var(--lamp-deep)), color-mix(in srgb,var(--wood-dark) 82%, var(--basement)) 78%); }
+.il .il-b1::before { content: none; }
+.il .il-b1::after { inset: 0; width: auto; height: auto; border-radius: 0; box-shadow: none; pointer-events: none;
+  background: radial-gradient(ellipse 88% 100% at 22% 14%, transparent 38%, var(--k4) 72%, var(--k9)); }
+.il-pool { background: radial-gradient(ellipse 60% 76% at 22% 16%, color-mix(in srgb,var(--lamp) 62%, transparent), color-mix(in srgb,var(--lamp-deep) 20%, transparent) 48%, transparent 76%); }
+.il-lamp { left: -78px; top: -88px; width: 290px; height: 290px; }
+.il-mug { right: 7%; top: 8%; width: 150px; height: 141px; }
+.il-pen { left: 5%; bottom: 12%; width: 230px; height: 44px; transform: rotate(-24deg); }
+.il .il-memo { box-shadow: 0 1px 0 var(--paper-shade), 5px 8px 10px var(--ui-sh2), 30px 46px 70px var(--k7); }
+.il .il-memo::before { background: linear-gradient(150deg, color-mix(in srgb,var(--lamp) 24%, transparent), transparent 42%, color-mix(in srgb,var(--paper-shade) 55%, transparent) 82%, color-mix(in srgb,var(--board) 26%, transparent)); }
+
+/* beat 2: the basement behind the monitor; a brushed bezel, the screen's glow on the wall and the desk */
+.il .il-b2 { background: var(--night-900); }
+.il .il-desk::before { box-shadow: 0 -16px 24px -8px var(--k7); background:
+  linear-gradient(color-mix(in srgb,var(--lamp) 62%, var(--wood)) 0 2px, transparent 2px),
+  var(--il-sheen, none),
+  radial-gradient(ellipse 30% 110% at 26% 0, var(--l5), transparent 72%),
+  linear-gradient(transparent 20px, var(--k4) 110px, var(--k9) 250px),
+  var(--fx-wood) 0 0 / 680px 170px,
+  linear-gradient(color-mix(in srgb,var(--wood) 84%, var(--lamp-deep)), color-mix(in srgb,var(--wood-dark) 84%, var(--basement)) 60%); }
+.il-only-mon .il-desk { --il-sheen: radial-gradient(ellipse 24% 80% at 50% 0, color-mix(in srgb,var(--snow-shade) 42%, transparent), color-mix(in srgb,var(--good) 14%, transparent) 55%, transparent 76%); }
+.il-mon { position: relative; }
+.il-mon::before { content: ""; position: absolute; z-index: -1; inset: -30% -26% -6%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb,var(--good) 36%, transparent), color-mix(in srgb,var(--night-600) 34%, transparent) 58%, transparent); }
+.il .il-scr { --bz: linear-gradient(150deg, color-mix(in srgb,var(--board) 78%, var(--snow)), var(--board-dark) 42%, color-mix(in srgb,var(--board-dark) 62%, var(--night-900))); border-color: transparent;
+  background:
+    linear-gradient(118deg, color-mix(in srgb,var(--snow) 5%, transparent) 0 24%, transparent 24.4%) padding-box,
+    radial-gradient(ellipse at 30% 20%, color-mix(in srgb,var(--night-600) 70%, var(--night-900)), var(--night-900) 80%) padding-box,
+    linear-gradient(150deg, color-mix(in srgb,var(--board) 60%, transparent), var(--k4)) border-box, var(--fx-brush) border-box, var(--bz) border-box;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--snow) 8%, transparent), inset 0 0 30px color-mix(in srgb,var(--good) 16%, transparent), 0 0 0 2px color-mix(in srgb,var(--board-dark) 70%, var(--night-900)), 14px 20px 30px var(--ui-sh2); }
+.il .il-neck { background: var(--fx-brush), linear-gradient(90deg, var(--board), var(--board-dark) 62%, color-mix(in srgb,var(--board-dark) 60%, var(--night-900))); }
+.il-note { position: absolute; right: -20px; top: -18px; width: 44px; height: 42px; border-radius: 1px 1px 3px; transform: rotate(7deg); box-shadow: 2px 4px 5px var(--ui-sh2);
+  background: repeating-linear-gradient(transparent 0 9px, color-mix(in srgb,var(--ink-soft) 55%, transparent) 9px 11px) 7px 9px / 28px 22px no-repeat, linear-gradient(160deg, color-mix(in srgb,var(--gold) 72%, var(--board)), color-mix(in srgb,var(--gold-dark) 70%, var(--board-dark))); }
+.il-kit { left: 50%; top: calc(100% - 46px); width: 900px; height: 130px; margin-left: -450px; }
+.il-only-board .il-kit, .il-only-board .il-wn { display: none; }
+.il .il-board { box-shadow: inset 0 2px 6px var(--ui-sh), 0 2px 0 var(--board-dark), 16px 24px 34px var(--k7); }
+
+/* beat 3: the edges of the floor fall away from the lamps */
+.il .il-b3::after { background: radial-gradient(ellipse 80% 78% at 50% 44%, transparent 52%, var(--k7)); }
+
+@media (max-width: 600px) {
+  .il-lamp { left: -96px; top: -104px; width: 230px; height: 230px; }
+  .il-mug { right: -30px; top: 3%; width: 112px; height: 105px; }
+  .il-pen { left: -30px; bottom: 6%; width: 180px; }
+  /* the monitor stands on his desk here too, not at the top of an empty wall */
+  .il-b2.il-only-mon { place-items: center; }
+  .il-only-mon .il-desk { height: auto; transform: translateY(9vh); }
+  .il-only-mon .il-desk::before, .il-only-mon .il-neck { display: block; }
+  .il-kit { top: calc(100% - 30px); width: 580px; height: 84px; margin-left: -290px; }
+  .il-note { right: -8px; top: -14px; width: 34px; height: 32px; }
+}
+
 /* ---------- epilogue ---------- */
 .ep { background: var(--night-900); transition: opacity 450ms var(--ease-in); }
 .ep-end { opacity: 0; }
 .ep-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .ep-sc { padding: 0; overflow: hidden; }
 .ep-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.ep-sc::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 82% 80% at 50% 46%, transparent 58%, var(--k7)); }
+.ep-slug { z-index: 1; }
 .ep-tx { font-family: var(--font-ui); }
 .ep-mono { font-family: var(--font-mono); }
 .ep-num { font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
@@ -85,3 +148,13 @@
   .ep-slug { left: 12px; top: 12px; max-width: calc(100% - 120px); font-size: var(--fs-caption); letter-spacing: .06em; }
   .ep .il-cap { font-size: 1.0625rem; }
 }
+
+/* Framing: the whole picture always fits its box. When the box is wider than the art (16:9 wide, 9:16 narrow) the picture
+   keeps its shape in the middle and its side edges melt into the dark, instead of the top and bottom being cropped away. */
+.ep-sc { container-type: size; }
+.ep-svg { margin: auto; }
+.ep-svg.ep-wd { max-width: calc(100cqh * 1200 / 675); }
+.ep-svg.ep-nr { max-width: calc(100cqh * 450 / 800); }
+.ep-sc::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, var(--night-900), transparent 5%, transparent 95%, var(--night-900)) center / calc(100cqh * 1200 / 675) 100% no-repeat; }
+.ep-sc:has(.ep-nr)::before { background-size: calc(100cqh * 450 / 800) 100%; }

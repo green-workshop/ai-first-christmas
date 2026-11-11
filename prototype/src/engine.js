@@ -846,6 +846,7 @@ window.NP = window.NP || {};
     if (NP.art) {
       if (NP.art.logo) { $("titleLogo").innerHTML = NP.art.logo; }
       if (NP.art.titleDashboard) { $("titleDash").innerHTML = NP.art.titleDashboard; }
+      if (NP.art.titleScene) { $("titleScene").innerHTML = NP.art.titleScene(); }
       $("btnPause").innerHTML = icon("pause");
       Array.prototype.forEach.call(document.querySelectorAll(".k-ico"), function (s) { s.innerHTML = icon(s.dataset.icon); });
     }

@@ -3,6 +3,7 @@
 window.NP = window.NP || {};
 (function (NP) {
   'use strict';
+  var FX = NP.fx;   // shared light and texture (fx.js loads first)
 
   /* ---------- tiny helpers ---------- */
   function reduced() { return document.documentElement.classList.contains('reduced'); }
@@ -112,18 +113,20 @@ window.NP = window.NP || {};
     '.reduced .sc-rig{transition:none}.reduced .sc-fade{transition:opacity 120ms}' +
     '.sc-txt{font-family:var(--font-ui);font-weight:700}' +
     '.sc-script{font-family:"Segoe Print","Bradley Hand","Noteworthy","Marker Felt","Chalkboard SE",var(--font-ui);font-weight:400}' +
-    '.sc-off{opacity:0}';
+    '.sc-off{opacity:0}' +
+    '@media (max-width:760px){.sc-ceil{transform:translateY(-70px)}}';
 
   function ensureDefs() {
+    FX.ensure();
     if (document.getElementById('sc-defs')) return;
     var d = document.createElement('div');
     d.innerHTML = '<svg id="sc-defs" xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" ' +
       'style="position:absolute;width:0;height:0;overflow:hidden"><style>' + CSS + '</style><defs>' + DEFS + '</defs></svg>';
     (document.body || document.documentElement).appendChild(d.firstChild);
   }
-  function mountSVG(el, vb, inner, cls) {
+  function mountSVG(el, vb, inner, cls, par) {
     ensureDefs();
-    el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="sc-svg ' + cls + '" viewBox="' + vb + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' + inner + '</svg>';
+    el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="sc-svg ' + cls + '" viewBox="' + vb + '" preserveAspectRatio="' + (par || 'xMidYMid meet') + '" aria-hidden="true" focusable="false">' + inner + '</svg>';
     return el.firstChild;
   }
   function measure(t, str) {
@@ -148,12 +151,31 @@ window.NP = window.NP || {};
     for (var bx = x + 70; bx < x + w; bx += 170) s += rect(bx, y - 2, 8, h + 4, 2, 'url(#sc-metald)');
     return s;
   }
-  function wallBase(w) {
-    return rect(0, 0, w, 300, 0, 'url(#sc-wall)') + rect(0, 0, w, 262, 0, 'url(#sc-brick)', { opacity: 0.32 }) +
-      pipeH(0, 8, w, 11) + pipeH(0, 24, w, 7);
+  // basement wall from y0 down to the floor: paint, brickwork with every brick its own tone, damp blotches,
+  // the ceiling's shadow, and two service pipes. k scales the bricks (the desk bay is drawn in larger units).
+  function wallBase(w, y0, k, noCeil) {
+    y0 = y0 || 0;
+    return rect(0, y0, w, 300 - y0, 0, 'url(#sc-wall)') + FX.tex('brick', 0, y0, w, 262 - y0, 0.5, { scale: k || 1 }) + FX.tex('mottle', 0, y0, w, 262 - y0, 0.55) + (noCeil ? '' : ceil(w, y0));
   }
-  function haze(w) { return rect(0, 0, w, 300, 0, M('night-600', 'basement', 50), { opacity: 0.3 }) + rect(0, 120, w, 142, 0, 'url(#sc-haze)'); }
-  function floor(w) { return rect(0, 262, w, 38, 0, 'url(#sc-floor)') + rect(0, 262, w, 2, 0, V('basement-light'), { opacity: 0.5 }); }
+  function ceil(w, y0) {
+    return rect(0, y0 - 80, w, 89, 0, M('basement', 'night-900', 35)) + rect(0, y0 + 9, w, 30, 0, 'url(#sc-aov)') +
+      pipeH(0, y0 + 17, w, 11) + rect(0, y0 + 28, w, 5, 0, V('night-900'), { opacity: 0.22 }) + pipeH(0, y0 + 35, w, 7);
+  }
+  function haze(w, y0) { y0 = y0 || 0; return rect(0, y0, w, 300 - y0, 0, M('night-600', 'basement', 50), { opacity: 0.16 }) + rect(0, 120, w, 142, 0, 'url(#sc-haze)', { opacity: 0.8 }); }
+  function floor(w) {
+    return rect(0, 262, w, 38, 0, 'url(#sc-floor)') + FX.tex('mottle', 0, 262, w, 38, 0.9) + rect(0, 262, w, 2, 0, V('basement-light'), { opacity: 0.6 }) +
+      rect(0, 264, w, 7, 0, 'url(#sc-aov)', { opacity: 0.5 });
+  }
+  // pendant work lamp: cord, enamel shade, hot bulb. Its beam is drawn by the caller, behind the actors.
+  function pendant(x, y, top, sc) {
+    sc = sc || 1;
+    return rect(x - 1, top, 2, y - top - 22 * sc, 0, M('board-dark', 'night-900', 60)) +
+      g({ transform: 'translate(' + x + ' ' + y + ') scale(' + sc + ')' },
+        rect(-5, -27, 10, 7, 2, 'url(#sc-metald)') +
+        lit('M-25 0C-25-13-15-21 0-21C15-21 25-13 25 0Z', 'url(#sc-green)', null, 1.3) + path('M6-20C17-17 25-11 25 0H13C13-8 10-15 6-20Z', V('night-900'), { opacity: 0.25 }) +
+        ell(0, 0, 25, 4.6, M('lamp', 'paper', 70)) + ell(0, 0.5, 17, 3, V('paper'))) +
+      FX.bulb(x, y + 2 * sc, 7 * sc, 0.8);
+  }
   function tick(s) { return line('M' + -9 * s + ' ' + 1 * s + 'L' + -3 * s + ' ' + 7 * s + 'L' + 9 * s + ' ' + -6 * s, V('ink'), 4.4 * s); }
   function cross(s) { return line('M' + -7 * s + ' ' + -7 * s + 'L' + 7 * s + ' ' + 7 * s + 'M' + 7 * s + ' ' + -7 * s + 'L' + -7 * s + ' ' + 7 * s, V('ink'), 4.4 * s); }
   function plate(x, y, w, h) { return lit(rr(x, y, w, h, 8), 'url(#sc-gold)', null, 1.4) + path(rr(x + 2.5, y + 2.5, w - 5, h - 5, 6), 'url(#sc-plate)'); }
@@ -180,21 +202,44 @@ window.NP = window.NP || {};
   }
 
   function beltMarkup() {
-    var s = wallBase(800);
-    // vertical pipe with valve, caged work lamp (key light, upper left)
-    s += rect(248, 0, 13, 224, 0, 'url(#sc-pipev)') + rect(246, 150, 17, 8, 2, 'url(#sc-metald)');
+    // The bay is drawn above the engine's 800x300 gift lane, so the hopper, the lamp and the gift's tag sit inside the picture:
+    // 100 units more on a wide screen, 170 on a phone (where the tag is taller). YT is the top of the art; the ceiling group
+    // sits at Y0 and CSS lifts it to YT on a phone.
+    var Y0 = -100, YT = -170;
+    var s = wallBase(800, YT, 1, true);
+    // vertical pipe with valve
+    s += rect(248, YT, 13, 224 - YT, 0, 'url(#sc-pipev)') + rect(246, 150, 17, 8, 2, 'url(#sc-metald)') + rect(246, Y0 + 46, 17, 8, 2, 'url(#sc-metald)');
     s += path('M254.5 94m-14 0a14 14 0 1 0 28 0a14 14 0 1 0-28 0Zm5 0a9 9 0 1 1 18 0a9 9 0 1 1-18 0Z', 'url(#sc-pipe)', { 'fill-rule': 'evenodd' }) +
       rect(253, 80, 3, 28, 1, V('board-dark')) + rect(240.5, 92.5, 28, 3, 1, V('board-dark'));
-    s += haze(800);
-    s += ell(520, 96, 360, 210, 'url(#sc-glow)', { opacity: 0.3 }) + ell(330, 34, 170, 120, 'url(#sc-glow)', { opacity: 0.2 });
-    s += rect(329, 0, 2, 30, 0, V('board-dark')) + circ(330, 40, 10, V('lamp')) + circ(330, 40, 22, 'url(#sc-glow)', { opacity: 0.8 }) +
-      line('M321 33Q330 26 339 33M320 40H340M321 47Q330 54 339 47M330 30V50', V('board-dark'), 1.6) + rect(323, 26, 14, 6, 2, 'url(#sc-metald)');
-    s += floor(800);
+    // the board's slide, taped up down here as a poster (kept dim: it is set dressing)
+    s += g({ transform: 'rotate(-2.5 196 -22)', opacity: 0.9 },
+      rect(162, -46, 74, 58, 2, V('night-900'), { opacity: 0.35 }) +
+      rect(160, -49, 74, 58, 2, M('paper', 'basement', 46)) + rect(160, -49, 74, 58, 2, 'url(#sc-shadel)', { opacity: 0.5 }) +
+      txt(168, -8, 30, 'AI', { fill: M('night-600', 'basement', 60), style: 'font-weight:900' }) +
+      line('M204 -3C219 -3 225 -17 226 -29', M('gold-dark', 'basement', 70), 3) +
+      path('M226 -42l6 12h-12z', M('pole-red', 'basement', 62)) +
+      rect(186, -53, 20, 7, 1, M('paper', 'gold', 60), { opacity: 0.55, transform: 'rotate(4 196 -50)' }));
+    // air grille and wall clock (five to midnight) on the right, cable run from the AI's cabinet
+    s += path(rr(626, -56, 84, 34, 4), 'url(#sc-metald)') + rect(631, -51, 74, 24, 2, V('night-900'), { opacity: 0.55 });
+    for (var gi = 0; gi < 5; gi++) s += rect(633, -48.5 + gi * 4.6, 70, 1.6, 0.8, V('board'), { opacity: 0.55 });
+    s += circ(752, -30, 21.5, V('night-900'), { opacity: 0.35 }) + lit(cd(751, -32, 20), 'url(#sc-metald)', null, 1.2) + circ(751, -32, 16.5, M('paper', 'basement', 52)) +
+      line('M751 -32L745.4 -41.8M751 -32L750.4 -40', V('ink'), 2) + circ(751, -32, 1.8, V('pole-red'));
+    s += line('M676 54C676 16 690 4 690 -22', V('night-900'), 4, { opacity: 0.55 }) + line('M684 54C690 20 700 6 700 -22', V('night-900'), 3, { opacity: 0.4 });
+    // duct from the ceiling into the hopper
+    s += rect(488, YT, 64, 20 - YT, 0, 'url(#sc-pipev)') + rect(497, YT, 5, 20 - YT, 0, V('snow'), { opacity: 0.13 }) +
+      rect(481, Y0 + 46, 78, 9, 3, 'url(#sc-metald)') + rect(481, -30, 78, 9, 3, 'url(#sc-metald)');
+    s += haze(800, YT);
+    // key light: a pendant up and to the left of the hopper. Its beam falls across the belt; dust hangs in it.
+    s += FX.pool(420, 96, 400, 230, 0.34) + FX.cone(330, -6, 46, 440, 268, 0.4, { skew: 46 }) + FX.pool(600, 20, 150, 100, 0.28);
+    s += FX.motes(250, 6, 280, 180, 12, 5, { r: 1.3 });
+    s += pendant(330, -8, YT, 1);
+    s += g({ 'class': 'sc-ceil' }, ceil(800, Y0));
+    s += floor(800) + FX.pool(396, 282, 250, 20, 0.34);
 
     // ---- packing chute (x 0..96) ----
     s += ao(50, 297, 66, 6, 0.55);
     s += lit(rr(-4, 104, 104, 200, 12), 'url(#sc-wood)');
-    s += rect(-4, 104, 104, 200, 0, 'url(#sc-shadel)', { opacity: 0.6 });
+    s += FX.texPath('woodv', rr(-4, 104, 104, 200, 12), 0.7) + rect(-4, 104, 104, 200, 0, 'url(#sc-shadel)', { opacity: 0.6 });
     s += path(rr(12, 122, 76, 116, 9), 'url(#sc-hole)');
     s += path('M12 132Q12 122 22 122H30V238H12Z', V('wood-dark'), { opacity: 0.55 });
     for (var i = 0; i < 6; i++) s += rect(15 + i * 12.4, 123, 10.6, 52 - (i % 2) * 6, 2, M('board-dark', 'night-900', 60), { opacity: 0.75 });
@@ -203,7 +248,7 @@ window.NP = window.NP || {};
     s += rect(-4, 238, 104, 3, 0, V('lamp'), { opacity: 0.25 });
     s += g({ 'class': 'sc-chglow sc-off' }, ell(50, 180, 66, 96, 'url(#sc-rgood)', { 'class': 'sc-chg-good' }) + ell(50, 180, 66, 96, 'url(#sc-rbad)', { 'class': 'sc-chg-bad' }));
     // sign
-    s += rect(30, 0, 3, 54, 0, V('board-dark')) + rect(128, 0, 3, 54, 0, V('board-dark'));
+    s += rect(30, YT, 3, 54 - YT, 0, V('board-dark')) + rect(128, YT, 3, 54 - YT, 0, V('board-dark'));
     s += plateQuiet(4, 50, 152, 48);
     s += txt(17, 84, 28, 'PACKING', { fill: SIGN_INK, 'letter-spacing': 1, style: 'font-weight:800' });
     // indicator light on the chute's lower panel, clear of the gift lane and the bubble
@@ -216,7 +261,7 @@ window.NP = window.NP || {};
     // ---- belt ----
     s += ao(450, 288, 390, 12, 0.6);
     [150, 330, 470, 610, 760].forEach(function (x) { s += rect(x, 256, 14, 40, 2, 'url(#sc-metald)') + rect(x - 4, 292, 22, 6, 2, V('board-dark')); });
-    s += lit(rr(92, 220, 712, 40, 6), 'url(#sc-metal)', null, 1.2);
+    s += lit(rr(92, 220, 712, 40, 6), 'url(#sc-metal)', null, 1.2) + FX.texPath('brush', rr(92, 220, 712, 40, 6), 0.8);
     s += rect(92, 220, 712, 4, 0, 'url(#sc-gold)') + rect(92, 224, 712, 8, 0, 'url(#sc-aov)') + rect(92, 254, 712, 6, 0, V('night-900'), { opacity: 0.3 });
     var rolls = '';
     for (var rx = 128; rx < 800; rx += 66) {
@@ -237,14 +282,15 @@ window.NP = window.NP || {};
     }
     s += g({ 'clip-path': 'url(#sc-beltclip)' }, g({ 'class': 'sc-treads' }, tr));
     s += rect(100, 196, 700, 2.5, 0, V('night-900'), { opacity: 0.4 }) + rect(100, 212.5, 700, 1.5, 0, V('snow'), { opacity: 0.18 });
-    s += ell(480, 205, 300, 12, 'url(#sc-glow)', { opacity: 0.22 });
+    s += FX.pool(450, 205, 250, 13, 0.4);
     s += circ(103, 209, 13.5, 'url(#sc-rubber)') + circ(103, 209, 6, 'url(#sc-metal)') + circ(101, 207, 2, V('snow'), { opacity: 0.4 });
     s += ao(520, 206, 70, 6, 0.35);
 
     // ---- AI hopper (mouth x=520, y≈118) ----
     var h = '';
     h += rect(492, -6, 56, 16, 3, 'url(#sc-pipev)');
-    h += lit(rr(416, -24, 208, 116, 22), 'url(#sc-metal)', null, 2.2);
+    h += lit(rr(416, -24, 208, 116, 22), 'url(#sc-metal)', null, 2.2) + FX.texPath('brush', rr(416, -24, 208, 116, 22), 0.8) +
+      path('M560 -24H602A22 22 0 0 1 624 -2V70A22 22 0 0 1 602 92H560Z', V('night-900'), { opacity: 0.16 });
     h += rect(416, 54, 208, 3, 0, V('board-dark'), { opacity: 0.5 }) + rect(416, 57, 208, 2, 0, V('snow'), { opacity: 0.15 });
     for (var k = 0; k < 8; k++) h += circ(432 + k * 25.5, 66, 2.6, V('board-dark')) + circ(431.4 + k * 25.5, 65.3, 1, V('snow'), { opacity: 0.5 });
     h += lit(rr(482, 10, 76, 38, 8), 'url(#sc-gold)', null, 1.2) + txt(520, 40, 28, 'AI', { 'text-anchor': 'middle', style: 'font-weight:900', 'letter-spacing': 2 });
@@ -260,12 +306,13 @@ window.NP = window.NP || {};
     h += ell(520, 117, 50, 8, M('board-dark', 'snow', 80)) + ell(520, 117.5, 45, 6, V('night-900'));
     // brain cabinet with the smug screen face
     h += line('M600 40C620 40 630 46 640 56', V('night-900'), 5, { opacity: 0.6 });
-    h += lit(rr(604, 52, 112, 124, 18), 'url(#sc-metal)', null, 2);
+    h += lit(rr(604, 52, 112, 124, 18), 'url(#sc-metal)', null, 2) + FX.texPath('brushv', rr(604, 52, 112, 124, 18), 0.8) +
+      path('M690 52H698A18 18 0 0 1 716 70V158A18 18 0 0 1 698 176H690Z', V('night-900'), { opacity: 0.18 });
     h += rect(612, 166, 96, 4, 2, V('night-900'), { opacity: 0.35 });
     h += circ(698, 66, 5, V('lamp')) + circ(698, 66, 12, 'url(#sc-glow)', { opacity: 0.6 });
     h += circ(620, 66, 2.5, V('board-dark')) + circ(634, 66, 2.5, V('board-dark'));
     h += path(rr(620, 106, 80, 58, 11), 'url(#sc-screen)');
-    h += ell(660, 135, 40, 30, 'url(#sc-glow)', { opacity: 0.22 });
+    h += FX.pool(660, 135, 62, 48, 0.42, null, { 'class': 'fx-add fx-breathe' });
     h += g({ 'class': 'sc-face sc-face-smug sc-fade' },
       path('M638 129A8 8 0 0 0 654 129Z', V('lamp')) + path('M666 129A8 8 0 0 0 682 129Z', V('lamp')) +
       line('M637 126L655 128M665 128L683 125', V('lamp'), 2.4) + line('M647 147Q662 153 676 143', V('lamp'), 3.4));
@@ -275,6 +322,8 @@ window.NP = window.NP || {};
       circ(645, 135, 4.5, V('lamp'), { 'class': 'sc-dot' }) + circ(660, 135, 4.5, V('lamp'), { 'class': 'sc-dot' }) + circ(675, 135, 4.5, V('lamp'), { 'class': 'sc-dot' }));
     h += path('M626 112Q626 109 630 109H662L640 140H626Z', V('snow'), { opacity: 0.07 });
     s += rig('sc-hopper', 520, 60, h);
+    // the room falls away into shadow above and below the lit lane
+    s += g({ 'class': 'sc-ceil' }, FX.fall(0, Y0, 800, 150, 0.7, true)) + FX.fall(0, 244, 800, 56, 0.3);
 
     // ---- barrier (hidden) ----
     var b = '';
@@ -299,7 +348,7 @@ window.NP = window.NP || {};
 
   NP.scene = NP.scene || {};
   NP.scene.mountBelt = function (el) {
-    var svg = mountSVG(el, '0 0 800 300', beltMarkup(), 'sc-belt');
+    var svg = mountSVG(el, '0 -170 800 470', beltMarkup(), 'sc-belt', 'xMidYMax slice');
     var treads = q(svg, '.sc-treads'), rolls = qa(svg, '.sc-roll').map(function (n) { return { n: n, c: +n.getAttribute('data-c') }; });
     var hop = q(svg, '.sc-hopper'), gear = q(svg, '.sc-gear'), bub = q(svg, '.sc-bubble'), bshape = q(svg, '.sc-bshape'), btxt = q(svg, '.sc-btxt');
     var lamp = q(svg, '.sc-lamp'), chg = q(svg, '.sc-chglow'), bar = q(svg, '.sc-barrier');
@@ -544,28 +593,30 @@ window.NP = window.NP || {};
   var FC_T = 'translate(252 100) scale(1.16) translate(-262 -104)';
   var LID = { x: 296, y: 146, w: 100, h: 69 };   // laptop lid (back towards us): the newest sticky goes here
   function deskMarkup() {
-    var s = wallBase(400);
-    // high basement window (cool exterior light), left of the lamp
-    s += path(rr(112, 22, 66, 50, 4), 'url(#sc-metald)') + path(rr(117, 26, 56, 42, 2), 'url(#sc-sky)') +
-      path('M117 68V60C122 56 128 58 133 55C140 52 148 57 156 54C162 52 168 56 173 54V68Z', V('snow-shade')) + rect(143.5, 26, 3, 42, 0, 'url(#sc-metald)') +
-      circ(127, 36, 1.3, V('snow')) + circ(160, 42, 1, V('snow')) + circ(136, 31, 1, V('snow'));
-    s += path('M117 70H173L128 262H0Z', V('snow-shade'), { opacity: 0.05 });
+    var s = wallBase(400, -9, 0.75);
+    // high basement window: moonlight outside, snow on the sill, a cool shaft down onto the rejects
+    s += g({ transform: 'translate(-10 0)' }, path(rr(109, 19, 72, 56, 5), V('night-900'), { opacity: 0.4 }) + lit(rr(112, 22, 66, 50, 4), 'url(#sc-metald)', null, 1.2) + path(rr(117, 26, 56, 42, 2), 'url(#sc-sky)') +
+      circ(160, 38, 5.5, V('snow'), { opacity: 0.9 }) + circ(162.5, 36.5, 5, M('night-600', 'night-900', 60)) +
+      path('M117 68V60C122 56 128 58 133 55C140 52 148 57 156 54C162 52 168 56 173 54V68Z', V('snow-shade')) + path('M117 68V62C124 59 130 61 136 59C144 56 150 60 158 58C164 57 169 59 173 58V68Z', V('snow')) +
+      rect(143.5, 26, 3, 42, 0, 'url(#sc-metald)') + rect(117, 45, 56, 2.4, 0, 'url(#sc-metald)') +
+      circ(127, 36, 1.3, V('snow')) + circ(136, 31, 1, V('snow')) + circ(150, 33, 0.9, V('snow')) + circ(124, 52, 1, V('snow'), { opacity: 0.7 }) +
+      path('M109 75H181L183 80H107Z', M('board', 'snow', 70)) + rect(107, 80, 76, 3, 0, V('night-900'), { opacity: 0.4 }));
     s += haze(400);
-    // key light: pendant lamp up and to the left of him; its pool falls down and to the right
-    s += ell(236, 138, 196, 166, 'url(#sc-glow)', { opacity: 0.46 });
-    s += path('M186 26L210 26L398 212L150 212Z', 'url(#sc-cone)', { opacity: 0.42 }) + path('M190 26L206 26L336 212L182 212Z', 'url(#sc-cone)', { opacity: 0.6 });
-    s += rect(197, 0, 2, 11, 0, V('board-dark')) + lit('M182 26C182 16 189 10 198 10C207 10 214 16 214 26Z', 'url(#sc-green)', null, 1.2) +
-      ell(198, 26, 13, 3.4, V('lamp')) + circ(198, 28, 22, 'url(#sc-glow)', { opacity: 0.7 });
+    s += FX.pool(135, 47, 62, 50, 0.5, 'cool') + FX.cone(135, 74, 60, 170, 190, 0.5, { skew: -58, cool: true }) + FX.pool(74, 276, 110, 22, 0.3, 'cool');
+    // key light: pendant lamp up and to the left of him. Its beam falls down and to the right, and he throws a shadow on the wall.
+    s += FX.pool(244, 132, 200, 170, 0.42) + FX.cone(193, 30, 30, 260, 184, 0.5, { skew: 66 }) + FX.motes(190, 50, 150, 130, 8, 9, { r: 1.2 });
+    s += FX.cast(334, 150, 58, 84, 0.5, 12);
+    s += pendant(193, 27, 0, 0.7);
     // REJECTS paper sign (background: kept soft)
-    s += g({ transform: 'translate(-22 -46) rotate(-3 82 98)', opacity: 0.86 }, lit(rr(36, 84, 94, 30, 2), 'url(#sc-paper)', null, 1.2) +
+    s += g({ transform: 'translate(-30 -44) rotate(-3 82 98)', opacity: 0.86 }, lit(rr(36, 84, 94, 30, 2), 'url(#sc-paper)', null, 1.2) +
       rect(74, 79, 16, 9, 1, V('paper-shade'), { opacity: 0.85, transform: 'rotate(8 82 83)' }) +
       txt(83, 106, 17, 'REJECTS', { 'text-anchor': 'middle', 'class': 'sc-txt sc-script', fill: V('ink-soft'), style: 'font-weight:700', 'letter-spacing': 1 }));
     s += floor(400);
     s += ao(100, 293, 40, 9, 0, { 'class': 'sc-pileao' });
     // desk top, then him (chair included), then the desk front
-    s += rect(178, 212, 222, 16, 0, 'url(#sc-desktop)') + rect(178, 212, 222, 4, 0, V('night-900'), { opacity: 0.18 });
+    s += rect(178, 212, 222, 16, 0, 'url(#sc-desktop)') + FX.tex('wood', 178, 212, 222, 16, 0.6) + rect(178, 212, 222, 4, 0, V('night-900'), { opacity: 0.18 }) + FX.pool(270, 219, 120, 9, 0.5);
     s += g({ transform: FC_T }, lit(rr(206, 112, 112, 100, 26), 'url(#sc-metald)', null, 1.4) + rect(218, 124, 88, 4, 2, V('snow'), { opacity: 0.08 }) + fcMarkup());
-    s += rect(178, 228, 222, 2, 0, V('lamp'), { opacity: 0.45 }) + rect(178, 230, 222, 70, 0, 'url(#sc-woodd)') + rect(178, 230, 222, 10, 0, 'url(#sc-aov)') +
+    s += rect(178, 228, 222, 2, 0, V('lamp'), { opacity: 0.45 }) + rect(178, 230, 222, 70, 0, 'url(#sc-woodd)') + FX.tex('wood', 178, 230, 222, 70, 0.75, { scale: 0.7 }) + rect(178, 230, 222, 10, 0, 'url(#sc-aov)') +
       rect(178, 212, 2, 88, 0, V('lamp'), { opacity: 0.3 });
     s += path(rr(206, 246, 84, 44, 5), V('night-900'), { opacity: 0.16 }) + rect(208, 289, 80, 1.5, 0, V('lamp'), { opacity: 0.16 }) + rect(238, 260, 24, 4, 2, V('gold-dark'));
     s += path(rr(304, 246, 84, 44, 5), V('night-900'), { opacity: 0.16 }) + rect(306, 289, 80, 1.5, 0, V('lamp'), { opacity: 0.16 }) + rect(334, 260, 24, 4, 2, V('gold-dark'));
@@ -576,6 +627,7 @@ window.NP = window.NP || {};
     s += lit(rr(L.x, L.y, L.w, L.h, 7), 'url(#sc-metal)', null, 1.6) + rect(L.x + 2, L.y + L.h - 6, L.w - 4, 5, 0, V('board-dark'), { opacity: 0.6 }) +
       path('M' + (L.x + 8) + ' ' + (L.y + 4) + 'H' + (L.x + 44) + 'L' + (L.x + 24) + ' ' + (L.y + 46) + 'H' + (L.x + 8) + 'Z', V('snow'), { opacity: 0.06 });
     s += ell(L.x + 50, L.y - 2, 58, 10, 'url(#sc-glowc)', { 'class': 'sc-sglow2', opacity: 0.3 });
+    s += FX.fall(0, 232, 400, 68, 0.4) + FX.fall(0, 0, 400, 70, 0.45, true);
     s += mugsMarkup();
     // warm the sticky-note faces (script regular + UI bold) at mount so the first note measures true
     s += T('text', { x: 2, y: 298, 'class': 'sc-script', 'font-size': 4, 'fill-opacity': 0 }, 'why ?') + T('text', { x: 2, y: 298, 'class': 'sc-txt', 'font-size': 4, 'fill-opacity': 0 }, 'why ?');

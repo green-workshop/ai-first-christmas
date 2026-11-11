@@ -11,7 +11,7 @@ const read = (f) => {
 };
 
 const css = ["tokens.css", "layout.css", "ui.css", "intro.css", "cutscene.css"].map((f) => `/* ---- ${f} ---- */\n` + read(f)).join("\n");
-const js = ["icons.js", "ui-art.js", "scene.js", "interlude.js", "intro.js", "epilogue.js", "content.js", "engine.js"]
+const js = ["icons.js", "fx.js", "ui-art.js", "scene.js", "interlude.js", "intro.js", "epilogue.js", "content.js", "engine.js"]
   .map((f) => `/* ---- ${f} ---- */\n;(function(){\n${read(f)}\n})();`).join("\n");
 
 // A literal "</script" inside the JS would close the tag early
