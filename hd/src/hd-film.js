@@ -38,11 +38,12 @@ HD.stills = function (c, shots, kit, o) {
   shots.forEach(function (s, i) {
     var url = HD.url(s.file), inner, cast = c.red ? '' : HD.pupMarkup(s.file.replace(/^cuts\//, ''));
     if (c.P) {
-      // upright phone: the still is a band across the middle, over a blurred, darkened copy of itself that fills the frame
-      // (four fifths of its width, centred on the still's point of interest, s.fx)
+      // upright phone: the still is a band across the middle of a plain dark field
+      // (four fifths of its width, centred on the still's point of interest, s.fx).
+      // The field used to be a blurred, darkened copy of the still, blurred with a CSS filter. iPhone browsers do not apply CSS
+      // filters to anything inside an SVG, so there the copy showed sharp and bright: the picture twice, the second one larger.
       var k = c.W / 1280, bh = 1000 * k, by = (c.H - bh) * 0.4, bx = Math.max(c.W - 1600 * k, Math.min(0, c.W / 2 - (s.fx || 800) * k));
-      inner = '<image class="hd-shot-fill" href="' + url + '" x="' + f((c.W - c.H * 1.6) / 2) + '" y="0" width="' + f(c.H * 1.6) + '" height="' + c.H + '" preserveAspectRatio="none"/>' +
-        '<rect class="hd-shot-dim" x="0" y="0" width="' + c.W + '" height="' + c.H + '"/>' +
+      inner = '<rect class="hd-shot-dim" x="0" y="0" width="' + c.W + '" height="' + c.H + '"/>' +
         // (clipped to the photograph: a cut-out on its way in from outside the frame, like the chair's hand, must not be seen
         // hanging in the margin above it)
         '<g transform="translate(' + f(bx) + ' ' + f(by) + ') scale(' + f(k * 1000) / 1000 + ')" clip-path="url(#hd-still-clip)"><image href="' + url + '" x="0" y="0" width="1600" height="1000" preserveAspectRatio="none"/>' + cast + (s.over || '') + '</g>';

@@ -1252,8 +1252,10 @@ html.reduced .hd-sweat { animation: none; opacity: 0; }
 .hd-pup-in { animation: hd-breath 3.6s ease-in-out infinite alternate; }
 .hd-pup[data-who^="droid"] .hd-pup-in, html.reduced .hd-pup-in, .in-red .hd-pup-in { animation: none; }
 @keyframes hd-breath { from { transform: scale(1, 1); } to { transform: scale(1.004, 1.011); } }
-.hd-shot-fill { filter: blur(22px) brightness(.5) saturate(.9); }
-.hd-shot-dim { fill: rgba(5, 8, 24, .35); }
+/* the field behind a film still on an upright phone: plain and dark. (Not a blurred copy of the still: CSS filters do nothing
+   to SVG content in iPhone browsers, so nothing drawn inside an SVG may depend on one to look right. The two that remain,
+   the note's soft shadow and the glow on the AI's face, are only softer or brighter with it.) */
+.hd-shot-dim { fill: #080b1f; }
 
 /* ---------------------------------------------------------------------
    Interlude: the memo on a real desk top, the patch notes in his corner of the basement
@@ -6516,11 +6518,12 @@ HD.stills = function (c, shots, kit, o) {
   shots.forEach(function (s, i) {
     var url = HD.url(s.file), inner, cast = c.red ? '' : HD.pupMarkup(s.file.replace(/^cuts\//, ''));
     if (c.P) {
-      // upright phone: the still is a band across the middle, over a blurred, darkened copy of itself that fills the frame
-      // (four fifths of its width, centred on the still's point of interest, s.fx)
+      // upright phone: the still is a band across the middle of a plain dark field
+      // (four fifths of its width, centred on the still's point of interest, s.fx).
+      // The field used to be a blurred, darkened copy of the still, blurred with a CSS filter. iPhone browsers do not apply CSS
+      // filters to anything inside an SVG, so there the copy showed sharp and bright: the picture twice, the second one larger.
       var k = c.W / 1280, bh = 1000 * k, by = (c.H - bh) * 0.4, bx = Math.max(c.W - 1600 * k, Math.min(0, c.W / 2 - (s.fx || 800) * k));
-      inner = '<image class="hd-shot-fill" href="' + url + '" x="' + f((c.W - c.H * 1.6) / 2) + '" y="0" width="' + f(c.H * 1.6) + '" height="' + c.H + '" preserveAspectRatio="none"/>' +
-        '<rect class="hd-shot-dim" x="0" y="0" width="' + c.W + '" height="' + c.H + '"/>' +
+      inner = '<rect class="hd-shot-dim" x="0" y="0" width="' + c.W + '" height="' + c.H + '"/>' +
         // (clipped to the photograph: a cut-out on its way in from outside the frame, like the chair's hand, must not be seen
         // hanging in the margin above it)
         '<g transform="translate(' + f(bx) + ' ' + f(by) + ') scale(' + f(k * 1000) / 1000 + ')" clip-path="url(#hd-still-clip)"><image href="' + url + '" x="0" y="0" width="1600" height="1000" preserveAspectRatio="none"/>' + cast + (s.over || '') + '</g>';
@@ -7395,7 +7398,8 @@ HD.epScene = function (k, o, wide, kit) {
     return '<svg class="ep-svg ep-wd hd-ep" viewBox="0 50 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + defs +
       '<g class="ep-cam" style="transform-origin:800px 545px">' + pic + over + placed + '</g></svg>';
   }
-  var fill = '<image class="hd-shot-fill" href="' + url + '" x="-830" y="0" width="2560" height="1600" preserveAspectRatio="none"/><rect class="hd-shot-dim" x="0" y="0" width="900" height="1600"/>';
+  // (a plain dark field behind the upright layout, not a blurred copy of the still: see HD.stills in hd-film.js)
+  var fill = '<rect class="hd-shot-dim" x="0" y="0" width="900" height="1600"/>';
   // upright, a scene with no document: two crops of the still, stacked. The lettering goes on the last one
   if (sc.panels) {
     var pw = 840, gap = 16, hs = sc.panels.map(function (p) { return p[3] * pw / p[2]; }), py = (1600 - hs.reduce(function (a, b) { return a + b; }, 0) - gap * (hs.length - 1)) / 2 + 20, body = '';

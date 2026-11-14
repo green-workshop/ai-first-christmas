@@ -121,7 +121,8 @@ HD.epScene = function (k, o, wide, kit) {
     return '<svg class="ep-svg ep-wd hd-ep" viewBox="0 50 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + defs +
       '<g class="ep-cam" style="transform-origin:800px 545px">' + pic + over + placed + '</g></svg>';
   }
-  var fill = '<image class="hd-shot-fill" href="' + url + '" x="-830" y="0" width="2560" height="1600" preserveAspectRatio="none"/><rect class="hd-shot-dim" x="0" y="0" width="900" height="1600"/>';
+  // (a plain dark field behind the upright layout, not a blurred copy of the still: see HD.stills in hd-film.js)
+  var fill = '<rect class="hd-shot-dim" x="0" y="0" width="900" height="1600"/>';
   // upright, a scene with no document: two crops of the still, stacked. The lettering goes on the last one
   if (sc.panels) {
     var pw = 840, gap = 16, hs = sc.panels.map(function (p) { return p[3] * pw / p[2]; }), py = (1600 - hs.reduce(function (a, b) { return a + b; }, 0) - gap * (hs.length - 1)) / 2 + 20, body = '';
