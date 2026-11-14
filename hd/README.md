@@ -3,9 +3,10 @@
 The same game as `../prototype` (same engine, same content, same rules), with every picture replaced by a photograph
 of a miniature film set: path-traced toys, felt puppets and real materials. Nothing in `../prototype` is changed.
 
-    node hd/build.mjs        ->  hd/index.html, which loads its pictures from hd/assets/
+    node hd/build.mjs        ->  hd/index.html, and ../index.html: the same page, loading its pictures from hd/assets/
 
-Unlike the original, the HD game is not a single file: `index.html` needs the `assets/` folder beside it.
+`../index.html` is the page the public link opens: this is the game now. The drawn version is `../v2/index.html`
+(`node prototype/build.mjs`). Unlike the drawn version, the HD game is not a single file: it needs its `assets/` folder.
 
 ## How it fits together
 

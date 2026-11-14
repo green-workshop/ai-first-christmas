@@ -8,7 +8,9 @@ The board of North Pole Ltd has mandated an AI-first Christmas, with the use cas
 
 ## Play
 
-Download `index.html` and open it in any modern browser. There is nothing to install and no network is needed, so it works offline. It also runs on GitHub Pages.
+Open the link above in any modern browser, on a computer or a phone. There is nothing to install.
+
+To play offline, download the repository and open `index.html`: it needs the `hd/assets/` folder beside it for its pictures. The earlier drawn version is one self-contained file, `v2/index.html`, which works anywhere by itself (also at [/v2/](https://green-workshop.github.io/ai-first-christmas/v2/)).
 
 | Action | Keyboard | Phone |
 |---|---|---|
@@ -26,7 +28,7 @@ A first play takes about 5 minutes, including a 69-second intro. After your firs
 
 - 24 children over 6 rounds, of which you check the first 5. Each round has its own kind of AI mistake, and the mistakes get subtler as the shift goes on: too literal, wrong quantity, mixed-up children, wrong size or colour, ignoring the word "not", and confident little hallucinations.
 - Between rounds, the board announces an initiative and Father Christmas ships a patch. It fixes one bug and introduces another. Elves are replaced by robots, which the board also calls AI, and then rehired to fix them. Eventually adoption reaches 100%, and that's you gone too.
-- Round 6 runs without you, on an AI trained by you. It's exactly as accurate as you were.
+- Round 6 runs without you, on an AI trained by you. It's exactly as accurate as you were. There is nothing to press: you watch.
 - The shift report sets your score beside the AI's and breaks down each round: what you caught, what got past you, and how often you talked the AI out of a right answer. The board measures adoption, which only goes up.
 
 ## Settings
@@ -41,9 +43,11 @@ Your settings are kept only in this browser. Your progress lasts only while the 
 
 ## Files
 
-- `index.html`: the whole game in one file.
-- `prototype/`: the source. `src/` holds the separate files, and `node build.mjs` inlines them into `index.html`. `tests/` has playtest bots that play like imperfect humans (slow readers, mashers, sloppy phone swipes, people who alt-tab).
+- `index.html`: the game. Its pictures are in `hd/assets/`.
+- `hd/`: the art and its source. The game's world is a miniature film set of felt puppets and toys, rendered by a path tracer in `hd/render/` and laid over the game by `hd/src/`; `node hd/build.mjs` builds `index.html`. `hd/README.md` explains how it fits together.
+- `prototype/`: the game's own source: rules, words and the earlier drawn art. `src/` holds the separate files, and `node build.mjs` inlines them into `v2/index.html`. `tests/` has checks and playtest bots that play like imperfect humans (slow readers, mashers, sloppy phone swipes, people who alt-tab).
 - `SPEC.md`: the design.
+- `v2/index.html`: the drawn version, in one file.
 - `v1/index.html`: the first version.
 - `LICENSE`: MIT.
 

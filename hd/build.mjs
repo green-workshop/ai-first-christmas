@@ -71,6 +71,11 @@ const js = [['p', 'icons.js'], ['p', 'fx.js'], ['p', 'ui-art.js'], ['p', 'scene.
 const html = P('shell.html').replace('<title>North Pole Ltd: AI-First Christmas</title>', '<title>North Pole Ltd: AI-First Christmas (HD)</title>')
   .replace('<!-- @css -->', () => css).replace('<!-- @js -->', () => js.replace(/<\/script/gi, '<\/script'));
 writeFileSync(join(here, 'index.html'), html);
+// The same page again as ../index.html, the one the public link opens: it loads its pictures from hd/assets/, and is the game
+// proper, so its title does not say HD. (hd/index.html stays, for anyone who has that address.)
+const base = '"base":"assets/"';
+if (html.split(base).length !== 2) throw new Error('expected the manifest to give the picture folder exactly once');
+writeFileSync(join(here, '..', 'index.html'), html.replace(base, '"base":"hd/assets/"').replace('<title>North Pole Ltd: AI-First Christmas (HD)</title>', '<title>North Pole Ltd: AI-First Christmas</title>'));
 // For testing only: the same page with a strip of buttons on the title that plays any cutscene by itself (src/hd-test.js).
 // The game proper (index.html) does not have it; do not publish test.html.
 writeFileSync(join(here, 'test.html'), html.replace('</body>', () => `<script>\n;(function(){\n${H('hd-test.js').replace(/<\/script/gi, '<\\/script')}\n})();\n</script>\n</body>`));
