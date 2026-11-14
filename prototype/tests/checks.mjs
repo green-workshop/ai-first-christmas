@@ -163,7 +163,7 @@ SCENARIOS.lowAndSession = async (r) => {
   await r.play({ film: 'read', reading: film, interlude: async () => { floors.push(await r.q(`document.querySelector('#interlude .il-mb').textContent`)); } });
   r.check('first shift is not a repeat', !(await r.st()).repeat && /LetterBot/.test(floors[0]), floors[0]);
   const rep = await r.report(), plate = parseInt(rep.adopt, 10);
-  const e1 = film.scenes[0], e2 = film.scenes[1];
+  const e1 = film.scenes[0], e2 = verdictOf(film);
   r.check('F4 film: caption, dashboard and report agree on adoption', e1.num === rep.adopt && e1.cap.includes(rep.adopt), `${e1.num} / ${e1.cap} / ${rep.adopt}`);
   r.check('F4 film: overshoot kept', plate > 100, rep.adopt);
   r.check('F9 Chair label on the board meeting caption', /^Chair:/.test(e1.cap), e1.cap);
@@ -183,7 +183,7 @@ SCENARIOS.lowAndSession = async (r) => {
   await r.b.clickSelector('#btnEnding'); await sleep(500);
   const rp = await r.q(`({cap:document.querySelector('#epilogue .il-cap').textContent,num:document.querySelector('#epilogue .ep-sc.on .ep-num').textContent})`);
   r.check('Replay ending shows the real adoption', rp.num === rep.adopt && rp.cap.includes(rep.adopt), JSON.stringify(rp));
-  await sleep(450); await r.b.key('Space'); await sleep(200);
+  await sleep(1100); await r.b.key('Space'); await sleep(200);          // (the HD build takes no press until the cheque has landed, 1.3 s in)
   const rp2 = await r.q(`document.querySelector('#epilogue .il-cap').textContent`);
   r.check('Replay ending shows the real score', rp2 === e2.cap, rp2);
   await r.b.key('s'); await sleep(600);
@@ -227,7 +227,7 @@ SCENARIOS.mid = async (r) => {
     const g = notes.some((n) => n.includes(good)), m = notes.some((n) => n.includes(mirror));
     r.check(`F3 no contradiction: "${good}"`, m && !g, notes.slice(0, 8).join(' | '));
   }
-  r.check('F9 middle band line in the film', /Lessons will be learned/.test(film.scenes[1].cap), film.scenes[1].cap);
+  r.check('F9 middle band line in the film', /Lessons will be learned/.test(verdictOf(film).cap), verdictOf(film).cap);
 };
 
 // All 20 right: the top band and the Copy result's wording (review F9, low items)
@@ -237,7 +237,7 @@ SCENARIOS.perfect = async (r) => {
   await r.play({ film: 'read', reading: film, choose: () => 'right' });
   const rep = await r.report(), copied = await r.copyText();
   r.check('perfect shift scores 100% with 20/20 and AI 4/4', rep.right === '100%' && rep.you === '20/20' && rep.ai === '4/4', JSON.stringify(rep));
-  r.check('F9 top band line in the film', /A lovely result for the AI/.test(film.scenes[1].cap), film.scenes[1].cap);
+  r.check('F9 top band line in the film', /A lovely result for the AI/.test(verdictOf(film).cap), verdictOf(film).cap);
   r.check('Copy result: no weakest round at 20/20', !/weakest/.test(copied), copied);
 };
 
@@ -311,9 +311,22 @@ SCENARIOS.filmInterrupted = async (r) => {
   r.check('restart during the film: still not seen', s.phase === 'briefing' && !s.skip, JSON.stringify(s));
 };
 
-// The closing film's last three scenes hold for the Next button (owner's playtest)
+// the closing film's second scene, the verdict, as play({ film: 'read' }) recorded it (the first that is not the board meeting)
+const verdictOf = (film) => film.scenes.find((x) => x.cls && !/ep-e1/.test(x.cls)) || film.scenes[1] || {};
+
+// The closing film's last three scenes hold for the Next button (owner's playtest). In the HD build the first two hold as well
+// (story review: the cheque scene has the most to read); the drawn game still times those two. Both are checked for what they do.
 const scene = (r) => r.q(`(()=>{const k=document.querySelector('#epilogue .ep-sc.on'),n=document.querySelector('#epilogue .ep-next'),c=document.querySelector('#epilogue .il-cap');return k?{k:k.className.match(/ep-(e1|good|mid|bad|jobless|autumn|rehire)/)[1],next:getComputedStyle(n).visibility==='visible',label:n.textContent,aria:n.getAttribute('aria-label'),focused:document.activeElement===n,cap:c.textContent,capOp:getComputedStyle(c).opacity,hint:document.querySelector('#epilogue .il-hint .kb').textContent}:null})()`);
 async function waitScene(r, k, ms = 20000) { const end = Date.now() + ms; while (Date.now() < end) { const s = await scene(r); if (s && s.k === k) return s; await sleep(60); } return scene(r); }
+// on to the first of the scenes that hold in both builds, pressing past any earlier scene that is waiting for a press
+async function toJobless(r, ms = 30000) {
+  const end = Date.now() + ms;
+  for (;;) {
+    const s = await scene(r);
+    if ((s && s.k === 'jobless') || Date.now() > end) return s;
+    if (s && s.next) { await sleep(700); await r.b.key('Enter'); await sleep(250); } else await sleep(60);
+  }
+}
 async function toFilm(r, params, vp) {
   await r.open(params, vp); await r.start();
   await r.play({ choose: (s) => (s.child === 1 && s.rejects === 0 ? 'never' : 'pack'), film: 'stop', stopAt: (s) => s.phase === 'epilogue' });
@@ -322,11 +335,27 @@ SCENARIOS.heldScenes = async (r) => {
   for (const [name, vp] of [['desktop', DESKTOP], ['phone', PHONE]]) {
     await toFilm(r, 'skipintro=1&fresh=1&seed=19&rounds=1', vp);
     const t0 = Date.now();
+    await sleep(1700);                                   // (in the HD build Next is shown once the cheque has landed, about 1.2 s in)
     let s = await scene(r);
-    r.check(`${name}: no Next button on the timed scenes`, s.k === 'e1' && !s.next, JSON.stringify(s));
-    s = await waitScene(r, 'jobless');
-    const took = Date.now() - t0;
-    r.check(`${name}: the first two scenes keep their timing`, took > 8500 && took < 12500, took);
+    if (!s.next) {
+      r.check(`${name}: no Next button on the timed scenes`, s.k === 'e1' && !s.next, JSON.stringify(s));
+      s = await waitScene(r, 'jobless');
+      const took = Date.now() - t0;
+      r.check(`${name}: the first two scenes keep their timing`, took > 8500 && took < 12500, took);
+    } else {
+      r.check(`${name}: the first scene waits for a press`, s.k === 'e1' && s.next, JSON.stringify(s));
+      await sleep(7000);
+      let held = await scene(r);
+      r.check(`${name} e1: holds with its text still up`, held.k === 'e1' && held.cap === s.cap && held.capOp === '1', JSON.stringify(held));
+      await r.b.key('Enter'); await sleep(1900);            // (Next is shown once the letter or the sack has landed, about 1.2 s in)
+      held = await scene(r);
+      r.check(`${name}: the verdict follows and waits too`, !!held && held.k !== 'e1' && held.k !== 'jobless' && held.next, JSON.stringify(held));
+      await sleep(7000);
+      const still = await scene(r);
+      r.check(`${name} verdict: holds with its text still up`, still.k === held.k && still.cap === held.cap && still.capOp === '1', JSON.stringify(still));
+      await r.b.key('Enter');
+      s = await waitScene(r, 'jobless');
+    }
     for (const [k, nextK] of [['jobless', 'autumn'], ['autumn', 'rehire'], ['rehire', null]]) {
       s = await waitScene(r, k);
       r.check(`${name} ${k}: Next is visible and focused`, s.k === k && s.next && s.focused, JSON.stringify(s));
@@ -352,7 +381,7 @@ SCENARIOS.heldScenes = async (r) => {
     await sleep(1200); await r.b.clickSelector('#btnReportTitle'); await sleep(500);
     // Replay ending: same holds, and the last button goes back to the title
     await r.b.clickSelector('#btnEnding'); await sleep(400);
-    await waitScene(r, 'jobless'); await sleep(700);
+    await toJobless(r); await sleep(700);
     await r.b.key('Enter'); await waitScene(r, 'autumn', 2000); await sleep(700);
     await r.b.key('Enter'); s = await waitScene(r, 'rehire', 2000);
     r.check(`${name}: Enter advances a held scene, and Replay ending ends at the title`, s.k === 'rehire' && s.label === 'Back to title', JSON.stringify(s));
@@ -362,7 +391,7 @@ SCENARIOS.heldScenes = async (r) => {
 };
 SCENARIOS.heldControls = async (r) => {
   await toFilm(r, 'skipintro=1&seed=20&rounds=1');
-  await waitScene(r, 'jobless'); await sleep(700);
+  await toJobless(r); await sleep(700);
   // Pause holds the scene, and resuming gives the button its focus back
   await r.b.key('Escape'); await sleep(400);
   r.check('pause on a held scene', (await r.st()).phase === 'paused');
@@ -374,7 +403,7 @@ SCENARIOS.heldControls = async (r) => {
   r.check('skipping leaves the story on the report', (await r.notes()).some((n) => /Next autumn/.test(n)));
   // Tabbing to Skip and pressing Enter skips, rather than advancing
   await toFilm(r, 'skipintro=1&fresh=1&seed=21&rounds=1');
-  await waitScene(r, 'jobless'); await sleep(700);
+  await toJobless(r); await sleep(700);
   await r.q(`document.querySelector('#epilogue .ep-skip').focus();1`);
   await r.b.key('Enter'); await sleep(900);
   r.check('Enter on a focused Skip skips', (await r.st()).phase === 'report');
@@ -386,7 +415,7 @@ SCENARIOS.heldControls = async (r) => {
   r.check('restart from a held scene', s.phase === 'briefing' && !s.toast, JSON.stringify(s));
   await r.go();
   await r.play({ film: 'stop', stopAt: (t) => t.phase === 'epilogue' });
-  await waitScene(r, 'jobless'); await sleep(300);
+  await toJobless(r); await sleep(300);
   await r.pauseAnd('#btnQuit', '#btnQuitYes');
   s = await r.st();
   r.check('resign from a held scene', s.phase === 'title' && !s.ending, JSON.stringify(s));
@@ -487,10 +516,11 @@ SCENARIOS.robotsBuild = async (r) => {
         await r.q(`(()=>{document.getElementById('screen-title').hidden=true;const el=document.getElementById('interlude');el.hidden=false;window.__il=NP.interlude.play(el,{memo:{title:'t',body:'b',footer:'f'},patch:{version:'v',fixed:['x']},issues:[],floor:${floor}},{reduced:${!!reduced}});return 1})()`);
         for (let i = 0; i < 3; i++) { await sleep(520); await r.q('__il.next();1'); }
         await sleep(reduced ? 500 : 3800);
-        const g = await r.q(`(()=>{const f=[...document.querySelectorAll('#interlude .il-bot')],a=f.map(b=>getComputedStyle(b.querySelector('.dr-arm')).animationName),t=f.filter(b=>b.querySelector(':scope > rect')).length;return {n:f.length,toys:t,anim:a.filter(x=>x==='il-tap').length,conToys:0}})()`);
+        // (.il-mend: in the HD build a robot a contractor is mending has stopped and has no moving arm; the drawn game has none of these)
+        const g = await r.q(`(()=>{const f=[...document.querySelectorAll('#interlude .il-bot')],m=f.filter(b=>b.classList.contains('il-mend')),a=f.filter(b=>!b.classList.contains('il-mend')).map(b=>getComputedStyle(b.querySelector('.dr-arm')).animationName),t=f.filter(b=>b.querySelector(':scope > rect')).length;return {n:f.length,toys:t,anim:a.filter(x=>x==='il-tap').length,mend:m.length,mendStill:m.filter(b=>!b.querySelector('.dr-arm')).length,conToys:0}})()`);
         const want = label === 'bots' ? 6 : 8;
         r.check(`${name} ${label}${reduced ? ' reduced' : ''}: every robot has a toy on the bench`, g.n === want && g.toys === want, JSON.stringify(g));
-        r.check(`${name} ${label}${reduced ? ' reduced' : ''}: robots hammer, or hold still with reduced motion`, g.anim === (reduced ? 0 : want), JSON.stringify(g));
+        r.check(`${name} ${label}${reduced ? ' reduced' : ''}: robots hammer (one being mended stands still), or hold still with reduced motion`, g.anim === (reduced ? 0 : want - g.mend) && g.mendStill === g.mend, JSON.stringify(g));
         await r.b.screenshot(join(OUT, `robots-${name}-${label}${reduced ? '-reduced' : ''}.png`));
         await r.q('__il.skip();document.getElementById("interlude").innerHTML="";1');
       }
@@ -544,9 +574,12 @@ SCENARIOS.rotate = async (r) => {
 
 SCENARIOS.briefingLockout = async (r) => {
   await r.open('skipintro=1&seed=18');
-  await r.q(`document.getElementById('btnStart').click();document.getElementById('btnBriefingGo').click();1`);
+  // (the phases the page goes through are logged with their times, so a failure says what happened and when)
+  await r.q(`window.__ph=[];new MutationObserver(()=>__ph.push([Math.round(performance.now()),document.body.dataset.phase])).observe(document.body,{attributes:true,attributeFilter:['data-phase']});
+    const t0=performance.now();document.getElementById('btnStart').click();const t1=performance.now();document.getElementById('btnBriefingGo').click();__ph.push(['start click took',Math.round(t1-t0),'ms; second click at',Math.round(t1)]);1`);
   await sleep(150);
-  r.check('a key landing as the briefing opens does not dismiss it', (await r.st()).phase === 'briefing');
+  const opened = (await r.st()).phase;
+  r.check('a key landing as the briefing opens does not dismiss it', opened === 'briefing', opened + ' ' + await r.q(`JSON.stringify(__ph)+' now '+Math.round(performance.now())`));
   await sleep(500); await r.b.key('Enter'); await sleep(200);
   r.check('the briefing dismisses after the lockout', (await r.st()).phase !== 'briefing');
 };

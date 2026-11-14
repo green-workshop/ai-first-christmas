@@ -1,0 +1,350 @@
+/* HD art layer: styles for what is drawn over the rendered plates (hd-scene.js), and the photographed look of the page chrome. */
+.hd-svg { overflow: hidden; }
+.hd-desk { overflow: visible; }                 /* the desk plate bleeds past the 400 x 300 panel; the panel clips it */
+.hd-add { mix-blend-mode: screen; }
+.hd-svg image { image-rendering: auto; }
+
+/* lettering on the enamel plates and the machine */
+.hd-enamel { fill: #ecdfb6; opacity: .93; filter: drop-shadow(0 .7px 0 rgba(0, 0, 0, .65)); }
+.hd-stencil { fill: #e9dfc4; opacity: .7; }
+.hd-poster { mix-blend-mode: multiply; }
+.hd-poster text { fill: #1c2858; opacity: .85; }
+.hd-poster-line { stroke: #94681a; opacity: .9; }
+.hd-poster-tip { fill: #9c2c2b; opacity: .9; }
+.hd-ink { fill: #2d2740; opacity: .82; mix-blend-mode: multiply; }
+
+/* belt: what moves with it */
+.hd-seam { fill: #000; opacity: .34; }
+.hd-seam-lit { fill: #fff; opacity: .08; }
+.hd-scuff { fill: #fff; opacity: .07; }
+
+/* the AI's lamps and face */
+.hd-led { opacity: 0; }
+.hd-led-on { opacity: .9; }
+.hd-face { filter: drop-shadow(0 0 2.5px rgba(255, 176, 84, .85)); }
+.hd-face path, .hd-face .sc-dot { fill: var(--lamp); }
+.hd-face .hd-face-line { fill: none; stroke: var(--lamp); stroke-linecap: round; }
+.hd-breathe { animation: hdBreathe 3.2s ease-in-out infinite alternate; }
+@keyframes hdBreathe { from { opacity: .1; } to { opacity: .22; } }
+html.reduced .hd-breathe { animation: none; }
+/* Reduced motion. The game's own rule gives every style change on every element a transition of a thousandth of a second. In
+   the two bays that is a fault: a size of type, or a note's place, that has just been set is not yet in force when the words
+   are measured in the next line of code (the AI's line was laid out at half its size and ran off both ends of its bubble) or
+   when the next frame is drawn (the old note was seen blank, still on the laptop, for one frame). Nothing in a bay eases. */
+html.reduced .sc-svg, html.reduced .sc-svg * { transition-property: none !important; }
+/* and in the films a scene cuts to the next: the one being left stays up beneath the new one for a moment, so the cut never
+   shows an empty frame while the new picture is put up */
+html.hd .il-reduced .il-beat { transition-delay: 160ms, 450ms; }
+html.hd .il-reduced .il-beat.on { transition-delay: 0s; z-index: 1; }
+
+/* barrier notice, speech bubble, sticky notes */
+.hd-notice { filter: drop-shadow(0 3px 4px rgba(4, 6, 20, .55)); }
+.hd-notice-card { fill: var(--paper); }
+.hd-notice-band { fill: var(--pole-red); }
+.hd-notice text { fill: var(--ink); }
+.hd-bubble { fill: url(#sc-bub); filter: drop-shadow(0 4px 6px rgba(4, 6, 20, .6)); }
+.hd-nshadow { fill: rgba(4, 6, 20, .5); transform: translate(1.5px, 2.5px); filter: blur(1.4px); }
+.hd-ncurl { fill: color-mix(in srgb, var(--gold) 70%, var(--lamp)); }
+
+/* gifts */
+.hd-gift-broken { filter: saturate(.5) brightness(.7); }
+.hd-gift-ol { filter: drop-shadow(0 0 .8px #fff) drop-shadow(0 0 .8px #fff); }
+.gift-art .hd-gift { filter: drop-shadow(0 0 0 transparent); }
+
+/* ---------------------------------------------------------------------
+   Page chrome in photographed materials (hd/assets/ui, from render/scenes/ui.glsl)
+   --------------------------------------------------------------------- */
+html.hd { --ui-paper: url("assets/ui/paper.webp") center / cover no-repeat; }
+
+/* the room behind the console */
+html.hd body:not(.on-title) {
+  background:
+    radial-gradient(ellipse 62% 48% at 50% 46%, color-mix(in srgb, var(--lamp-deep) 12%, transparent), transparent 72%),
+    linear-gradient(180deg, color-mix(in srgb, var(--night-900) 20%, transparent), color-mix(in srgb, var(--night-900) 72%, transparent)),
+    url("assets/ui/room.webp") center / cover no-repeat fixed;
+  background-color: var(--night-900);
+}
+html.hd body:not(.on-title)::before { display: none; }
+
+/* readouts: enamel plates in brass frames */
+html.hd .plate {
+  border: 13px solid transparent; border-radius: 0; padding: .1rem .7rem .15rem; background: none; box-shadow: none;
+  border-image: url("assets/ui/plate-navy.webp") 50 fill / 13px stretch;
+  filter: drop-shadow(0 3px 4px rgba(4, 6, 20, .55));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .55);
+}
+html.hd .plate-xmas { border-image-source: url("assets/ui/plate-green.webp"); }
+html.hd .plate-label { color: #d9c896; }
+html.hd .plate-value { color: #f3ead0; }
+html.hd .plate-board .plate-value { color: #f0c458; }
+@media (max-width: 760px) { html.hd #screen-game .hud .plate { border-width: 9px; padding: .05rem .3rem .1rem; border-image-width: 9px; } }
+
+/* buttons: moulded keys */
+html.hd .keycap {
+  border: 16px solid transparent; border-radius: 0; background: none; box-shadow: none; padding: .15em .8em .2em; margin-bottom: 0;
+  border-image: url("assets/ui/key-cream.webp") 56 fill / 16px stretch;
+  filter: drop-shadow(0 5px 5px rgba(4, 6, 20, .55));
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
+}
+html.hd .keycap-pack { border-image-source: url("assets/ui/key-blue.webp"); color: #071a33; }
+html.hd .keycap-reject { border-image-source: url("assets/ui/key-orange.webp"); color: #2b1203; }
+html.hd .keycap-plain { border-image-source: url("assets/ui/key-cream.webp"); }
+html.hd .keycap:hover { filter: drop-shadow(0 5px 5px rgba(4, 6, 20, .55)) brightness(1.07); }
+html.hd .keycap:active { transform: translateY(2px) scale(.985); box-shadow: none; filter: drop-shadow(0 2px 2px rgba(4, 6, 20, .6)) brightness(.9); }
+html.hd .keycap:disabled { filter: drop-shadow(0 3px 3px rgba(4, 6, 20, .5)) saturate(.3) brightness(.8); }
+html.hd .keycap-icon { border-width: 12px; border-image-width: 12px; padding: 0; width: 54px; height: 50px; }
+html.hd .keycap:focus-visible::after { inset: -20px; border-radius: 14px; }
+
+/* the console both bays sit in: brushed steel */
+html.hd .floor {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--snow) 16%, transparent), transparent 10%, color-mix(in srgb, var(--night-900) 45%, transparent)),
+    url("assets/ui/steel.webp") center / 520px auto;
+}
+
+/* the gift's tag: manila card on a string */
+html.hd .gift-tag::after {
+  background:
+    radial-gradient(circle at 50% calc(100% - 12px), var(--basement) 0 3.6px, #8a6a3a 4px 4.8px, #e9dcc0 5.2px 7.6px, #9c7c4a 8px 8.6px, transparent 9px),
+    linear-gradient(180deg, rgba(255, 255, 255, .35), transparent 3px),
+    url("assets/ui/manila.webp") center / cover;
+}
+html.hd .gift-tag { filter: drop-shadow(0 2px 1.5px rgba(4, 6, 20, .5)) drop-shadow(0 7px 7px rgba(4, 6, 20, .5)); }
+
+/* letter: a real sheet, lit from the left */
+html.hd .letter-card { box-shadow: 0 1px 0 var(--paper-shade), 0 3px 4px rgba(4, 6, 20, .45), 0 16px 28px rgba(4, 6, 20, .5); }
+
+/* sticky notes on the laptop */
+html.hd .sc-nbody { fill: #f4d466; }
+
+/* title backdrop */
+.hd-title, .hd-title img { display: block; width: 100%; height: 100%; }
+.hd-title img { object-fit: cover; object-position: 30% 70%; }
+html.hd #titleScene::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 75% 60% at 50% 42%, rgba(6, 10, 30, .28), transparent 75%), linear-gradient(180deg, rgba(6, 10, 30, .25), transparent 30%, rgba(6, 10, 30, .35)); }
+
+/* films told in stills */
+/* captions change in place: the outgoing card and the incoming one share one spot and cross-fade, where the drawn film stacks
+   them for a moment (which shoves the old card upwards as it goes). With reduced motion every line is shown at once, stacked. */
+html.hd .in-caps { display: grid; justify-items: center; align-items: end; }
+html.hd .in-caps > .in-cap { grid-area: 1 / 1; }
+html.hd .in-red .in-caps { display: flex; }
+html.hd .in-red .in-caps > .in-cap { grid-area: auto; }
+/* snow out of doors (hd-film.js HD.snow): each flake drifts from above the frame to below it, for ever */
+.hd-flake { animation: hd-fall var(--t) linear var(--d) infinite; }
+@keyframes hd-fall { from { transform: translate(0, -40px); } to { transform: translate(var(--dx), var(--dy)); } }
+html.reduced .hd-flake { animation: none; opacity: 0; }
+/* the board clapping: a second photograph of them with their hands apart comes and goes over the one with their hands together */
+/* (two photographs, hands together and hands apart: each is held and the change between them is quick, so it is seen as hands
+   meeting, three times a second, and not as a shimmer of both) */
+.hd-clap { animation: hd-clap .34s linear infinite; }
+@keyframes hd-clap { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+/* and cheering, arms up: each bounces on the spot, out of step with the next (a cut-out may grow upwards, never shrink) */
+.hd-shot[data-shot="intro-7b"] .hd-pup[data-who^="board"] .hd-pup-in { animation: hd-cheer .44s ease-in-out infinite alternate; }
+@keyframes hd-cheer { from { transform: scale(1, 1); } to { transform: scale(1, 1.05); } }
+/* a drop of sweat runs down his face and goes, over and over (hd-intro.js sweat()) */
+.hd-sweat { animation: hd-drip 1.4s cubic-bezier(.45, 0, .85, .6) infinite; }
+@keyframes hd-drip { 0% { transform: translateY(-4px); opacity: 0; } 14%, 78% { opacity: 1; } 100% { transform: translateY(22px); opacity: 0; } }
+html.reduced .hd-sweat { animation: none; opacity: 0; }
+/* the cast, cut out over the still: each breathes, growing a hair upwards from where it sits and back (never smaller than the
+   still beneath, so nothing shows round it). The robot does not breathe. */
+.hd-pup, .hd-pup-in { transform-box: fill-box; transform-origin: 50% 100%; }
+.hd-pup-in { animation: hd-breath 3.6s ease-in-out infinite alternate; }
+.hd-pup[data-who^="droid"] .hd-pup-in, html.reduced .hd-pup-in, .in-red .hd-pup-in { animation: none; }
+@keyframes hd-breath { from { transform: scale(1, 1); } to { transform: scale(1.004, 1.011); } }
+.hd-shot-fill { filter: blur(22px) brightness(.5) saturate(.9); }
+.hd-shot-dim { fill: rgba(5, 8, 24, .35); }
+
+/* ---------------------------------------------------------------------
+   Interlude: the memo on a real desk top, the patch notes in his corner of the basement
+   --------------------------------------------------------------------- */
+html.hd .il-b1 { background: #1a120c url("assets/cuts/il-desk.webp") center / cover no-repeat; }
+html.hd .il-b1::before, html.hd .il-b1::after { display: none; }
+html.hd .il-b1 .il-lamp, html.hd .il-b1 .il-mug, html.hd .il-b1 .il-pen, html.hd .il-b1 .il-pool { display: none; }
+html.hd .il-memo { box-shadow: 0 1px 0 var(--paper-shade), 0 3px 5px rgba(4, 6, 20, .5), 0 22px 44px rgba(4, 6, 20, .6); }
+html.hd .il-b2 { background: var(--night-900) url("assets/cuts/il-den.webp") center top / cover no-repeat; }
+html.hd .il-b2 .il-set { display: none; }
+html.hd .il-desk::before {
+  background:
+    linear-gradient(180deg, rgba(255, 205, 130, .55) 0 2px, transparent 3px, transparent 26px, rgba(8, 10, 28, .9) 200px),
+    url("assets/ui/wood.webp") center top / 100% 100% no-repeat;
+}
+html.hd .il-kit > * { display: none; }
+html.hd .il-kit { background: url("assets/cuts/il-kit.webp") center / 100% 100% no-repeat; }
+html.hd .il-tk { background: var(--ui-paper); }
+html.hd .il-ret { background: linear-gradient(rgba(194, 59, 59, .12), rgba(194, 59, 59, .12)), var(--ui-paper); }
+
+/* ---- interlude: the workshop floor, in sprites (hd-interlude.js) ---- */
+/* A moving sprite is a pile of frames (hd-interlude.js cycle()). Each fades up as the one before fades down; the opacities
+   always add up to one, and "plus-lighter" adds the pictures, so the blend is a true cross-fade with no see-through dip. */
+html.hd .hd-cyc { isolation: isolate; }
+html.hd .hd-cyc > image { mix-blend-mode: plus-lighter; opacity: 0; }
+html.hd .hd-cyc > .hd-f0 { opacity: 1; }
+/* Hammering, one blow a second: the tool waits up, comes down fast, rests a beat on the work and lifts more slowly.
+   The prototype's own animation name still runs on the last frame (.il-arm, .dr-arm: the checks look for il-tap there),
+   so in this build il-tap is that frame's turn in the blend instead of an arm turning. */
+html.hd .il-b3.on .hd-ham > image { animation: hd-ham0 1s linear var(--d) infinite; }
+html.hd .il-b3.on .hd-ham > .hd-f1 { animation-name: hd-ham1; }
+html.hd .il-b3.on .hd-ham > .hd-f2 { animation-name: hd-ham2; }
+html.hd .il-b3.on .hd-ham > .hd-fl, html.hd .il-b3.on .il-bot .hd-ham > .dr-arm { animation: il-tap 1s linear var(--d) infinite; transform: none; }
+@keyframes hd-ham0 { 0%, 36% { opacity: 1; } 43%, 86% { opacity: 0; } 96%, 100% { opacity: 1; } }
+@keyframes hd-ham1 { 0%, 36% { opacity: 0; } 43% { opacity: 1; } 50%, 76% { opacity: 0; } 86% { opacity: 1; } 96%, 100% { opacity: 0; } }
+@keyframes hd-ham2 { 0%, 43% { opacity: 0; } 50% { opacity: 1; } 56%, 66% { opacity: 0; } 76% { opacity: 1; } 86%, 100% { opacity: 0; } }
+@keyframes il-tap { 0%, 50% { opacity: 0; } 56%, 66% { opacity: 1; } 76%, 100% { opacity: 0; } }
+/* (only the two poses rendered: the first frame is simply whatever the last is not) */
+html.hd .il-b3.on .hd-ham.hd-n2 > .hd-f0 { animation-name: hd-ham-rest; }
+@keyframes hd-ham-rest { 0%, 50% { opacity: 1; } 56%, 66% { opacity: 0; } 76%, 100% { opacity: 1; } }
+/* Walking. The elf with his box rocks from one frame to the other and back, once a step. */
+html.hd .il-b3.on .il-walk .hd-gait.hd-n2 > .hd-f0 { animation: hd-out .28s ease-in-out infinite alternate; }
+html.hd .il-b3.on .il-walk .hd-gait.hd-n2 > .hd-fl { animation: hd-in .28s ease-in-out infinite alternate; }
+@keyframes hd-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes hd-in { from { opacity: 0; } to { opacity: 1; } }
+html.hd .il-b3.on .il-walk .il-bob { animation-duration: .28s; }
+/* The reindeer: five frames through its stride and back, the legs swinging like a pendulum (slow at each end). */
+html.hd .il-b3.on .il-walk .hd-gait.hd-n5 > image { animation: hd-g0 .76s linear infinite; }
+html.hd .il-b3.on .il-walk .hd-gait.hd-n5 > .hd-f1 { animation-name: hd-g1; }
+html.hd .il-b3.on .il-walk .hd-gait.hd-n5 > .hd-f2 { animation-name: hd-g2; }
+html.hd .il-b3.on .il-walk .hd-gait.hd-n5 > .hd-f3 { animation-name: hd-g3; }
+html.hd .il-b3.on .il-walk .hd-gait.hd-n5 > .hd-fl { animation-name: hd-g4; }
+@keyframes hd-g0 { 0% { opacity: 1; } 14.8%, 85.2% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes hd-g1 { 0% { opacity: 0; } 14.8% { opacity: 1; } 25%, 75% { opacity: 0; } 85.2% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes hd-g2 { 0%, 14.8% { opacity: 0; } 25% { opacity: 1; } 35.2%, 64.8% { opacity: 0; } 75% { opacity: 1; } 85.2%, 100% { opacity: 0; } }
+@keyframes hd-g3 { 0%, 25% { opacity: 0; } 35.2% { opacity: 1; } 50% { opacity: 0; } 64.8% { opacity: 1; } 75%, 100% { opacity: 0; } }
+@keyframes hd-g4 { 0%, 35.2% { opacity: 0; } 50% { opacity: 1; } 64.8%, 100% { opacity: 0; } }
+html.hd .il-b3.on .il-walk .il-bob.hd-trot { animation-duration: .38s; }
+/* a robot taking over a bench rolls in from the side on its tracks (the drawn film only fades it in) */
+html.hd .il-b3.on .il-botin { animation: hd-botin .95s cubic-bezier(.2, .7, .3, 1) var(--od) both; }
+@keyframes hd-botin { from { opacity: 0; transform: translateX(84px); } 22% { opacity: 1; } to { opacity: 1; transform: none; } }
+/* drone rotors: see rotor() in hd-interlude.js */
+html.hd .hd-rotor { transform-box: fill-box; transform-origin: 50% 50%; }
+html.hd .il-b3.on .hd-rotor { animation: hd-spin .13s linear infinite; }
+@keyframes hd-spin { to { transform: rotate(360deg); } }
+html.hd .il .hd-b3::after { background: radial-gradient(ellipse 82% 80% at 50% 46%, transparent 55%, rgba(4, 5, 14, .72)); }
+
+/* the Reject key wears out as it is over-used: the drawn version changes its colours, the photographed key is printed darker */
+html.hd .reject-slot[data-wear="3"] .keycap-reject { filter: drop-shadow(0 4px 4px rgba(4, 6, 20, .55)) brightness(.8) saturate(.8); }
+html.hd .reject-slot[data-wear="4"] .keycap-reject { filter: drop-shadow(0 4px 4px rgba(4, 6, 20, .55)) brightness(.56) saturate(.5); }
+/* upright: enlarge the tall backdrop from its top edge, so the cabin sits below the options and credits, not behind them */
+@media (max-aspect-ratio: 4/5) { .hd-title { overflow: hidden; } .hd-title img { object-position: 50% 0; transform: scale(1.17); transform-origin: 50% 0; } }
+
+/* ---- closing film (hd-epilogue.js) ---- */
+/* The sack of returns: it falls, gathering speed, lands, and sags a little as its load settles (no bounce). Until it has landed
+   the table is covered by a photograph of itself without the sack, which then clears to show the still (and the sack's shadow). */
+html.hd .ep-sc.on .hd-ep .ep-sack { animation: hd-ep-drop .62s .45s both; }
+@keyframes hd-ep-drop {
+  0% { opacity: 0; transform: translateY(-620px); animation-timing-function: cubic-bezier(.45, 0, .9, .55); }
+  6% { opacity: 1; }
+  74% { transform: translateY(0) scale(1); animation-timing-function: ease-out; }
+  86% { transform: scale(1.035, .94); animation-timing-function: ease-in-out; }
+  100% { transform: none; }
+}
+/* (the cover clears after the sag: sooner, and the sack in the photograph shows above the sagging one) */
+html.hd .ep-sc.on .hd-ep-cover { animation: hd-ep-uncover .2s 1.1s both; }
+@keyframes hd-ep-uncover { to { opacity: 0; } }
+/* leaves past the autumn window: real ones take their time */
+html.hd .ep-sc.on .hd-ep .ep-leaf { animation-duration: 5.5s; }
+
+/* ---- the automatic sixth round (hd-auto.js): nothing here is yours to press, and it must look it ---- */
+.hd-gone { opacity: 0; }
+.hd-auto-strip, .hd-auto-feed, .hd-auto-card { display: none; }
+body.hd-auto .hd-gone { opacity: 1; }
+/* nobody at the desk (his chair taped off, the lamp as good as out), no mittens at the belt */
+body.hd-auto .hd-desk .hd-fcs, body.hd-auto .hd-desk .sc-held, body.hd-auto .hd-desk .sc-q, body.hd-auto .hd-desk .sc-notes, body.hd-auto .hd-desk .sc-sglow2 { opacity: 0 !important; }
+body.hd-auto .desk-panel { filter: brightness(.62) saturate(.8); }
+body.hd-auto .sc-belt .sc-mpos { opacity: 0; }
+/* the controls: both buttons and the row of ticks give way to one strip */
+body.hd-auto .controls { position: relative; }
+body.hd-auto .controls > :not(.hd-auto-strip) { visibility: hidden; }
+body.hd-auto .hd-auto-strip { display: flex; position: absolute; inset: 0; align-items: center; gap: .9em; padding: 0 1.1em; border-radius: 12px; color: var(--paper);
+  background: repeating-linear-gradient(-45deg, rgba(255, 196, 84, .1) 0 14px, transparent 14px 28px), linear-gradient(180deg, #2a1420, #170b14);
+  box-shadow: inset 0 0 0 2px rgba(255, 196, 84, .55), 0 6px 18px rgba(3, 4, 14, .5); font-weight: 700; white-space: nowrap; overflow: hidden; }
+.hd-auto-word { font-size: 1.5rem; font-weight: 900; letter-spacing: .14em; color: var(--gold); }
+.hd-auto-sub { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--snow-shade); }
+.hd-auto-count { font-family: var(--font-mono); letter-spacing: .02em; }
+.hd-auto-count b { display: inline-block; min-width: 1ch; font-size: 1.5rem; color: var(--gold); }
+.hd-auto-count i { font-style: normal; opacity: .7; }
+.hd-auto-lamp { flex: none; display: inline-block; width: .8em; height: .8em; border-radius: 50%; background: #ff5a4a; box-shadow: 0 0 0 3px rgba(255, 90, 74, .25), 0 0 12px #ff5a4a; animation: hd-auto-lamp 1.2s steps(1) infinite; }
+@keyframes hd-auto-lamp { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .25; } }   /* one blink in 1.2 s: far under three flashes a second */
+html.reduced .hd-auto-lamp { animation: none; }
+body.hd-auto .keys-hint { font-size: 0; }
+body.hd-auto .keys-hint::after { content: "Nothing to press: the AI is running the belt. Esc pauses."; font-size: var(--fs-caption); }
+/* the workshop as a picture from a camera nobody is watching: corner marks and a LIVE label */
+body.hd-auto .floor { position: relative; }
+body.hd-auto .hd-auto-feed { display: block; position: absolute; inset: -5px; pointer-events: none; z-index: 4; border-radius: 16px;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .028) 0 1px, transparent 1px 4px); }
+.hd-auto-feed .hd-c { position: absolute; width: 26px; height: 26px; border: 3px solid rgba(255, 244, 220, .85); }
+.hd-auto-feed .hd-tl { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.hd-auto-feed .hd-tr { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.hd-auto-feed .hd-bl { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.hd-auto-feed .hd-br { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+.hd-auto-live { position: absolute; right: 14px; top: 10px; display: flex; align-items: center; gap: .5em; padding: .25em .6em; border-radius: 6px; background: rgba(6, 8, 22, .78);
+  color: #fff; font: 800 .8125rem/1.2 var(--font-mono); letter-spacing: .12em; }
+.hd-auto-live em { font-style: normal; font-weight: 600; letter-spacing: .04em; color: var(--snow-shade); text-transform: uppercase; }
+/* the letter: still shown, read by nobody */
+body.hd-auto .letter-card { position: relative; }
+.hd-auto-stamp { display: none; }
+body.hd-auto .hd-auto-stamp { display: block; position: absolute; right: 2.5%; top: 9%; transform: rotate(5deg); white-space: nowrap; padding: .15em .5em; border: 3px solid var(--pole-red); border-radius: 6px;
+  color: var(--pole-red); font: 900 1rem/1.1 var(--font-ui); letter-spacing: .14em; text-transform: uppercase; opacity: .85; pointer-events: none; }
+/* the card that opens the round */
+body.hd-auto .play { position: relative; }
+body.hd-auto .hd-auto-card { display: grid; place-items: center; position: absolute; inset: -6px; z-index: 8; border-radius: 16px; background: rgba(7, 9, 24, .9); opacity: 0; transition: opacity .28s ease; }
+body.hd-auto .hd-auto-card[hidden] { display: none; }
+body.hd-auto .hd-auto-card.on { opacity: 1; }
+.hd-auto-panel { box-sizing: border-box; width: min(34rem, 92%); padding: 1.4em 1.6em 1.5em; border-radius: 16px; text-align: center; color: var(--ink);
+  background: var(--ui-grain), linear-gradient(165deg, var(--paper), color-mix(in srgb, var(--paper) 72%, var(--paper-shade)));
+  box-shadow: 0 0 0 3px var(--gold), 0 18px 50px rgba(2, 3, 12, .7); transform: translateY(10px); transition: transform .36s cubic-bezier(.2, .8, .2, 1); }
+.hd-auto-card.on .hd-auto-panel { transform: none; }
+.hd-auto-kick { margin: 0 0 .3em; font: 800 .8125rem/1.2 var(--font-mono); letter-spacing: .22em; text-transform: uppercase; color: var(--pole-red-dark); }
+.hd-auto-panel h2 { margin: 0 0 .35em; font-size: clamp(1.6rem, 1.1rem + 2.2vw, 2.4rem); line-height: 1.1; }
+.hd-auto-body { margin: 0 0 .9em; font-size: clamp(1.0625rem, .95rem + .6vw, 1.3125rem); line-height: 1.35; font-weight: 650; }
+.hd-auto-foot { display: flex; align-items: center; justify-content: center; gap: .6em; margin: 0; padding: .55em .8em; border-radius: 10px; background: #1b0d16; color: var(--paper); font-weight: 750; }
+@media (max-width: 760px) {
+  .hd-auto-word { font-size: 1.125rem; letter-spacing: .1em; }
+  .hd-auto-sub { display: none; }
+  body.hd-auto .hd-auto-strip { justify-content: space-between; padding: 0 .8em; }
+  .hd-auto-live em { display: none; }
+  body.hd-auto .hd-auto-stamp { font-size: .6875rem; top: 5%; border-width: 2px; }
+}
+html.reduced body.hd-auto .hd-auto-card, html.reduced .hd-auto-panel { transition: none; }
+
+/* (while the card is up, no notice from the round before lies over it) */
+body.hd-auto-open .toast { visibility: hidden; }
+/* the card's time, shown draining, so the wait is seen to be deliberate (it stops while the game is paused) */
+.hd-auto-bar { height: 5px; margin: 1em 0 0; border-radius: 3px; background: color-mix(in srgb, var(--ink) 14%, transparent); overflow: hidden; }
+.hd-auto-bar i { display: block; height: 100%; border-radius: 3px; background: var(--pole-red-dark); transform-origin: 0 50%; }
+.hd-auto-card.on .hd-auto-bar i { animation: hd-auto-drain var(--card-s, 7.5s) linear both; }
+@keyframes hd-auto-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+/* (as specific as the rule above, or its shorthand sets the bar running again; and with reduced motion there is no bar: a full,
+   still line promised a countdown that never moved) */
+body[data-phase="paused"] .hd-auto-card.on .hd-auto-bar i { animation-play-state: paused; }
+html.reduced .hd-auto-bar { display: none; }
+.hd-auto-kick:empty { display: none; }
+/* how much of what it shipped was right: the game's own tick and cross, in its own blue and orange */
+.hd-auto-tally { display: inline-flex; gap: .7em; margin-left: .9em; padding-left: .9em; border-left: 2px solid rgba(255, 244, 220, .3); }
+.hd-auto-tally b { font-size: 1.25rem; min-width: 1ch; }
+.hd-auto-ok, .hd-auto-ok b { color: color-mix(in srgb, var(--good) 62%, #fff); }
+.hd-auto-no, .hd-auto-no b { color: color-mix(in srgb, var(--bad) 70%, #fff); }
+/* nobody is on the clock: the belt's timer goes too */
+body.hd-auto .timerbar { visibility: hidden; }
+@media (max-width: 760px) { .hd-auto-tally { gap: .45em; margin-left: .5em; padding-left: .5em; } .hd-auto-count { font-size: .8125rem; } .hd-auto-count b, .hd-auto-tally b { font-size: 1.0625rem; } }
+/* Phone: a four-line gift tag reached up over the bottom of the letter. A little wider and closer-set, nearly every tag is
+   three lines and stays inside the bay (the engine keeps a tag on screen by its measured width, whatever that is). */
+@media (max-width: 760px) {
+  html.hd .gift .gift-tag { width: 172px; padding: .4rem .55rem 1.55rem; margin-bottom: 2px; }
+  html.hd .gift-tag .gt-text { line-height: 1.22; }
+  html.hd .gift-tag .gt-conf { margin-top: .2rem; }
+}
+@media (max-width: 760px) {
+  /* (and it is not shown while its gift is in the air: dropping from the hatch it stood a gift's height higher, over the letter) */
+  html.hd .gift .gift-tag { transition: opacity .12s; }
+  html.hd body[data-phase="flight"] .gift .gift-tag { opacity: 0; }
+  /* the automatic strip: room for the whole tally on a narrow screen */
+  .hd-auto-x { display: none; }
+  .hd-auto-count { text-transform: capitalize; }
+  body.hd-auto .hd-auto-strip { gap: .5em; padding: 0 .6em; }
+}
+
+/* the cheer (intro scene 7, second half): the board with their arms drawn down and in (x7-cheer) is held, then the still with
+   arms at full stretch is held, about twice a second: arms pumping. With it there, the cut-outs do not also pulse. */
+.hd-cheer2 { animation: hd-cheer2 .5s linear infinite; }
+@keyframes hd-cheer2 { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+.hd-shot[data-shot="intro-7b"]:has(.hd-cheer2) .hd-pup[data-who^="board"] .hd-pup-in { animation: none; }
