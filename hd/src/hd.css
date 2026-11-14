@@ -151,8 +151,10 @@ html.reduced .hd-sweat { animation: none; opacity: 0; }
 .hd-pup-in { animation: hd-breath 3.6s ease-in-out infinite alternate; }
 .hd-pup[data-who^="droid"] .hd-pup-in, html.reduced .hd-pup-in, .in-red .hd-pup-in { animation: none; }
 @keyframes hd-breath { from { transform: scale(1, 1); } to { transform: scale(1.004, 1.011); } }
-.hd-shot-fill { filter: blur(22px) brightness(.5) saturate(.9); }
-.hd-shot-dim { fill: rgba(5, 8, 24, .35); }
+/* the field behind a film still on an upright phone: plain and dark. (Not a blurred copy of the still: CSS filters do nothing
+   to SVG content in iPhone browsers, so nothing drawn inside an SVG may depend on one to look right. The two that remain,
+   the note's soft shadow and the glow on the AI's face, are only softer or brighter with it.) */
+.hd-shot-dim { fill: #080b1f; }
 
 /* ---------------------------------------------------------------------
    Interlude: the memo on a real desk top, the patch notes in his corner of the basement
