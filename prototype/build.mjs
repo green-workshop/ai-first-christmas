@@ -18,5 +18,7 @@ const js = ["icons.js", "fx.js", "ui-art.js", "scene.js", "interlude.js", "intro
 const safeJs = js.replace(/<\/script/gi, "<\\/script");
 const html = read("shell.html").replace("<!-- @css -->", () => css).replace("<!-- @js -->", () => safeJs);
 writeFileSync(join(root, "slice.html"), html);
-writeFileSync(join(root, "..", "index.html"), html);   // the deliverable
-console.log("slice.html + ../index.html", (Buffer.byteLength(html) / 1024).toFixed(1) + " KB");
+// The drawn game as one self-contained file. (It was ../index.html, the page the public link opens, until the HD build took
+// that place: hd/build.mjs writes ../index.html now.)
+writeFileSync(join(root, "..", "v2", "index.html"), html);
+console.log("slice.html + ../v2/index.html", (Buffer.byteLength(html) / 1024).toFixed(1) + " KB");
