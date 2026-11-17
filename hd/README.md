@@ -24,7 +24,7 @@ of a miniature film set: path-traced toys, felt puppets and real materials. Noth
 | `render/` | The darkroom: the offline path tracer and every scene. See `render/README.md`. |
 | `tools/ilshot.mjs`, `tools/epshot.mjs` | Screenshots of the interlude and of the closing film's verdicts, for art review. The prototype's `tests/shot.mjs` and `tests/cuts.mjs` cover the rest with `--slice hd/index.html`. |
 | `tools/motion.mjs` | Film strips: every frame Edge paints of one moving thing (Father Christmas reacting, the AI speaking, the workshop floor, an intro scene), in order on one sheet. Stills cannot show a stumble; this can. |
-| `tools/serve.mjs` | Serves this folder at `http://localhost:4173/` for trying the game by link. |
+| `tools/serve.mjs` | Serves this folder at `http://localhost:4173/` for trying the game by link. With `--site` it serves the whole repository, as GitHub Pages does, so the top page (`index.html`, the one the public link opens) can be tried as players get it: `node hd/tools/serve.mjs 4174 --site`. Try that page before publishing; this folder's own page can look right while the top one does not. |
 | `src/hd-test.js`, `test.html` | Testing only. `build.mjs` also writes `test.html`: the game with a strip of buttons on the title that plays any cutscene by itself (the intro, each interlude, each ending). It is not part of the game; do not publish it. |
 
 ## How things move

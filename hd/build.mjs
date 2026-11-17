@@ -75,7 +75,12 @@ writeFileSync(join(here, 'index.html'), html);
 // proper, so its title does not say HD. (hd/index.html stays, for anyone who has that address.)
 const base = '"base":"assets/"';
 if (html.split(base).length !== 2) throw new Error('expected the manifest to give the picture folder exactly once');
-writeFileSync(join(here, '..', 'index.html'), html.replace(base, '"base":"hd/assets/"').replace('<title>North Pole Ltd: AI-First Christmas (HD)</title>', '<title>North Pole Ltd: AI-First Christmas</title>'));
+// The stylesheet's own pictures (key caps, plates, paper, the room) are read relative to the page too, so they move with it.
+// Without this the top page's buttons are bare text on the public site.
+const cssUrl = 'url("assets/';
+if (html.split(cssUrl).length < 2) throw new Error('expected the stylesheet to load pictures from assets/');
+if (/url\(\s*'?assets\//.test(html)) throw new Error('a stylesheet picture is written in a way this build does not move to hd/assets/');
+writeFileSync(join(here, '..', 'index.html'), html.replace(base, '"base":"hd/assets/"').split(cssUrl).join('url("hd/assets/').replace('<title>North Pole Ltd: AI-First Christmas (HD)</title>', '<title>North Pole Ltd: AI-First Christmas</title>'));
 // For testing only: the same page with a strip of buttons on the title that plays any cutscene by itself (src/hd-test.js).
 // The game proper (index.html) does not have it; do not publish test.html.
 writeFileSync(join(here, 'test.html'), html.replace('</body>', () => `<script>\n;(function(){\n${H('hd-test.js').replace(/<\/script/gi, '<\\/script')}\n})();\n</script>\n</body>`));

@@ -1,10 +1,12 @@
-// Serves the HD game on this computer so it can be opened by link.   node hd/tools/serve.mjs [port]   ->  http://localhost:4173/
-// Only the hd folder is served, and only to this computer.
+// Serves the HD game on this computer so it can be opened by link.   node hd/tools/serve.mjs [port] [--site]   ->  http://localhost:4173/
+// Only the hd folder is served, and only to this computer. With --site the whole repository is served, as GitHub Pages serves it,
+// so the top page (index.html, which loads its pictures from hd/assets/) can be tried exactly as the public link opens it.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { dirname, extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-const root = join(dirname(fileURLToPath(import.meta.url)), '..'), port = +process.argv[2] || 4173;
+const site = process.argv.includes('--site'), args = process.argv.slice(2).filter((a) => a !== '--site');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', ...(site ? ['..'] : [])), port = +args[0] || 4173;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
 createServer(async (req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -15,4 +17,4 @@ createServer(async (req, res) => {
     const body = await readFile(file);
     res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache' }).end(body);
   } catch { res.writeHead(404).end('not found'); }
-}).listen(port, '127.0.0.1', () => console.log('North Pole Ltd HD: http://localhost:' + port + '/'));
+}).listen(port, '127.0.0.1', () => console.log((site ? 'North Pole Ltd, whole site' : 'North Pole Ltd HD') + ': http://localhost:' + port + '/'));

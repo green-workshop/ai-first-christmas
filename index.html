@@ -1155,14 +1155,14 @@ html.hd .il-reduced .il-beat.on { transition-delay: 0s; z-index: 1; }
 /* ---------------------------------------------------------------------
    Page chrome in photographed materials (hd/assets/ui, from render/scenes/ui.glsl)
    --------------------------------------------------------------------- */
-html.hd { --ui-paper: url("assets/ui/paper.webp") center / cover no-repeat; }
+html.hd { --ui-paper: url("hd/assets/ui/paper.webp") center / cover no-repeat; }
 
 /* the room behind the console */
 html.hd body:not(.on-title) {
   background:
     radial-gradient(ellipse 62% 48% at 50% 46%, color-mix(in srgb, var(--lamp-deep) 12%, transparent), transparent 72%),
     linear-gradient(180deg, color-mix(in srgb, var(--night-900) 20%, transparent), color-mix(in srgb, var(--night-900) 72%, transparent)),
-    url("assets/ui/room.webp") center / cover no-repeat fixed;
+    url("hd/assets/ui/room.webp") center / cover no-repeat fixed;
   background-color: var(--night-900);
 }
 html.hd body:not(.on-title)::before { display: none; }
@@ -1170,11 +1170,11 @@ html.hd body:not(.on-title)::before { display: none; }
 /* readouts: enamel plates in brass frames */
 html.hd .plate {
   border: 13px solid transparent; border-radius: 0; padding: .1rem .7rem .15rem; background: none; box-shadow: none;
-  border-image: url("assets/ui/plate-navy.webp") 50 fill / 13px stretch;
+  border-image: url("hd/assets/ui/plate-navy.webp") 50 fill / 13px stretch;
   filter: drop-shadow(0 3px 4px rgba(4, 6, 20, .55));
   text-shadow: 0 1px 0 rgba(0, 0, 0, .55);
 }
-html.hd .plate-xmas { border-image-source: url("assets/ui/plate-green.webp"); }
+html.hd .plate-xmas { border-image-source: url("hd/assets/ui/plate-green.webp"); }
 html.hd .plate-label { color: #d9c896; }
 html.hd .plate-value { color: #f3ead0; }
 html.hd .plate-board .plate-value { color: #f0c458; }
@@ -1183,13 +1183,13 @@ html.hd .plate-board .plate-value { color: #f0c458; }
 /* buttons: moulded keys */
 html.hd .keycap {
   border: 16px solid transparent; border-radius: 0; background: none; box-shadow: none; padding: .15em .8em .2em; margin-bottom: 0;
-  border-image: url("assets/ui/key-cream.webp") 56 fill / 16px stretch;
+  border-image: url("hd/assets/ui/key-cream.webp") 56 fill / 16px stretch;
   filter: drop-shadow(0 5px 5px rgba(4, 6, 20, .55));
   text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
 }
-html.hd .keycap-pack { border-image-source: url("assets/ui/key-blue.webp"); color: #071a33; }
-html.hd .keycap-reject { border-image-source: url("assets/ui/key-orange.webp"); color: #2b1203; }
-html.hd .keycap-plain { border-image-source: url("assets/ui/key-cream.webp"); }
+html.hd .keycap-pack { border-image-source: url("hd/assets/ui/key-blue.webp"); color: #071a33; }
+html.hd .keycap-reject { border-image-source: url("hd/assets/ui/key-orange.webp"); color: #2b1203; }
+html.hd .keycap-plain { border-image-source: url("hd/assets/ui/key-cream.webp"); }
 html.hd .keycap:hover { filter: drop-shadow(0 5px 5px rgba(4, 6, 20, .55)) brightness(1.07); }
 html.hd .keycap:active { transform: translateY(2px) scale(.985); box-shadow: none; filter: drop-shadow(0 2px 2px rgba(4, 6, 20, .6)) brightness(.9); }
 html.hd .keycap:disabled { filter: drop-shadow(0 3px 3px rgba(4, 6, 20, .5)) saturate(.3) brightness(.8); }
@@ -1200,7 +1200,7 @@ html.hd .keycap:focus-visible::after { inset: -20px; border-radius: 14px; }
 html.hd .floor {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--snow) 16%, transparent), transparent 10%, color-mix(in srgb, var(--night-900) 45%, transparent)),
-    url("assets/ui/steel.webp") center / 520px auto;
+    url("hd/assets/ui/steel.webp") center / 520px auto;
 }
 
 /* the gift's tag: manila card on a string */
@@ -1208,7 +1208,7 @@ html.hd .gift-tag::after {
   background:
     radial-gradient(circle at 50% calc(100% - 12px), var(--basement) 0 3.6px, #8a6a3a 4px 4.8px, #e9dcc0 5.2px 7.6px, #9c7c4a 8px 8.6px, transparent 9px),
     linear-gradient(180deg, rgba(255, 255, 255, .35), transparent 3px),
-    url("assets/ui/manila.webp") center / cover;
+    url("hd/assets/ui/manila.webp") center / cover;
 }
 html.hd .gift-tag { filter: drop-shadow(0 2px 1.5px rgba(4, 6, 20, .5)) drop-shadow(0 7px 7px rgba(4, 6, 20, .5)); }
 
@@ -1260,19 +1260,19 @@ html.reduced .hd-sweat { animation: none; opacity: 0; }
 /* ---------------------------------------------------------------------
    Interlude: the memo on a real desk top, the patch notes in his corner of the basement
    --------------------------------------------------------------------- */
-html.hd .il-b1 { background: #1a120c url("assets/cuts/il-desk.webp") center / cover no-repeat; }
+html.hd .il-b1 { background: #1a120c url("hd/assets/cuts/il-desk.webp") center / cover no-repeat; }
 html.hd .il-b1::before, html.hd .il-b1::after { display: none; }
 html.hd .il-b1 .il-lamp, html.hd .il-b1 .il-mug, html.hd .il-b1 .il-pen, html.hd .il-b1 .il-pool { display: none; }
 html.hd .il-memo { box-shadow: 0 1px 0 var(--paper-shade), 0 3px 5px rgba(4, 6, 20, .5), 0 22px 44px rgba(4, 6, 20, .6); }
-html.hd .il-b2 { background: var(--night-900) url("assets/cuts/il-den.webp") center top / cover no-repeat; }
+html.hd .il-b2 { background: var(--night-900) url("hd/assets/cuts/il-den.webp") center top / cover no-repeat; }
 html.hd .il-b2 .il-set { display: none; }
 html.hd .il-desk::before {
   background:
     linear-gradient(180deg, rgba(255, 205, 130, .55) 0 2px, transparent 3px, transparent 26px, rgba(8, 10, 28, .9) 200px),
-    url("assets/ui/wood.webp") center top / 100% 100% no-repeat;
+    url("hd/assets/ui/wood.webp") center top / 100% 100% no-repeat;
 }
 html.hd .il-kit > * { display: none; }
-html.hd .il-kit { background: url("assets/cuts/il-kit.webp") center / 100% 100% no-repeat; }
+html.hd .il-kit { background: url("hd/assets/cuts/il-kit.webp") center / 100% 100% no-repeat; }
 html.hd .il-tk { background: var(--ui-paper); }
 html.hd .il-ret { background: linear-gradient(rgba(194, 59, 59, .12), rgba(194, 59, 59, .12)), var(--ui-paper); }
 
