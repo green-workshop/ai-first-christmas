@@ -125,6 +125,9 @@ void mFC(vec3 p, inout float d) {
 #else
   float bb = sdBox(p - vec3(0.0, 2.3, 0.3), vec3(2.6, 3.1, 1.7));
 #endif
+#ifdef FC_POINT
+  bb = min(bb, sdBox(p - vec3(-0.4, 2.1, 2.6), vec3(1.6, 1.4, 2.2)));      // the pointing arm reaches out of the usual box
+#endif
   if (bb > 0.2) { d = min(d, bb); return; }
   // ---- body: felt coat ----
   vec3 b = p - vec3(0.0, -FC_SLUMP, FC_SLUMP);
@@ -178,6 +181,18 @@ void mFC(vec3 p, inout float d) {
   float part;
   float aL = fcArm(p, vec3(-1.05, 1.9 - FC_SLUMP, 0.05), FC_EL, FC_HL, part); add(d, aL - (part < 0.5 ? feltN : 0.0), part < 0.5 ? 200.0 : (part < 1.5 ? 203.0 : 201.0));
   float aR = fcArm(p, vec3(1.05, 1.9 - FC_SLUMP, 0.05), FC_ER, FC_HR, part); add(d, aR - (part < 0.5 ? feltN : 0.0), part < 0.5 ? 200.0 : (part < 1.5 ? 203.0 : 201.0));
+#ifdef FC_POINT
+  // The recruiting poster (scenes/poster.glsl): the hand at screen left is a fist with its index finger out along FC_POINT,
+  // a direction (towards the lens, for the poster). Only that picture defines it; every game frame is as before.
+  {
+    vec3 dir = normalize(FC_HL - FC_EL), hc = FC_HL + dir * 0.3, fd = normalize(FC_POINT), up = vec3(0.0, 1.0, 0.0);
+    float fin = sdCapsule(p, hc + fd * 0.12 + up * 0.07, hc + fd * 0.7 + up * 0.09, 0.1);
+    fin = smin(fin, sdSphere(p - (hc + fd * 0.2 + up * 0.08), 0.1), 0.05);          // the knuckle
+    // the other three fingers curled into the palm, as bumps under the fist
+    for (int k = 0; k < 3; k++) fin = smin(fin, sdEllipsoid(p - (hc + fd * 0.17 - up * (0.03 + 0.085 * float(k))), vec3(0.11, 0.05, 0.09)), 0.04);
+    add(d, fin - 0.003 * (noise(p * 60.0) - 0.5), 201.0);
+  }
+#endif
 
   // ---- head ----
   vec3 q = fcHead(p);

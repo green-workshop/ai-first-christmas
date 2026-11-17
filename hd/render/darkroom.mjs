@@ -58,11 +58,12 @@ export async function render(b, opts) {
     cam: { pos: cfg.pos, tgt: cfg.tgt, fov: cfg.fov, aperture: cfg.aperture, focus: cfg.focus, ortho: cfg.ortho, roll: cfg.roll, shift: cfg.shift },
     exposure: cfg.exposure, bloom: cfg.bloom, bloomThreshold: cfg.bloomThreshold, vignette: cfg.vignette, contrast: cfg.contrast, saturation: cfg.saturation,
     curve: cfg.curve, alpha: cfg.alpha, tint: cfg.tint, type: cfg.type, quality: cfg.quality };
-  await b.evaluate(`window.__result = null; window.__progress = null; window.darkroom(${JSON.stringify(job)}).then((r) => { window.__result = r; }, (e) => { window.__result = { error: String(e && e.stack || e) }; }); 0`);
+  await b.evaluate(`window.__result = null; window.__progress = null; window.darkroom(${JSON.stringify(job)}).then((r) => { window.__result = r; }, (e) => { window.__result = { error: String(e && e.stack || e) }; }); 0`, { timeoutMs: 900000 });
   let said = 0;
   for (;;) {
     await sleep(400);
-    const st = JSON.parse(await b.evaluate('JSON.stringify({ done: !!window.__result, p: window.__progress })'));
+    // (a long wait: on the d3d11 and gl backends a big shader can hold the page for minutes while it compiles)
+    const st = JSON.parse(await b.evaluate('JSON.stringify({ done: !!window.__result, p: window.__progress })', { timeoutMs: 900000 }));
     if (st.done) break;
     if (opts.verbose && st.p && Date.now() - said > 15000) { said = Date.now(); console.log(`  pass ${st.p.pass}/${st.p.passes}  ${st.p.sec.toFixed(0)}s`); }
   }
